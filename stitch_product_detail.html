@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary-fixed-variant": "#91002d",
+                        "background": "#f8f9fa",
+                        "tertiary-fixed": "#ffdea9",
+                        "surface-container": "#edeeef",
+                        "on-primary-fixed": "#40000f",
+                        "error": "#ba1a1a",
+                        "primary-container": "#da3054",
+                        "tertiary": "#7a5500",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-primary-container": "#fffbff",
+                        "on-surface-variant": "#5a4042",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191c1d",
+                        "secondary-fixed": "#f2daff",
+                        "primary-fixed": "#ffdadb",
+                        "outline-variant": "#e2bec0",
+                        "surface-container-low": "#f3f4f5",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#996c00",
+                        "secondary-container": "#9e49e3",
+                        "on-tertiary-fixed-variant": "#5e4100",
+                        "inverse-primary": "#ffb2b8",
+                        "outline": "#8e6f71",
+                        "surface": "#f8f9fa",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#ffb2b8",
+                        "inverse-surface": "#2e3132",
+                        "surface-variant": "#e1e3e4",
+                        "surface-dim": "#d9dadb",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2",
+                        "primary": "#b60e3d",
+                        "on-secondary-fixed-variant": "#6b00af",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-background": "#191c1d",
+                        "surface-bright": "#f8f9fa",
+                        "secondary-fixed-dim": "#e0b6ff",
+                        "secondary": "#8429c8",
+                        "on-tertiary-fixed": "#271900",
+                        "on-secondary-fixed": "#2e004e",
+                        "on-tertiary": "#ffffff",
+                        "surface-tint": "#ba1340",
+                        "tertiary-fixed-dim": "#ffba27",
+                        "surface-container-high": "#e7e8e9",
+                        "on-secondary-container": "#fffbff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-mobile": "16px",
+                        "lg": "40px",
+                        "xl": "64px",
+                        "margin-desktop": "32px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "xs": "4px",
+                        "md": "24px",
+                        "sm": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "headline-lg": ["Montserrat"],
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "500"}],
+                        "display-lg-mobile": ["36px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .parfait-layer-line::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            width: 8px;
+            height: 1px;
+            background-color: currentColor;
+        }
+        .scrolled-nav {
+            backdrop-filter: blur(8px);
+            background-color: rgba(248, 249, 250, 0.85);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed">
+<!-- TopNavBar -->
+<nav class="w-full sticky top-0 z-50 shadow-[0_4px_20px_rgba(0,0,0,0.05)] bg-surface dark:bg-background transition-all duration-300" id="mainNav">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop h-20 flex items-center justify-between">
+<a class="font-display-lg text-headline-md text-primary dark:text-primary-fixed-dim" href="#">Stacey Halu Halu</a>
+<div class="hidden md:flex items-center gap-xl">
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200" href="#">Home</a>
+<a class="text-primary dark:text-primary-fixed-dim border-b-2 border-primary font-semibold pb-1" href="#">Menu</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200" href="#">Locations</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary dark:hover:text-primary-fixed-dim transition-colors duration-200" href="#">About</a>
+</div>
+<div class="flex items-center gap-md">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">shopping_bag</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full active:scale-95 transition-transform">Order Now</button>
+</div>
+</div>
+</nav>
+<main class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-xl">
+<!-- Hero Image Section -->
+<div class="lg:col-span-7">
+<div class="relative rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.05)] group">
+<img alt="The Grand Stacey Signature Parfait" class="w-full aspect-[4/5] object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A macro, editorial photograph of a towering Halo-halo parfait in a sleek glass vessel. The dessert features distinct, vibrant layers of purple ube halaya, yellow leche flan, bright green pandan jelly, and ruby red beans. Shaved ice glistens under soft, high-key studio lighting with a clean white background. The aesthetic is premium and modern, highlighting the rich textures and deep pink Stacey Halu Halu brand accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Xjk7de4D9Xm84Vbm_AUc0Q45VjznQIBrIxnnntK_KpmzqoPAu5TbcQ2tS4wwMgyUoWIa-emAm5RQbZ3a2Tw1sutTw-LnLZzI9Gl7sPPQTXTm-ycdMi68_-vc0xzWKydUeyBFhqog0s5USQlIgKPHt25HTszvq2F2CdsCwOPg0db-0_GAFcKlewCpKR6GHeMRDtDiVxdUyfvLk0D9SA1yZJTpKVqq6BCjVRyyfYG6nJN5diVbwx-ojt3QIhjPBu9jrZiYTI_opBk"/>
+<div class="absolute top-6 left-6 flex flex-col gap-sm">
+<span class="bg-primary text-on-primary font-label-md text-label-md px-4 py-1.5 rounded-full shadow-lg">Signature Series</span>
+<span class="bg-surface/90 backdrop-blur text-primary font-label-md text-label-md px-4 py-1.5 rounded-full shadow-lg flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                            4.9 (240+ Reviews)
+                        </span>
+</div>
+</div>
+</div>
+<!-- Product Info Section -->
+<div class="lg:col-span-5 flex flex-col gap-lg">
+<div class="flex flex-col gap-sm">
+<h1 class="font-display-lg text-display-lg-mobile md:text-headline-lg text-primary">The Grand Stacey</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                        Our magnum opus. A meticulously engineered 12-layer masterpiece that redefines the artisanal Philippine dessert experience. Each layer is handcrafted daily using heritage techniques.
+                    </p>
+<div class="flex items-baseline gap-sm mt-xs">
+<span class="font-display-lg text-headline-lg text-primary">₱420.00</span>
+<span class="text-on-surface-variant/60 line-through">₱495.00</span>
+</div>
+</div>
+<!-- Quantity & Actions -->
+<div class="bg-surface-container-low p-md rounded-xl flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-on-surface">SELECT QUANTITY</span>
+<div class="flex items-center gap-md bg-surface rounded-full border border-outline-variant p-1">
+<button class="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors" onclick="updateQty(-1)">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<span class="font-headline-md text-headline-md w-8 text-center" id="qtyDisplay">1</span>
+<button class="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary/10 rounded-full transition-colors" onclick="updateQty(1)">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-headline-md text-headline-md py-4 rounded-full shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">shopping_bag</span>
+                        Add to Bag — <span id="priceDisplay">₱420.00</span>
+</button>
+</div>
+<!-- Parfait Progress / Layer Breakdown -->
+<div class="flex flex-col gap-md">
+<h3 class="font-label-md text-label-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary">layers</span>
+                        THE 12-LAYER PROCESS
+                    </h3>
+<div class="relative pl-6 border-l-2 border-primary-fixed">
+<!-- Iterative Layers -->
+<div class="flex flex-col gap-base">
+<div class="relative group">
+<div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary ring-4 ring-background"></div>
+<div class="flex items-center justify-between bg-surface p-sm rounded-lg border border-transparent hover:border-primary-fixed hover:shadow-sm transition-all cursor-default">
+<span class="font-label-md text-primary">12. GOLDEN LECHE FLAN</span>
+<span class="text-[12px] text-on-surface-variant font-medium">Creamy Topper</span>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary-fixed-dim ring-4 ring-background"></div>
+<div class="flex items-center justify-between bg-surface p-sm rounded-lg border border-transparent hover:border-primary-fixed hover:shadow-sm transition-all cursor-default">
+<span class="font-label-md text-on-surface-variant">11. HOUSE UBE ICE CREAM</span>
+<span class="text-[12px] text-on-surface-variant/60">Signature Churn</span>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary-fixed-dim ring-4 ring-background"></div>
+<div class="flex items-center justify-between bg-surface p-sm rounded-lg border border-transparent hover:border-primary-fixed hover:shadow-sm transition-all cursor-default">
+<span class="font-label-md text-on-surface-variant">10. CRISPY PINIPIG</span>
+<span class="text-[12px] text-on-surface-variant/60">Texture Layer</span>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary-fixed-dim ring-4 ring-background"></div>
+<div class="flex items-center justify-between bg-surface p-sm rounded-lg border border-transparent hover:border-primary-fixed hover:shadow-sm transition-all cursor-default">
+<span class="font-label-md text-on-surface-variant">...9-2. HANDCRAFTED JELLIES &amp; FRUITS</span>
+<span class="text-[12px] text-on-surface-variant/60">Vibrant Variety</span>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-primary ring-4 ring-background"></div>
+<div class="flex items-center justify-between bg-surface p-sm rounded-lg border border-transparent hover:border-primary-fixed hover:shadow-sm transition-all cursor-default">
+<span class="font-label-md text-primary">1. SWEETENED RED BEANS</span>
+<span class="text-[12px] text-on-surface-variant font-medium">Foundation</span>
+</div>
+</div>
+</div>
+</div>
+<button class="text-primary font-label-md text-label-md text-center py-2 hover:underline">View Full 12-Layer Encyclopedia</button>
+</div>
+</div>
+</div>
+<!-- Recommendations Section -->
+<section class="mt-xl pt-xl border-t border-surface-variant">
+<h2 class="font-display-lg text-headline-lg text-on-surface mb-lg">You might also like</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Rec Card 1 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-xl overflow-hidden mb-md shadow-sm">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A vibrant purple Ube Cheesecake topped with toasted coconut and macapuno strings. The setting is a bright, high-end cafe with marble textures and soft pink accents. Professional food photography style, shallow depth of field, highlighting the smooth texture of the cake and the artisanal presentation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxbUmfrp-Gkk4MFsqkw3Oas3vcpN71oNYE1tPL-IfcCIJIX9_Vgo8AhQdcGWhHugfg95sEtsqKAQ3P9FqFcuWxLNpbiN2PsHTm5AoTQ9MKDGppgFdhMLCDT2rl84Eesc_dnfa6atThwwZWdgpujVqCPU5-VBb7W82dE9gj17G07ZFxUhR-PLkk3ItjXhjF-IUcqvw6yvXxm055ATvg1GuITL_vyZZjSqtIM74zrlbHCvrjgs1dY_I-bhWhGHkHhzhz9tj3tCaqHBk"/>
+<div class="absolute top-4 right-4 bg-surface/90 p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-primary">favorite</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Heritage Ube Cheesecake</h4>
+<p class="text-on-surface-variant font-body-md">₱350.00</p>
+</div>
+<!-- Rec Card 2 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-xl overflow-hidden mb-md shadow-sm">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A refreshing Mango Sago dessert in a crystal glass. Bright yellow mango cubes sit atop a bed of translucent sago pearls and creamy coconut milk. The scene is bathed in warm, tropical morning light. The image has a clean, minimalist, high-end aesthetic with a palette of sunny yellows and creamy whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCpzlAqaqH3w_HlB7GJsBnF75kv0b1J1sX37X8TnlsXgprrIuYBCQ1rgMbUFvp3NjpzXqLKwR8MbWf6zg3gBxTPTJiKMIrRFre8608iJMZIyUm7ITk7Ts6EWSZmdGEHwmHRf7LT5c4lNdcL6xTFJCO08Kf69DY34G4iWfXuAnIuOTi3_uB3B024wq1aeLVejakbPGDIgzyOno_ol53cJQBBCbBzjW0NTsUrgBaI6AW6Ob5GCaEFmNqgXNpImQ-Riv6WmHuaJ4QOEA"/>
+<div class="absolute top-4 right-4 bg-surface/90 p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-primary">favorite</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Mango Sago Frost</h4>
+<p class="text-on-surface-variant font-body-md">₱280.00</p>
+</div>
+<!-- Rec Card 3 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-square rounded-xl overflow-hidden mb-md shadow-sm">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Gourmet Leche Flan squares served on an artisanal ceramic plate. The flan is drizzled with deep amber caramel and garnished with tiny edible gold leaves. The background is a sophisticated dark-mode dining environment but with bright pop-up pink lighting accents to match the Stacey brand identity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXp1QRL-HdGBYHsGiSgJzAtmaqyQZRsZ99ICSTcn4Y5zJVcJHp0diLMnyRs0CSTQJzm2UN1LFZ63kblWfyaYnalxeMTlHAxWAm0MpR5pDwN-zEyaqKf6m6fLxWpQloPdSU83XbNUUMfXfXbTJNKyQBOjhXdRnooVAu8aN1r0EHyqn-NL6BViqCd5z84JreBsof9aaQEbBP0TRXOo9nWZLzW2_B45XQiBYoOd8Ab3SU5KHDs4Nq_50sA4pYv2j2IvUbVL-Z6r3O4XY"/>
+<div class="absolute top-4 right-4 bg-surface/90 p-2 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-primary">favorite</span>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Caramelized Flan Bites</h4>
+<p class="text-on-surface-variant font-body-md">₱195.00</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-xl bg-surface-container-low dark:bg-surface-container-lowest border-t border-surface-variant dark:border-outline-variant">
+<div class="max-w-7xl mx-auto px-margin-mobile md:px-margin-desktop grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<div class="col-span-1 md:col-span-1">
+<span class="font-display-lg text-headline-md text-primary dark:text-primary-fixed-dim block mb-base">Stacey Halu Halu</span>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-[240px]">Artisanal Philippine Delights crafted for the modern connoisseur.</p>
+</div>
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">COMPANY</span>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-md underline decoration-transparent hover:decoration-primary" href="#">Privacy</a>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-md underline decoration-transparent hover:decoration-primary" href="#">Terms</a>
+</div>
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">EXPLORE</span>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-md underline decoration-transparent hover:decoration-primary" href="#">Contact</a>
+<a class="text-on-surface-variant hover:text-primary transition-all font-body-md underline decoration-transparent hover:decoration-primary" href="#">Careers</a>
+</div>
+<div class="flex flex-col gap-base">
+<span class="font-label-md text-label-md text-primary">NEWSLETTER</span>
+<div class="flex gap-xs">
+<input class="bg-surface rounded-lg border-none focus:ring-2 focus:ring-primary w-full px-4" placeholder="Email" type="email"/>
+<button class="bg-primary text-on-primary p-2 rounded-lg">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+<p class="text-[12px] text-on-surface-variant mt-2">© 2024 Stacey Halu Halu. All rights reserved.</p>
+</div>
+</div>
+</footer>
+<script>
+        let qty = 1;
+        const basePrice = 420.00;
+
+        function updateQty(delta) {
+            qty = Math.max(1, qty + delta);
+            document.getElementById('qtyDisplay').innerText = qty;
+            const totalPrice = (qty * basePrice).toLocaleString('en-PH', {
+                style: 'currency',
+                currency: 'PHP'
+            });
+            document.getElementById('priceDisplay').innerText = totalPrice;
+        }
+
+        // Navbar interaction
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('mainNav');
+            if (window.scrollY > 50) {
+                nav.classList.add('scrolled-nav');
+                nav.classList.remove('bg-surface');
+            } else {
+                nav.classList.remove('scrolled-nav');
+                nav.classList.add('bg-surface');
+            }
+        });
+
+        // Simple enter animation
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.style.opacity = '0';
+            document.body.style.transition = 'opacity 0.5s ease-in-out';
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body></html>
