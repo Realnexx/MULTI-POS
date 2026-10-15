@@ -4,6 +4,7 @@ $title = htmlspecialchars($title ?? 'Notification | Stacey Halu Halu');
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
+<?php require __DIR__.'/../partials/site_favicon.php'; ?>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title><?= $title ?></title>

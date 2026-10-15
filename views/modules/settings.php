@@ -8,16 +8,14 @@ ob_start();
 
 <div class="settings-page">
     <!-- Header Area -->
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h4 class="fw-800 text-dark mb-1" style="font-family:'Outfit', sans-serif;">SYSTEM CONFIGURATION</h4>
-            <p class="text-muted small mb-0">Manage your store profiles, financial rules, and system aesthetics</p>
-        </div>
-        <div class="col-auto">
-            <div class="d-flex gap-2">
-                    <div class="btn-glass p-2 d-flex align-items-center gap-2" style="font-size: 11px; color:#666;">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Last updated: <?= date('F j Y g:i a') ?>
-                    </div>
+    <div class="settings-page-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h4 class="settings-page-title"><i class="ti ti-settings me-2" style="color:#5d87ff;"></i>System Configuration</h4>
+                <p class="settings-page-subtitle">Manage your store profiles, financial rules, and system aesthetics</p>
+            </div>
+            <div class="settings-last-updated">
+                <i class="ti ti-clock me-1"></i> Last updated: <?= date('F j Y g:i a') ?>
             </div>
         </div>
     </div>
@@ -26,7 +24,7 @@ ob_start();
     <div class="row g-4">
         <!-- Sidebar Navigation -->
         <div class="col-xl-3 col-lg-4">
-            <div class="glass-card p-3 sticky-top" style="top: 80px; z-index: 10;">
+            <div class="settings-sidebar-card p-3 sticky-top" style="top: 80px; z-index: 10;">
                 <div class="nav flex-column nav-pills settings-nav" role="tablist">
                     <button class="nav-link <?= $active_tab === 'general' ? 'active' : '' ?> d-flex align-items-center gap-3 py-3 px-4 mb-2"
                         data-bs-toggle="pill" data-bs-target="#tab-general" type="button">
@@ -95,7 +93,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="general">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon"><span class="material-symbols-outlined">info</span></div>
                                 <h5 class="mb-0 fw-bold">Store Information</h5>
@@ -202,7 +200,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="financial">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon bg-success-subtle text-success"><span class="material-symbols-outlined">monetization_on</span></div>
                                 <h5 class="mb-0 fw-bold">Currency & Taxation</h5>
@@ -286,7 +284,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="pos">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon bg-warning-subtle text-warning"><span class="material-symbols-outlined">receipt</span></div>
                                 <h5 class="mb-0 fw-bold">Operational Rules</h5>
@@ -382,7 +380,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="security">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon bg-danger-subtle text-danger"><span class="material-symbols-outlined">verified_user</span></div>
                                 <h5 class="mb-0 fw-bold">System Security Controls</h5>
@@ -549,7 +547,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="appearance">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon bg-info-subtle text-info"><span class="material-symbols-outlined">auto_fix_high</span></div>
                                 <h5 class="mb-0 fw-bold">UI Theme & Branding</h5>
@@ -599,7 +597,7 @@ ob_start();
                         <input type="hidden" name="setting_category" value="password">
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
-                        <div class="glass-card p-4">
+                        <div class="settings-section-card p-4">
                             <div class="d-flex align-items-center gap-3 mb-4 pb-3 border-bottom">
                                 <div class="section-icon bg-primary-subtle text-primary"><span class="material-symbols-outlined">lock_reset</span></div>
                                 <h5 class="mb-0 fw-bold">Update Account Password</h5>
@@ -718,13 +716,44 @@ ob_start();
         margin-top: -2px;
     }
 
-    /* Glass Card Overrides */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.8);
-        backdrop-filter: blur(10px);
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.02);
+    /* Page Header */
+    .settings-page-header {
+        margin-top: 0.25rem;
+    }
+    .settings-page-title {
+        font-size: 1.45rem;
+        font-weight: 800;
+        color: #2a3547;
+        letter-spacing: -0.4px;
+        margin-bottom: 4px;
+        font-family: 'Outfit', sans-serif;
+    }
+    .settings-page-subtitle {
+        font-size: 0.85rem;
+        color: #7c8fac;
+        margin-bottom: 0;
+    }
+    .settings-last-updated {
+        font-size: 0.78rem;
+        color: #7c8fac;
+        background: #f0f4ff;
+        border-radius: 50px;
+        padding: 6px 16px;
+        font-weight: 500;
+    }
+
+    /* Solid Section Cards */
+    .settings-sidebar-card {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e8edf5;
+        box-shadow: 0 2px 12px rgba(93,135,255,0.06);
+    }
+    .settings-section-card {
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #e8edf5;
+        box-shadow: 0 2px 12px rgba(93,135,255,0.06);
     }
 
     .section-icon {

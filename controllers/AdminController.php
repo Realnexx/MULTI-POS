@@ -7,13 +7,14 @@ require_once __DIR__ . '/../models/Sale.php';
 require_once __DIR__ . '/../models/Website.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Setting.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 class AdminController {
     public function dashboard() {
         require_permission('view_dashboard');
         require_once __DIR__ . '/../models/Branch.php';
 
-        $is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
         $all_branches = $is_admin ? Branch::get_all_active() : [];
 
         // Determine which branch to display data for
@@ -54,6 +55,7 @@ class AdminController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
+            $this->validateUserAccess((int)($_POST['user_id'] ?? 0), (array)($_POST['roles'] ?? []), true);
             if ($action === 'create') {
                 $firstname = sanitize($_POST['firstname'] ?? '');
                 $middlename = sanitize($_POST['middlename'] ?? '');
@@ -70,8 +72,17 @@ class AdminController {
                 } else {
                     $username = explode('@', $email)[0];
                     $image = $this->handleUserImage($_FILES['image'] ?? null);
-                    User::create($firstname, $middlename, $lastname, $extname, $username, $email, $password, $roles, $image);
+                    $new_id = User::create($firstname, $middlename, $lastname, $extname, $username, $email, $password, $roles, $image);
+                    if ($new_id) {
+                        // Set POS PIN — use provided value or default
+                        $pin = trim($_POST['pos_pin'] ?? '');
+                        if (!preg_match('/^\d{4}$/', $pin)) {
+                            $pin = '1234';
+                        }
+                        $GLOBALS['conn']->query("UPDATE users SET pos_pin = '" . $GLOBALS['conn']->real_escape_string($pin) . "' WHERE id = " . intval($new_id));
+                    }
                     User::log_activity($_SESSION['user']['id'], 'USER_CREATE', 'Created user: ' . $email);
+                    ActivityLog::log('User Created', 'Created user: ' . $email . ' (ID: ' . $new_id . ')');
                     set_flash('success', 'User created successfully.');
                 }
                 redirect('?route=admin/users');
@@ -87,7 +98,15 @@ class AdminController {
 
                 $image = $this->handleUserImage($_FILES['image'] ?? null);
                 User::update($id, $firstname, $middlename, $lastname, $extname, $email, $password, $roles, $image);
+
+                // Handle POS PIN update
+                $pos_pin = trim($_POST['pos_pin'] ?? '');
+                if (!empty($pos_pin) && preg_match('/^\d{4}$/', $pos_pin)) {
+                    $GLOBALS['conn']->query("UPDATE users SET pos_pin = '" . $GLOBALS['conn']->real_escape_string($pos_pin) . "' WHERE id = " . intval($id));
+                }
+
                 User::log_activity($_SESSION['user']['id'], 'USER_UPDATE', 'Updated user: ' . $email . ' (ID: ' . $id . ')');
+                ActivityLog::log('User Updated', 'Updated user: ' . $email . ' (ID: ' . $id . ')');
                 set_flash('success', 'User updated successfully.');
                 redirect('?route=admin/users');
             } elseif ($action === 'delete') {
@@ -97,6 +116,7 @@ class AdminController {
                 } else {
                     User::delete($id);
                     User::log_activity($_SESSION['user']['id'], 'USER_DELETE', 'Deleted user ID: ' . $id);
+                    ActivityLog::log('User Deleted', 'Deleted user ID: ' . $id);
                     set_flash('success', 'User deleted successfully.');
                 }
                 redirect('?route=admin/users');
@@ -118,6 +138,8 @@ class AdminController {
         $order_dir = $_GET['order'][0]['dir'] ?? 'DESC';
 
         $users = User::get_dt_users($start, $length, $search, $order_col, $order_dir);
+        foreach ($users as &$listed_user) { unset($listed_user['password'], $listed_user['pos_pin']); $listed_user['can_manage'] = User::can_manage_user($_SESSION['user']['id'], $listed_user['id']); }
+        unset($listed_user);
         $totalRecords = User::count_all_users();
         $totalFiltered = User::count_filtered_users($search);
 
@@ -134,11 +156,21 @@ class AdminController {
     }
 
     public function getRoles() {
-        require_permission('manage_roles');
+        require_permissions(['manage_roles','manage_users']);
         header('Content-Type: application/json');
+        $permissionNames=[];foreach(Role::get_all_permissions() as $group) foreach($group as $permission) $permissionNames[$permission['id']]=$permission['name'];
+        $actorSuper=User::is_superadmin($_SESSION['user']['id']);
         echo json_encode([
             'success' => true,
-            'roles' => Role::get_all_roles()
+            'roles' => array_map(function($r) use($permissionNames,$actorSuper) {
+                $r['is_superadmin'] = preg_replace('/[ _-]/','',strtolower($r['name'])) === 'superadmin';
+                $allowed=$actorSuper || !$r['is_superadmin'];
+                if(!$actorSuper) foreach(array_filter(explode(',',$r['permission_ids'] ?? '')) as $pid) if(isset($permissionNames[$pid]) && !User::has_permission($_SESSION['user']['id'],$permissionNames[$pid])) $allowed=false;
+                $r['can_assign']=$allowed;
+                $r['can_edit']=$allowed && !$r['is_superadmin'];
+                $r['can_delete']=$r['can_edit'] && !(int)$r['is_system'];
+                return $r;
+            }, Role::get_all_roles())
         ]);
         exit;
     }
@@ -157,7 +189,9 @@ class AdminController {
         require_permission('manage_users');
         header('Content-Type: application/json');
         $id = intval($_GET['id'] ?? 0);
+        $this->validateUserAccess($id, []);
         $user = User::find_by_id($id);
+        if ($user) unset($user['password'], $user['pos_pin']);
         
         if ($user) {
             // Include roles since find_by_id doesn't natively include them in the same format as ALL
@@ -177,6 +211,7 @@ class AdminController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
+            $this->validateRoleAccess((int)($_POST['role_id'] ?? 0), (string)($_POST['name'] ?? ''), (array)($_POST['permissions'] ?? []));
             if ($action === 'create') {
                 $name = sanitize($_POST['name'] ?? '');
                 $description = sanitize($_POST['description'] ?? '');
@@ -187,8 +222,10 @@ class AdminController {
                 } else {
                     Role::create($name, $description, $permissions);
                     User::log_activity($_SESSION['user']['id'], 'ROLE_CREATE', 'Created role: ' . $name);
+                    ActivityLog::log('Role Created', 'Created role: ' . $name);
                     set_flash('success', 'Role created successfully.');
                 }
+                if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') { header('Content-Type: application/json'); echo json_encode(['success'=>true]); exit; }
                 redirect('?route=admin/roles');
             } elseif ($action === 'edit') {
                 $id = intval($_POST['role_id'] ?? 0);
@@ -198,16 +235,21 @@ class AdminController {
 
                 Role::update($id, $name, $description, $permissions);
                 User::log_activity($_SESSION['user']['id'], 'ROLE_UPDATE', 'Updated role: ' . $name . ' (ID: ' . $id . ')');
+                ActivityLog::log('Role Updated', 'Updated role: ' . $name . ' (ID: ' . $id . ')');
                 set_flash('success', 'Role updated successfully.');
+                if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') { header('Content-Type: application/json'); echo json_encode(['success'=>true]); exit; }
                 redirect('?route=admin/roles');
             } elseif ($action === 'delete') {
                 $id = intval($_POST['role_id'] ?? 0);
-                if (Role::delete($id)) {
+                $deleted=Role::delete($id);
+                if ($deleted) {
                     User::log_activity($_SESSION['user']['id'], 'ROLE_DELETE', 'Deleted role ID: ' . $id);
+                    ActivityLog::log('Role Deleted', 'Deleted role ID: ' . $id);
                     set_flash('success', 'Role deleted successfully.');
                 } else {
-                    set_flash('danger', 'Cannot delete system role or role in use.');
+                    set_flash('danger', 'This role is protected, no longer exists, or cannot be deleted.');
                 }
+                if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest') { if(!$deleted) http_response_code(409); header('Content-Type: application/json'); echo json_encode(['success'=>$deleted,'message'=>$deleted?'Role deleted.':'This role is protected.']); exit; }
                 redirect('?route=admin/roles');
             }
         }
@@ -233,11 +275,13 @@ class AdminController {
                     'contact_email' => sanitize($_POST['contact_email'] ?? '')
                 ];
                 Website::update_content($content);
+                ActivityLog::log('Website Content Updated', 'Updated website content (hero, about, contact)');
                 set_flash('success', 'Website content updated successfully.');
                 redirect('?route=admin/cms');
             } elseif ($action === 'mark_read') {
                 $id = intval($_POST['message_id'] ?? 0);
                 Website::mark_message_read($id);
+                ActivityLog::log('Message Marked Read', 'Marked contact message ID ' . $id . ' as read');
                 set_flash('success', 'Message marked as read.');
                 redirect('?route=admin/cms');
             }
@@ -252,7 +296,7 @@ class AdminController {
         require_once __DIR__ . '/../models/Branch.php';
         require_permission('view_reports');
         
-        $is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
         $branches = $is_admin ? (Branch::get_all_active() ?: []) : [];
         
         require __DIR__ . '/../views/modules/reports.php';
@@ -273,7 +317,7 @@ class AdminController {
         $raw_channels = isset($_GET['channels']) ? (is_array($_GET['channels']) ? $_GET['channels'] : [$_GET['channels']]) : [];
         $raw_locations = isset($_GET['locations']) ? (is_array($_GET['locations']) ? $_GET['locations'] : [$_GET['locations']]) : [];
 
-        $is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
         $branch_id = ($is_admin && $branch_id_req !== 'all') ? (int)$branch_id_req : ($is_admin ? null : ($_SESSION['user']['branch_id'] ?? null));
 
         $data = [];
@@ -340,11 +384,8 @@ class AdminController {
     public function branches() {
         require_once __DIR__ . '/../models/Branch.php';
         // Require permission or manage_users as fallback
-        if (User::has_permission($_SESSION['user']['id'], 'manage_branches')) {
-            require_permission('manage_branches');
-        } else {
-            require_permission('view_dashboard');
-        }
+        require_permission('manage_branches');
+
         
         $branches = Branch::get_all();
         $stats = Branch::get_stats();
@@ -354,7 +395,7 @@ class AdminController {
 
     public function branchesReport() {
         require_once __DIR__ . '/../models/Branch.php';
-        require_permission('view_reports');
+        require_permission('manage_branches');
         
         $branches = Branch::get_all();
         $stats = Branch::get_stats();
@@ -388,6 +429,7 @@ class AdminController {
                 } else {
                     User::update_password($user['id'], $new_pass);
                     User::log_activity($user['id'], 'PASSWORD_CHANGE', 'User changed their own password.');
+                    ActivityLog::log('Password Changed', 'User #' . $user['id'] . ' changed their password');
                     set_flash('success', 'Password updated successfully.');
                 }
                 redirect('?route=admin/settings&tab=password');
@@ -406,7 +448,7 @@ class AdminController {
             // Handle logo upload if present
             if (isset($_FILES['store_logo']) && $_FILES['store_logo']['error'] === UPLOAD_ERR_OK) {
                 $targetDir = __DIR__ . '/../assets/img/';
-                if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+                if (!file_exists($targetDir)) mkdir($targetDir, 0755, true);
                 $ext = pathinfo($_FILES['store_logo']['name'], PATHINFO_EXTENSION);
                 $filename = 'logo_' . time() . '.' . $ext;
                 if (move_uploaded_file($_FILES['store_logo']['tmp_name'], $targetDir . $filename)) {
@@ -416,6 +458,7 @@ class AdminController {
 
             Setting::update_all($data, $category);
             User::log_activity($_SESSION['user']['id'], 'SETTINGS_UPDATE', 'Updated settings category: ' . $category);
+            ActivityLog::log('Settings Updated', 'Updated settings category: ' . $category);
             set_flash('success', 'Settings updated successfully.');
             redirect('?route=admin/settings&tab=' . $category);
         }
@@ -446,7 +489,7 @@ class AdminController {
         if (!$file || $file['error'] !== UPLOAD_ERR_OK) return null;
 
         $targetDir = __DIR__ . '/../assets/img/users/';
-        if (!file_exists($targetDir)) mkdir($targetDir, 0777, true);
+        if (!file_exists($targetDir)) mkdir($targetDir, 0755, true);
 
         $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = uniqid() . '.' . $ext;
@@ -458,7 +501,7 @@ class AdminController {
     }
     public function activityLogs() {
         require_once __DIR__ . '/../models/ActivityLog.php';
-        require_permission('manage_users');
+        require_permission('view_activity_logs');
 
         $users = User::get_all_users();
         $total_logs = ActivityLog::countAll();
@@ -468,7 +511,7 @@ class AdminController {
 
     public function activityLogsPrint() {
         require_once __DIR__ . '/../models/ActivityLog.php';
-        require_permission('manage_users');
+        require_permission('view_activity_logs');
 
         $filters = [
             'user_id' => $_GET['user_id'] ?? null,
@@ -487,7 +530,7 @@ class AdminController {
 
     public function getActivityLogsData() {
         require_once __DIR__ . '/../models/ActivityLog.php';
-        require_permission('manage_users');
+        require_permission('view_activity_logs');
 
         $params = $_GET;
         $start = $params['start'] ?? 0;
@@ -553,4 +596,40 @@ class AdminController {
         ]);
         exit;
     }
+    private function validateRoleAccess($target, $name, array $permission_ids) {
+        $known=[];foreach(Role::get_all_permissions() as $group) foreach($group as $p) $known[]=(int)$p['id'];
+        if(array_diff(array_map('intval',$permission_ids),$known)) access_denied('Select valid permissions.',400);
+        if (User::is_superadmin($_SESSION['user']['id'])) return;
+        foreach (Role::get_all_roles() as $role) {
+            if ((int)$role['id']===$target) { foreach(Role::get_all_permissions() as $group) foreach($group as $permission) if(in_array((int)$permission['id'],array_map('intval',explode(',',$role['permission_ids'] ?? '')),true) && !User::has_permission($_SESSION['user']['id'],$permission['name'])) access_denied('You cannot change a role with greater access than your own.'); }
+            if ((int)$role['id']===$target && preg_replace('/[ _-]/','',strtolower($role['name']))==='superadmin') access_denied('Only Superadmin can change this role.');
+        }
+        if (preg_replace('/[ _-]/','',strtolower($name))==='superadmin') access_denied('Only Superadmin can create this role.');
+        foreach (Role::get_all_permissions() as $group) foreach($group as $permission) {
+            if (in_array((int)$permission['id'],array_map('intval',$permission_ids),true) && !User::has_permission($_SESSION['user']['id'],$permission['name'])) access_denied('You cannot grant permissions you do not have.');
+        }
+    }
+    private function validateUserAccess($target, array $roles, $write = false) {
+        $known=array_map('intval',array_column(Role::get_all_roles(),'id'));
+        if(array_diff(array_map('intval',$roles),$known)) access_denied('Select a valid role.',400);
+        if ($write && $target && User::is_superadmin($target)) {
+            $keeps_superadmin=false;
+            foreach(Role::get_all_roles() as $r) if(in_array((int)$r['id'],array_map('intval',$roles),true) && preg_replace('/[ _-]/','',strtolower($r['name']))==='superadmin') $keeps_superadmin=true;
+            if(!$keeps_superadmin) {
+                $other=false;
+                foreach(User::get_all_users() as $account) if((int)$account['id']!==$target && User::is_superadmin($account['id'])) { $other=true;break; }
+                if(!$other) access_denied('Keep at least one active Superadmin account.');
+            }
+        }
+        if (User::is_superadmin($_SESSION['user']['id'])) return;
+        if ($target && User::is_superadmin($target)) access_denied('This account is protected.');
+        if ($write && $target && !User::can_manage_user($_SESSION['user']['id'],$target)) access_denied('You cannot change an account with greater access than your own.');
+        foreach (Role::get_all_roles() as $role) if (in_array((int)$role['id'],array_map('intval',$roles),true)) {
+            if (preg_replace('/[ _-]/','',strtolower($role['name']))==='superadmin') access_denied('Only Superadmin can assign this role.');
+            foreach (Role::get_all_permissions() as $group) foreach($group as $permission) {
+                if (in_array((int)$permission['id'],array_map('intval',explode(',',$role['permission_ids'] ?? '')),true) && !User::has_permission($_SESSION['user']['id'],$permission['name'])) access_denied('You cannot assign a role with greater access than your own.');
+            }
+        }
+    }
+
 }

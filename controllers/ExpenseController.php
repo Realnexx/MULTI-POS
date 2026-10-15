@@ -8,13 +8,14 @@ class ExpenseController
 {
     public function index()
     {
+        require_permission('manage_expenses');
         $branch_id = $_GET['branch_id'] ?? null;
         $start_date = $_GET['start_date'] ?? null;
         $end_date = $_GET['end_date'] ?? null;
         
         $store_name = Setting::get('store_name', 'Stacey Halo Halo');
-        $expenses = Expense::get_all(); // Still needed for some legacy parts or global view
-        $branches = Branch::get_all();
+        $expenses = Expense::get_all_filtered($branch_id); // Still needed for some legacy parts or global view
+        $branches = Branch::for_current_user(false);
         $expense_stats = Expense::get_stats($branch_id, $start_date, $end_date);
 
         // Fetch Monthly Revenue (Sales)
@@ -83,6 +84,7 @@ class ExpenseController
     }
 
     public function data() {
+        require_permission('manage_expenses');
         global $conn;
         header('Content-Type: application/json');
 
@@ -148,13 +150,20 @@ class ExpenseController
     }
 
     public function print() {
+        require_permission('manage_expenses');
         global $conn;
         $branch_id = $_GET['branch_id'] ?? null;
-        $start_date = $_GET['start_date'] ?? null;
-        $end_date = $_GET['end_date'] ?? null;
+        $start_date = $this->printDate($_GET['start_date'] ?? null, date('Y-m-01'));
+        $end_date = $this->printDate($_GET['end_date'] ?? null, date('Y-m-t'));
+        if ($start_date > $end_date) { http_response_code(400); exit('The start date must be before the end date.'); }
 
         $expenses = Expense::get_all_filtered($branch_id, $start_date, $end_date);
-        $branches = Branch::get_all();
+        $search = trim((string) ($_GET['search'] ?? ''));
+        if ($search !== '') {
+            $count = Expense::count_dt_expenses_filtered($search, $branch_id ?: null, $start_date, $end_date);
+            $expenses = Expense::get_dt_expenses(0, max(1, $count), $search, 0, 'DESC', $branch_id ?: null, $start_date, $end_date);
+        }
+        $branches = Branch::for_current_user(false);
         $expense_stats = Expense::get_stats($branch_id, $start_date, $end_date);
         
         // Fetch Monthly Revenue (Sales) for the period
@@ -199,12 +208,14 @@ class ExpenseController
     }
 
     public function summary_print() {
+        require_permission('manage_expenses');
         global $conn;
         $branch_id = $_GET['branch_id'] ?? null;
-        $start_date = $_GET['start_date'] ?? date('Y-m-01');
-        $end_date = $_GET['end_date'] ?? date('Y-m-t');
+        $start_date = $this->printDate($_GET['start_date'] ?? null, date('Y-m-01'));
+        $end_date = $this->printDate($_GET['end_date'] ?? null, date('Y-m-t'));
+        if ($start_date > $end_date) { http_response_code(400); exit('The start date must be before the end date.'); }
 
-        $branches = Branch::get_all();
+        $branches = Branch::for_current_user(false);
         $store_name = Setting::get('store_name', 'Stacey Halo Halo');
         
         $selected_branch_name = "Global Network";
@@ -272,4 +283,12 @@ class ExpenseController
         include 'views/modules/expenses_summary_print.php';
         exit;
     }
+    private function printDate($value, $fallback)
+    {
+        if (!$value) return $fallback;
+        $date = DateTime::createFromFormat('!Y-m-d', (string) $value);
+        if (!$date || $date->format('Y-m-d') !== $value) { http_response_code(400); exit('Please choose a valid date.'); }
+        return $value;
+    }
+
 }

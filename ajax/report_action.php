@@ -7,9 +7,11 @@ require_once __DIR__ . '/../middleware/rbac.php';
 header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
+require_once __DIR__ . '/../middleware/access_policy.php';
+authorize_action('report_action', $action);
 
 // Shared Branch Filter Logic
-$is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+$is_admin = User::has_all_branch_access($_SESSION['user']['id']);
 $branch_id_req = $_REQUEST['branch_id'] ?? 'all';
 $branch_id = ($is_admin && $branch_id_req !== 'all') ? (int)$branch_id_req : ($is_admin ? null : ($_SESSION['user']['branch_id'] ?? null));
 
@@ -27,9 +29,9 @@ if ($action === 'get_dt_sales') {
     $order_col = intval($_POST['order'][0]['column'] ?? 0);
     $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
 
-    $sales = Sale::get_dt_sales($start, $length, $search, $order_col, $order_dir, $branch_id);
-    $total_records = Sale::get_total_sales_count($branch_id);
-    $filtered_records = Sale::count_dt_sales_filtered($search, $branch_id);
+    $sales = Sale::get_dt_sales($start, $length, $search, $order_col, $order_dir, $branch_id, $start_date, $end_date);
+    $total_records = Sale::get_total_sales_count($branch_id, $start_date, $end_date);
+    $filtered_records = Sale::count_dt_sales_filtered($search, $branch_id, $start_date, $end_date);
 
     echo json_encode([
         "draw" => $draw,
@@ -50,9 +52,9 @@ if ($action === 'get_dt_inventory_logs') {
     $order_col = intval($_POST['order'][0]['column'] ?? 0);
     $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
 
-    $logs = Product::get_dt_inventory_logs($start, $length, $search, $order_col, $order_dir, $branch_id);
-    $total_records = Product::get_total_inventory_logs_count($branch_id);
-    $filtered_records = Product::count_dt_inventory_logs_filtered($search, $branch_id);
+    $logs = Product::get_dt_inventory_logs($start, $length, $search, $order_col, $order_dir, $branch_id, $start_date, $end_date);
+    $total_records = Product::get_total_inventory_logs_count($branch_id, $start_date, $end_date);
+    $filtered_records = Product::count_dt_inventory_logs_filtered($search, $branch_id, $start_date, $end_date);
 
     echo json_encode([
         "draw" => $draw,
@@ -65,7 +67,7 @@ if ($action === 'get_dt_inventory_logs') {
 
 if ($action === 'get_summary_stats') {
     require_permission('view_reports');
-    $stats = Sale::get_summary_stats($branch_id);
+    $stats = Sale::get_summary_stats($branch_id, $start_date, $end_date);
     echo json_encode($stats);
     exit;
 }

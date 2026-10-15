@@ -1,0 +1,16 @@
+/* Shared pagination for Bootstrap tables, DataTables and admin lists. */
+body .pagination, body .dataTables_wrapper .dataTables_paginate, body .dt-container .dt-paging {gap:5px!important;align-items:center;flex-wrap:wrap;margin-bottom:0!important;}
+body .pagination {display:flex;padding:0;list-style:none;}
+body .pagination .page-item {margin:0!important;}
+body .pagination .page-link,
+body .dataTables_wrapper .dataTables_paginate .paginate_button:not(.page-item),
+body .dt-container .dt-paging .dt-paging-button {
+ display:inline-flex!important;align-items:center;justify-content:center;min-width:34px;height:36px;padding:0 10px!important;margin:0!important;border:0!important;border-radius:9px!important;background:transparent!important;background-image:none!important;color:#64748b!important;font-size:13px!important;font-weight:500!important;text-decoration:none!important;box-shadow:none!important;line-height:1!important;cursor:pointer;
+}
+body .pagination .page-link:hover,body .dataTables_wrapper .dataTables_paginate .paginate_button:not(.page-item):hover,body .dt-container .dt-paging .dt-paging-button:hover {background:#eef3ff!important;color:#5d87ff!important;}
+body .pagination .page-item.active .page-link,body .dataTables_wrapper .dataTables_paginate .paginate_button.current,body .dt-container .dt-paging .dt-paging-button.current {background:#5d87ff!important;color:#fff!important;box-shadow:0 4px 10px #5d87ff26!important;}
+body .pagination .page-item.disabled .page-link,body .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:not(.page-item),body .dt-container .dt-paging .dt-paging-button.disabled {background:#f1f5f9!important;color:#94a3b8!important;cursor:default;box-shadow:none!important;}
+body .pagination .page-link:focus-visible,body .dataTables_wrapper .dataTables_paginate a:focus-visible,body .dt-container .dt-paging button:focus-visible {outline:2px solid #5d87ff!important;outline-offset:2px;}
+body .dataTables_paginate svg,body .dt-paging svg {width:16px;height:16px;pointer-events:none;}
+
+body .dataTables_wrapper .dataTables_paginate .paginate_button.page-item,body .dataTables_wrapper .dataTables_paginate .paginate_button.page-item:hover {background:transparent!important;border:0!important;padding:0!important;box-shadow:none!important;}

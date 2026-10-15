@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/Expense.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 header('Content-Type: application/json');
 
 $action = $_GET['action'] ?? '';
+require_once __DIR__ . '/../middleware/access_policy.php';
+authorize_action('expense_action', $action);
 
 if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $data = [
@@ -15,7 +18,9 @@ if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'description' => $_POST['description']
     ];
 
-    if (Expense::create($data)) {
+    $expense_id = Expense::create($data);
+    if ($expense_id) {
+        ActivityLog::log('Expense Created', 'Expense #' . $expense_id . ': ' . $data['category'] . ' - ' . $data['amount'] . ' (Branch ID ' . $data['branch_id'] . ')');
         echo json_encode(['success' => true, 'message' => 'Expense logged successfully']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to log expense']);
@@ -24,8 +29,11 @@ if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($action === 'delete') {
-    $id = intval($_GET['id'] ?? 0);
+    $id = intval($_POST['id'] ?? $_GET['id'] ?? 0);
+    $expense = Expense::get_by_id($id);
     if (Expense::delete($id)) {
+        $detail = $expense ? $expense['category'] . ' - ' . $expense['amount'] . ' (Branch ID ' . $expense['branch_id'] . ')' : 'ID ' . $id;
+        ActivityLog::log('Expense Deleted', 'Expense #' . $id . ': ' . $detail);
         echo json_encode(['success' => true, 'message' => 'Expense deleted']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to delete expense']);
@@ -34,7 +42,7 @@ if ($action === 'delete') {
 }
 
 if ($action === 'single') {
-    $id = intval($_GET['id'] ?? 0);
+    $id = intval($_POST['id'] ?? $_GET['id'] ?? 0);
     $expense = Expense::get_by_id($id);
     if ($expense) {
         echo json_encode(['success' => true, 'expense' => $expense]);
@@ -55,6 +63,7 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
 
     if (Expense::update($id, $data)) {
+        ActivityLog::log('Expense Updated', 'Expense #' . $id . ': ' . $data['category'] . ' - ' . $data['amount'] . ' (Branch ID ' . $data['branch_id'] . ')');
         echo json_encode(['success' => true, 'message' => 'Expense updated successfully']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to update expense']);

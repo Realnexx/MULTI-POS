@@ -1,166 +1,56 @@
 <?php
-require_once __DIR__ . '/../config/db.php';
-
+require_once __DIR__.'/../config/db.php';
+require_once __DIR__.'/RecipeInventory.php';
 class Cart {
-    public static function add($product_id, $qty, $session_id, $user_id = null) {
-        global $conn;
-        // Check if item already exists in the cart for this user/session
-        if ($user_id) {
-            $stmt = $conn->prepare("SELECT id, qty FROM cart WHERE user_id = ? AND product_id = ?");
-            $stmt->bind_param("ii", $user_id, $product_id);
-        } else {
-            $stmt = $conn->prepare("SELECT id, qty FROM cart WHERE session_id = ? AND product_id = ?");
-            $stmt->bind_param("si", $session_id, $product_id);
-        }
-        $stmt->execute();
-        $res = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if ($res) {
-            $new_qty = $res['qty'] + $qty;
-            // Get product stock to cap the qty
-            $p_stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
-            $p_stmt->bind_param("i", $product_id);
-            $p_stmt->execute();
-            $prod = $p_stmt->get_result()->fetch_assoc();
-            $p_stmt->close();
-            
-            if ($prod) {
-                $new_qty = min($new_qty, $prod['stock']);
+    public static function owner_key($session,$user=null) { return hash('sha256',$user?'user:'.(int)$user:'guest:'.$session); }
+    public static function lock_owner($session,$user=null) {
+        $key=self::owner_key($session,$user);
+        RecipeInventory::query('INSERT IGNORE INTO online_cart_owners(owner_key) VALUES (?)','s',[$key]);
+        RecipeInventory::rows('SELECT owner_key FROM online_cart_owners WHERE owner_key=? FOR UPDATE','s',[$key]);
+    }
+    private static function owner($session,$user) { return $user?['user_id=?','i',[(int)$user]]:['session_id=? AND user_id IS NULL','s',[$session]]; }
+    public static function available($product,$branch=null) {
+        if(!empty($product['is_ingredient'])||$product['product_type']==='ingredient')return 0;
+        return RecipeInventory::catalogAvailability($product,$branch);
+    }
+    private static function quantity($qty,$zero=false) { if(!ctype_digit((string)$qty)||(int)$qty<($zero?0:1)||(int)$qty>100000)throw new DomainException('Enter a valid whole quantity.');return (int)$qty; }
+    public static function add($id,$qty,$session,$user=null) {
+        $qty=self::quantity($qty);
+        return RecipeInventory::atomic(function()use($id,$qty,$session,$user){
+            self::lock_owner($session,$user);[$where,$type,$params]=self::owner($session,$user);
+            $row=RecipeInventory::rows('SELECT COALESCE(SUM(qty),0) quantity FROM cart WHERE '.$where.' AND product_id=?',$type.'i',array_merge($params,[$id]))[0];
+            self::write_quantity($id,(int)$row['quantity']+$qty,$session,$user);
+        });
+    }
+    private static function write_quantity($id,$qty,$session,$user) {
+        $qty=self::quantity($qty,true);$product=RecipeInventory::product($id);
+        $available=self::available($product,$_SESSION['online_branch_id'] ?? null);
+        if($qty>$available)throw new DomainException($product['name'].': not enough stock at the selected branch.');
+        self::remove($id,$session,$user);
+        if($qty)RecipeInventory::query('INSERT INTO cart(session_id,user_id,product_id,qty) VALUES (?,?,?,?)','siii',[$session,$user,$id,$qty]);
+    }
+    public static function update($id,$qty,$session,$user=null) {
+        return RecipeInventory::atomic(function()use($id,$qty,$session,$user){self::lock_owner($session,$user);self::write_quantity($id,$qty,$session,$user);});
+    }
+    public static function remove($id,$session,$user=null) {
+        return RecipeInventory::atomic(function()use($id,$session,$user){self::lock_owner($session,$user);[$where,$type,$params]=self::owner($session,$user);RecipeInventory::query('DELETE FROM cart WHERE '.$where.' AND product_id=?',$type.'i',array_merge($params,[$id]));});
+    }
+    public static function clear($session,$user=null) {
+        return RecipeInventory::atomic(function()use($session,$user){self::lock_owner($session,$user);[$where,$type,$params]=self::owner($session,$user);RecipeInventory::query('DELETE FROM cart WHERE '.$where,$type,$params);});
+    }
+    public static function get_items($session,$user=null,$branch=null) {
+        [$where,$type,$params]=self::owner($session,$user);
+        $rows=RecipeInventory::rows('SELECT p.*,c.qty,cat.name category_name FROM (SELECT product_id,SUM(qty) qty FROM cart WHERE '.$where.' GROUP BY product_id) c JOIN products p ON p.id=c.product_id LEFT JOIN categories cat ON cat.id=p.category_id ORDER BY p.id',$type,$params);
+        $items=[];foreach($rows as $row){$row['stock']=self::available($row,$branch ?? ($_SESSION['online_branch_id'] ?? null));$items[$row['id']]=$row;}return $items;
+    }
+    public static function migrate($session,$user) {
+        return RecipeInventory::atomic(function()use($session,$user){
+            $owners=[[null,self::owner_key($session,null)],[$user,self::owner_key($session,$user)]];usort($owners,function($a,$b){return strcmp($a[1],$b[1]);});foreach($owners as $owner)self::lock_owner($session,$owner[0]);
+            foreach(self::get_items($session,null) as $item) {
+                [$where,$type,$params]=self::owner($session,$user);$current=RecipeInventory::rows('SELECT COALESCE(SUM(qty),0) quantity FROM cart WHERE '.$where.' AND product_id=?',$type.'i',array_merge($params,[$item['id']]))[0];
+                $qty=min((int)$item['stock'],(int)$item['qty']+(int)$current['quantity']);self::write_quantity($item['id'],$qty,$session,$user);
             }
-
-            $stmt = $conn->prepare("UPDATE cart SET qty = ? WHERE id = ?");
-            $stmt->bind_param("ii", $new_qty, $res['id']);
-            $stmt->execute();
-            $stmt->close();
-        } else {
-            // Get product stock to cap the qty
-            $p_stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
-            $p_stmt->bind_param("i", $product_id);
-            $p_stmt->execute();
-            $prod = $p_stmt->get_result()->fetch_assoc();
-            $p_stmt->close();
-            
-            if ($prod) {
-                $qty = min($qty, $prod['stock']);
-            }
-
-            $stmt = $conn->prepare("INSERT INTO cart (session_id, user_id, product_id, qty) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("siii", $session_id, $user_id, $product_id, $qty);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-
-    public static function update($product_id, $qty, $session_id, $user_id = null) {
-        global $conn;
-        // Get product stock to cap the qty
-        $p_stmt = $conn->prepare("SELECT stock FROM products WHERE id = ?");
-        $p_stmt->bind_param("i", $product_id);
-        $p_stmt->execute();
-        $prod = $p_stmt->get_result()->fetch_assoc();
-        $p_stmt->close();
-
-        if (!$prod) return;
-        $qty = min($qty, $prod['stock']);
-
-        if ($qty <= 0) {
-            self::remove($product_id, $session_id, $user_id);
-            return;
-        }
-
-        if ($user_id) {
-            $stmt = $conn->prepare("SELECT id FROM cart WHERE user_id = ? AND product_id = ?");
-            $stmt->bind_param("ii", $user_id, $product_id);
-        } else {
-            $stmt = $conn->prepare("SELECT id FROM cart WHERE session_id = ? AND product_id = ?");
-            $stmt->bind_param("si", $session_id, $product_id);
-        }
-        $stmt->execute();
-        $res = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if ($res) {
-            $stmt = $conn->prepare("UPDATE cart SET qty = ? WHERE id = ?");
-            $stmt->bind_param("ii", $qty, $res['id']);
-            $stmt->execute();
-            $stmt->close();
-        } else {
-            $stmt = $conn->prepare("INSERT INTO cart (session_id, user_id, product_id, qty) VALUES (?, ?, ?, ?)");
-            $stmt->bind_param("siii", $session_id, $user_id, $product_id, $qty);
-            $stmt->execute();
-            $stmt->close();
-        }
-    }
-
-    public static function remove($product_id, $session_id, $user_id = null) {
-        global $conn;
-        if ($user_id) {
-            $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ? AND product_id = ?");
-            $stmt->bind_param("ii", $user_id, $product_id);
-        } else {
-            $stmt = $conn->prepare("DELETE FROM cart WHERE session_id = ? AND product_id = ?");
-            $stmt->bind_param("si", $session_id, $product_id);
-        }
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    public static function clear($session_id, $user_id = null) {
-        global $conn;
-        if ($user_id) {
-            $stmt = $conn->prepare("DELETE FROM cart WHERE user_id = ?");
-            $stmt->bind_param("i", $user_id);
-        } else {
-            $stmt = $conn->prepare("DELETE FROM cart WHERE session_id = ?");
-            $stmt->bind_param("s", $session_id);
-        }
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    public static function get_items($session_id, $user_id = null) {
-        global $conn;
-        if ($user_id) {
-            $stmt = $conn->prepare("
-                SELECT c.qty, p.id, p.name, p.price, p.image_url, p.stock, cat.name as category_name
-                FROM cart c 
-                JOIN products p ON c.product_id = p.id 
-                LEFT JOIN categories cat ON p.category_id = cat.id
-                WHERE c.user_id = ?
-            ");
-            $stmt->bind_param("i", $user_id);
-        } else {
-            $stmt = $conn->prepare("
-                SELECT c.qty, p.id, p.name, p.price, p.image_url, p.stock, cat.name as category_name
-                FROM cart c 
-                JOIN products p ON c.product_id = p.id 
-                LEFT JOIN categories cat ON p.category_id = cat.id
-                WHERE c.session_id = ?
-            ");
-            $stmt->bind_param("s", $session_id);
-        }
-        $stmt->execute();
-        $res = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-
-        // Index by product id to match $_SESSION['cart'] structure
-        $cart = [];
-        foreach ($res as $item) {
-            $cart[$item['id']] = $item;
-        }
-        return $cart;
-    }
-
-    public static function migrate($session_id, $user_id) {
-        global $conn;
-        // Get all items in the session-based cart
-        $session_items = self::get_items($session_id, null);
-        foreach ($session_items as $item) {
-            // Add to the user-based cart
-            self::add($item['id'], $item['qty'], $session_id, $user_id);
-        }
-        // Delete items under session_id
-        self::clear($session_id, null);
+            self::clear($session,null);
+        });
     }
 }

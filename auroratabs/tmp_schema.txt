@@ -1,0 +1,29 @@
+TXN:
+CREATE TABLE `transactions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `transaction_code` varchar(50) NOT NULL,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `amount` decimal(10,2) NOT NULL,
+  `status` enum('pending','success','failed','refunded') DEFAULT 'pending',
+  `gateway` varchar(50) DEFAULT NULL,
+  `reference_number` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `transaction_code` (`transaction_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+
+VOTES:
+CREATE TABLE `votes` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `candidate_id` bigint(20) unsigned NOT NULL,
+  `vote_count` int(11) DEFAULT 1,
+  `user_id` bigint(20) unsigned DEFAULT NULL,
+  `package_id` bigint(20) unsigned DEFAULT NULL,
+  `transaction_id` bigint(20) unsigned DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `candidate_id` (`candidate_id`),
+  CONSTRAINT `votes_ibfk_1` FOREIGN KEY (`candidate_id`) REFERENCES `candidates` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

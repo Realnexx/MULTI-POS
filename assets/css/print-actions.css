@@ -1,0 +1,10 @@
+/* Shared appearance for print actions across admin, POS and report previews. */
+body :is(.print-action,.report-print-link,.expense-print-button,.btn-print,#print-daily-btn,button[onclick*="window.print"],button[onclick*="printInsights"],button[onclick*="printAudit"],button[onclick*="executePrint"],button[onclick*="printModalReceipt"],.print-toolbar button) {
+    background:#fff!important;background-image:none!important;color:#3563e9!important;border:1px solid #3563e9!important;box-shadow:none!important;font-weight:600;
+}
+body :is(.print-action,.report-print-link,.expense-print-button,.btn-print,#print-daily-btn,button[onclick*="window.print"],button[onclick*="printInsights"],button[onclick*="printAudit"],button[onclick*="executePrint"],button[onclick*="printModalReceipt"],.print-toolbar button):hover {
+    background:#edf2ff!important;color:#244fd0!important;border-color:#244fd0!important;
+}
+body :is(.print-action,.report-print-link,.expense-print-button,.btn-print,#print-daily-btn,button[onclick*="window.print"],button[onclick*="printInsights"],button[onclick*="printAudit"],button[onclick*="executePrint"],button[onclick*="printModalReceipt"],.print-toolbar button):focus-visible {
+    outline:3px solid #b2c4ff!important;outline-offset:3px;
+}

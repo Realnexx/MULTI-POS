@@ -29,8 +29,6 @@ class Website {
 
     public static function save_contact_message($name, $email, $subject, $message) {
         global $conn;
-        $stmt = $conn->prepare("INSERT INTO contacts_messages (name, email, subject, message) VALUES (?, (?, ?, ?)");
-        // Wait, let's make sure the SQL syntax is perfect: VALUES (?, ?, ?, ?)
         $stmt = $conn->prepare("INSERT INTO contacts_messages (name, email, subject, message) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("ssss", $name, $email, $subject, $message);
         $success = $stmt->execute();

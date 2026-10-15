@@ -13,8 +13,10 @@ $inactive_mobile_class = 'flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-
 <header class="bg-surface dark:bg-on-background shadow-sm sticky top-0 z-50 transition-all duration-300">
     <nav class="flex justify-between items-center w-full px-margin-desktop py-base max-w-full mx-auto relative">
         <!-- Left: Brand Logo -->
-        <a href="<?= url('?route=home') ?>" class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim flex items-center gap-2 text-decoration-none z-10">
-            <span><i class="fa-solid fa-ice-cream"></i></span> <span class="hidden md:inline">Stacy Halo Halo</span>
+        <?php $brand_display_name = !empty($store_settings['store_name']) ? ucwords($store_settings['store_name']) . ' Burger' : 'Kairo Burger Co.'; ?>
+        <a href="<?= url('?route=home') ?>" class="font-headline-md text-headline-md font-extrabold text-primary dark:text-primary-fixed-dim flex items-center gap-2 text-decoration-none z-10 tracking-tight group">
+            <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-burger text-xl"></i></span>
+            <span class="inline font-bold text-xl md:text-2xl"><?= htmlspecialchars($brand_display_name) ?></span>
         </a>
 
         <!-- Center: Centered Navlinks -->
@@ -116,7 +118,7 @@ $inactive_mobile_class = 'flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-
 
             <?php else: ?>
                 <!-- Not Logged In -->
-                <a href="<?= url('?route=customer_login') ?>" class="hidden md:block font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors text-decoration-none"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
+                <a href="<?= url('?route=login') ?>" class="hidden md:block font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors text-decoration-none"><i class="fa-solid fa-right-to-bracket me-1"></i> Login</a>
                 <a href="<?= url('?route=products') ?>" class="bg-primary hover:bg-primary-container text-white px-md py-sm rounded-pill font-label-md text-label-md shadow-sm active:scale-95 transition-all inline-block text-decoration-none"><i class="fa-solid fa-utensils me-1"></i> Order Now</a>
 
                 <?php $cartCount = array_sum(array_column($_SESSION['cart'] ?? [], 'qty')); ?>
@@ -151,7 +153,7 @@ $inactive_mobile_class = 'flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-
                 <a href="<?= url('?route=setup_profile') ?>" class="<?= $inactive_mobile_class ?> text-decoration-none"><i class="fa-solid fa-gear text-lg w-6"></i> Settings</a>
                 <a href="<?= url('?route=logout') ?>" onclick="openLogoutModal(event)" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-error/10 text-error font-bold transition-all text-decoration-none"><i class="fa-solid fa-right-from-bracket text-lg w-6"></i> Logout</a>
             <?php else: ?>
-                <a href="<?= url('?route=customer_login') ?>" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-bold transition-all text-decoration-none"><i class="fa-solid fa-right-to-bracket text-lg w-6"></i> Login</a>
+                <a href="<?= url('?route=login') ?>" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 text-primary font-bold transition-all text-decoration-none"><i class="fa-solid fa-right-to-bracket text-lg w-6"></i> Login</a>
             <?php endif; ?>
         </div>
     </div>

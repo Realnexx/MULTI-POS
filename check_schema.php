@@ -1,6 +1,8 @@
 <?php
 require_once 'config/db.php';
-$result = $conn->query("DESCRIBE users");
-while($row = $result->fetch_assoc()) {
-    print_r($row);
+$res = $conn->query("DESCRIBE products");
+$cols = [];
+while ($row = $res->fetch_assoc()) {
+    $cols[] = $row['Field'];
 }
+echo json_encode($cols);

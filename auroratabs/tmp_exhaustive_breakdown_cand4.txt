@@ -1,0 +1,45 @@
+﻿--- Categories and Weights ---
+ID: 4 | Name: Production Number | Weight: 20.00%
+ID: 5 | Name: Talent | Weight: 20.00%
+ID: 6 | Name: Evening Gown | Weight: 30.00%
+ID: 7 | Name: Question &amp; Answer | Weight: 30.00%
+
+--- Individual Scores ---
+ScoreID: 19 | Judge: 17 | Cat: Production Number | Crit: Stage Presence | Value: 35
+ScoreID: 20 | Judge: 17 | Cat: Production Number | Crit: Confidence | Value: 25
+ScoreID: 21 | Judge: 17 | Cat: Production Number | Crit: Audience Impact | Value: 26
+ScoreID: 31 | Judge: 17 | Cat: Talent | Crit: Skill Level | Value: 29
+ScoreID: 32 | Judge: 17 | Cat: Talent | Crit: Creativity | Value: 29
+ScoreID: 33 | Judge: 17 | Cat: Talent | Crit: Audience Impact | Value: 29
+ScoreID: 43 | Judge: 17 | Cat: Evening Gown | Crit: Elegance &amp; Poise | Value: 25
+ScoreID: 44 | Judge: 17 | Cat: Evening Gown | Crit: Walk &amp; Bearing | Value: 25
+ScoreID: 45 | Judge: 17 | Cat: Evening Gown | Crit: Overall Impact | Value: 24
+ScoreID: 55 | Judge: 17 | Cat: Question &amp; Answer | Crit: Content | Value: 40
+ScoreID: 56 | Judge: 17 | Cat: Question &amp; Answer | Crit: Delivery | Value: 30
+ScoreID: 57 | Judge: 17 | Cat: Question &amp; Answer | Crit: Confidence | Value: 20
+
+--- Judge Category Totals ---
+Judge: 17 | Category: Production Number | Total: 86
+Judge: 17 | Category: Talent | Total: 87
+Judge: 17 | Category: Evening Gown | Total: 74
+Judge: 17 | Category: Question &amp; Answer | Total: 90
+
+--- Final Calculation Breakdown ---
+Production Number (Weight: 20.00%):
+  Judge Score Sums: 86 (Count: 1)
+  Average: 86
+  Contribution: 17.20
+Talent (Weight: 20.00%):
+  Judge Score Sums: 87 (Count: 1)
+  Average: 87
+  Contribution: 17.40
+Evening Gown (Weight: 30.00%):
+  Judge Score Sums: 74 (Count: 1)
+  Average: 74
+  Contribution: 22.20
+Question &amp; Answer (Weight: 30.00%):
+  Judge Score Sums: 90 (Count: 1)
+  Average: 90
+  Contribution: 27.00
+
+FINAL TOTAL: 83.80%

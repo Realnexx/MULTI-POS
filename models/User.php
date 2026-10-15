@@ -2,6 +2,35 @@
 require_once __DIR__ . '/../config/db.php';
 
 class User {
+    public static function access_context($id) {
+        global $conn;
+        $user = self::find_by_id($id);
+        $roles = $user ? array_column(self::get_user_roles($id), 'name') : [];
+        $global = false; $staff = false; $role = 'Customer';
+        foreach ($roles as $name) {
+            $key = strtolower(str_replace([' ', '_', '-'], '', $name));
+            if ($key !== 'customer') { $staff = true; if (!$global) $role = $name; }
+            if (in_array($key, ['admin', 'superadmin'], true)) { $global = true; $role = $name; }
+        }
+        $branchId = !empty($user['branch_id']) ? (int)$user['branch_id'] : null;
+        $branchName = null;
+        if ($branchId) {
+            $stmt = $conn->prepare("SELECT name FROM branches WHERE id = ? AND status = 'Active'");
+            $stmt->bind_param('i', $branchId); $stmt->execute();
+            $branchName = $stmt->get_result()->fetch_assoc()['name'] ?? null; $stmt->close();
+            if (!$branchName) $branchId = null;
+        }
+        return ['staff'=>$staff, 'global'=>$global, 'role'=>$role, 'branch_id'=>$branchId,
+            'branch'=>$global ? 'All Branches' : ($branchName ?: 'No branch assigned')];
+    }
+    public static function has_all_branch_access($id) { return self::access_context($id)['global']; }
+    public static function landing_route($id) {
+        $context = self::access_context($id);
+        if (!$context['staff']) return 'home';
+        if (($context['global'] || $context['branch_id']) && self::has_permission($id, 'view_dashboard')) return 'dashboard';
+        return 'admin/start';
+    }
+
     public static function find_by_email($email) {
         global $conn;
         $stmt = $conn->prepare("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL");
@@ -32,14 +61,25 @@ class User {
         return $result;
     }
 
+    // Exclude any account carrying a Super Admin role, including multi-role accounts.
+    private static function directory_condition() {
+        return "u.deleted_at IS NULL AND NOT EXISTS (
+            SELECT 1 FROM user_roles hidden_ur
+            INNER JOIN roles hidden_r ON hidden_r.id = hidden_ur.role_id
+            WHERE hidden_ur.user_id = u.id
+            AND LOWER(REPLACE(REPLACE(REPLACE(hidden_r.name, ' ', ''), '_', ''), '-', '')) = 'superadmin'
+        )";
+    }
+
     public static function get_dt_users($start, $length, $search, $order_col, $order_dir) {
         global $conn;
+        $order_dir = strtoupper((string)$order_dir) === 'ASC' ? 'ASC' : 'DESC';
         
         $sql = "SELECT u.*, GROUP_CONCAT(r.name SEPARATOR ', ') as roles 
                 FROM users u 
                 LEFT JOIN user_roles ur ON u.id = ur.user_id 
                 LEFT JOIN roles r ON ur.role_id = r.id 
-                WHERE u.deleted_at IS NULL";
+                WHERE " . self::directory_condition();
         
         if (!empty($search)) {
             $sql .= " AND (u.name LIKE ? OR u.email LIKE ? OR r.name LIKE ?)";
@@ -70,7 +110,7 @@ class User {
 
     public static function count_all_users() {
         global $conn;
-        $res = $conn->query("SELECT COUNT(*) as count FROM users WHERE deleted_at IS NULL");
+        $res = $conn->query("SELECT COUNT(*) as count FROM users u WHERE " . self::directory_condition());
         return $res->fetch_assoc()['count'];
     }
 
@@ -82,7 +122,7 @@ class User {
                 FROM users u 
                 LEFT JOIN user_roles ur ON u.id = ur.user_id 
                 LEFT JOIN roles r ON ur.role_id = r.id 
-                WHERE u.deleted_at IS NULL AND (u.name LIKE ? OR u.email LIKE ? OR r.name LIKE ?)";
+                WHERE " . self::directory_condition() . " AND (u.name LIKE ? OR u.email LIKE ? OR r.name LIKE ?)";
         
         $stmt = $conn->prepare($sql);
         $search_param = "%$search%";
@@ -95,10 +135,11 @@ class User {
 
     public static function get_role_distribution() {
         global $conn;
-        $sql = "SELECT r.name, COUNT(ur.user_id) as count 
-                FROM roles r 
-                LEFT JOIN user_roles ur ON r.id = ur.role_id 
-                LEFT JOIN users u ON ur.user_id = u.id AND u.deleted_at IS NULL
+        $sql = "SELECT r.name, COUNT(u.id) as count
+                FROM roles r
+                LEFT JOIN user_roles ur ON r.id = ur.role_id
+                LEFT JOIN users u ON ur.user_id = u.id AND " . self::directory_condition() . "
+                WHERE LOWER(REPLACE(REPLACE(REPLACE(r.name, ' ', ''), '_', ''), '-', '')) <> 'superadmin'
                 GROUP BY r.id";
         return $conn->query($sql)->fetch_all(MYSQLI_ASSOC);
     }
@@ -272,18 +313,28 @@ class User {
         return $result;
     }
 
+    public static function is_superadmin($user_id) {
+        global $conn;
+        $stmt=$conn->prepare("SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id JOIN roles r ON r.id=ur.role_id WHERE u.id=? AND u.deleted_at IS NULL AND LOWER(REPLACE(REPLACE(REPLACE(r.name,' ',''),'_',''),'-',''))='superadmin' LIMIT 1");
+        $stmt->bind_param('i',$user_id);$stmt->execute();$found=(bool)$stmt->get_result()->fetch_assoc();$stmt->close();return $found;
+    }
+
+    public static function can_manage_user($actor, $target) {
+        global $conn;
+        if(self::is_superadmin($actor)) return true;
+        if(self::is_superadmin($target)) return false;
+        $stmt=$conn->prepare('SELECT DISTINCT p.name FROM user_roles ur JOIN role_permissions rp ON rp.role_id=ur.role_id JOIN permissions p ON p.id=rp.permission_id WHERE ur.user_id=?');
+        $stmt->bind_param('i',$target);$stmt->execute();$permissions=$stmt->get_result()->fetch_all(MYSQLI_ASSOC);$stmt->close();
+        foreach($permissions as $permission) if(!self::has_permission($actor,$permission['name'])) return false;
+        return true;
+    }
+
     public static function has_permission($user_id, $permission_name) {
         global $conn;
-        $stmt = $conn->prepare("SELECT COUNT(*) as count 
-                                FROM user_roles ur 
-                                INNER JOIN role_permissions rp ON ur.role_id = rp.role_id 
-                                INNER JOIN permissions p ON rp.permission_id = p.id 
-                                WHERE ur.user_id = ? AND p.name = ?");
-        $stmt->bind_param("is", $user_id, $permission_name);
-        $stmt->execute();
-        $row = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-        return $row['count'] > 0;
+        $canonical = $permission_name === 'manage_cms' ? 'access_website_admin' : $permission_name;
+        $legacy = $canonical === 'access_website_admin' ? 'manage_cms' : $canonical;
+        $stmt=$conn->prepare("SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id JOIN roles r ON r.id=ur.role_id LEFT JOIN role_permissions rp ON rp.role_id=r.id LEFT JOIN permissions p ON p.id=rp.permission_id WHERE u.id=? AND u.deleted_at IS NULL AND (p.name IN (?,?) OR LOWER(REPLACE(REPLACE(REPLACE(r.name,' ',''),'_',''),'-',''))='superadmin') LIMIT 1");
+        $stmt->bind_param('iss',$user_id,$canonical,$legacy);$stmt->execute();$found=(bool)$stmt->get_result()->fetch_assoc();$stmt->close();return $found;
     }
 
     public static function update_password($id, $new_password) {
@@ -294,5 +345,18 @@ class User {
         $success = $stmt->execute();
         $stmt->close();
         return $success;
+    }
+
+    public static function verify_pin($user_id, $pin) {
+        global $conn;
+        $stmt = $conn->prepare("SELECT pos_pin FROM users WHERE id = ? AND deleted_at IS NULL");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if ($result && !empty($result['pos_pin'])) {
+            return $result['pos_pin'] === $pin;
+        }
+        return false;
     }
 }

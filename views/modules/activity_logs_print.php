@@ -145,6 +145,7 @@ $date_to = $_GET['date_to'] ?? 'Now';
             .no-print { display: none !important; }
         }
     </style>
+<link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
 </head>
 <body>
     <div class="report-wrapper">

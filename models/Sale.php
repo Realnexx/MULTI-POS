@@ -1,37 +1,19 @@
 <?php
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/Product.php';
+require_once __DIR__ . '/User.php';
 
 class Sale
 {
     public static function create_sale($cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items = [], $order_type = 'Dine-in')
     {
-        global $conn;
-        $conn->begin_transaction();
-
         try {
-            $stmt = $conn->prepare("INSERT INTO sales (cashier_id, branch_id, total_amount, discount_amount, final_amount, amount_tendered, change_amount, payment_method, order_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Completed')");
-            $stmt->bind_param("iidddddss", $cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $order_type);
-            $stmt->execute();
-            $sale_id = $stmt->insert_id;
-            $stmt->close();
-
-            $stmt_item = $conn->prepare("INSERT INTO sales_items (sale_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)");
-
-            foreach ($items as $item) {
-                $subtotal = $item['quantity'] * $item['price'];
-                $stmt_item->bind_param("iiidd", $sale_id, $item['product_id'], $item['quantity'], $item['price'], $subtotal);
-                $stmt_item->execute();
-
-                // Deduct stock using FIFO and Branch ID
-                Product::deduct_stock_fifo($item['product_id'], $item['quantity'], $cashier_id, "Sale #HH-" . str_pad($sale_id, 6, '0', STR_PAD_LEFT), $branch_id);
-            }
-
-            $stmt_item->close();
-
-            $conn->commit();
-            return $sale_id;
-        } catch (Exception $e) {
-            $conn->rollback();
+            return RecipeInventory::checkout($cashier_id,$branch_id,$items,$discount_amount,$amount_tendered,$payment_method,$order_type,
+                $_POST['request_key'] ?? ($_SESSION['pos_checkout_key'] ?? ''));
+        } catch (Throwable $error) {
+            error_log('Checkout failed: ' . $error->getMessage());
+            $_SESSION['checkout_error'] = $error instanceof DomainException || $error instanceof InvalidArgumentException
+                ? $error->getMessage() : 'Checkout failed. Verify the inventory migration and try again.';
             return false;
         }
     }
@@ -49,7 +31,7 @@ class Sale
         $branch_cond = '';
         if ($branch && $branch !== 'all') {
             $b = $conn->real_escape_string($branch);
-            $branch_cond = " AND u.branch = '$b'";
+            $branch_cond = " AND s.branch_id IN (SELECT id FROM branches WHERE name = '$b')";
         }
 
         $date_cond = '';
@@ -73,18 +55,33 @@ class Sale
     public static function find_sale_by_id($sale_id)
     {
         global $conn;
-        $stmt = $conn->prepare("SELECT s.*, u.name as cashier_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id WHERE s.id = ?");
+        $stmt = $conn->prepare("SELECT s.*, u.name as cashier_name, b.name as branch_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id LEFT JOIN branches b ON s.branch_id = b.id WHERE s.id = ?");
         $stmt->bind_param("i", $sale_id);
         $stmt->execute();
         $sale = $stmt->get_result()->fetch_assoc();
+        if ($sale && !empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
+            $context = User::access_context($_SESSION['user']['id']);
+            if (!$context['branch_id'] || (int)$sale['branch_id'] !== $context['branch_id']) { $stmt->close(); return null; }
+        }
         $stmt->close();
 
         if ($sale) {
             $stmt_items = $conn->prepare("SELECT si.*, p.name as product_name FROM sales_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = ?");
             $stmt_items->bind_param("i", $sale_id);
             $stmt_items->execute();
-            $sale['items'] = $stmt_items->get_result()->fetch_all(MYSQLI_ASSOC);
+            $items = $stmt_items->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmt_items->close();
+
+            // Fetch modifiers for each item
+            $stmt_mods = $conn->prepare("SELECT modifier_name, additional_price FROM sale_item_modifiers WHERE sales_item_id = ?");
+            foreach ($items as &$item) {
+                $stmt_mods->bind_param("i", $item['id']);
+                $stmt_mods->execute();
+                $item['modifiers'] = $stmt_mods->get_result()->fetch_all(MYSQLI_ASSOC);
+            }
+            $stmt_mods->close();
+
+            $sale['items'] = $items;
         }
 
         return $sale;
@@ -109,7 +106,7 @@ class Sale
         $branch_cond = '';
         if ($branch && $branch !== 'all') {
             $b = $conn->real_escape_string($branch);
-            $branch_cond = " AND u.branch = '$b'";
+            $branch_cond = " AND s.branch_id IN (SELECT id FROM branches WHERE name = '$b')";
         }
 
         // Date filter
@@ -185,14 +182,12 @@ class Sale
         return $stats;
     }
 
-    public static function get_top_selling_products($limit = 3, $branch = null, $start_date = null, $end_date = null)
+    public static function get_top_selling_products($limit = 3, $branch_id = null, $start_date = null, $end_date = null)
     {
         global $conn;
-        $branch_join = "LEFT JOIN users u ON s.cashier_id = u.id";
         $branch_cond = '';
-        if ($branch && $branch !== 'all') {
-            $b = $conn->real_escape_string($branch);
-            $branch_cond = " AND u.branch = '$b'";
+        if ($branch_id !== null) {
+            $branch_cond = " AND s.branch_id = " . intval($branch_id);
         }
 
         $date_cond = '';
@@ -205,11 +200,10 @@ class Sale
             $date_cond .= " AND DATE(s.created_at) <= '$ed'";
         }
 
-        $query = "SELECT p.name, SUM(si.quantity) as total_qty
+        $query = "SELECT p.name, SUM(si.quantity) as total_qty, SUM(si.subtotal) as total_revenue
                   FROM sales_items si
                   LEFT JOIN products p ON si.product_id = p.id
                   LEFT JOIN sales s ON si.sale_id = s.id
-                  $branch_join
                   WHERE 1=1 $branch_cond $date_cond
                   GROUP BY si.product_id
                   ORDER BY total_qty DESC LIMIT " . intval($limit);
@@ -219,7 +213,7 @@ class Sale
             if (!empty($data))
                 return $data;
         }
-        $fallback_query = "SELECT name, 0 as total_qty FROM products ORDER BY price DESC LIMIT " . intval($limit);
+        $fallback_query = "SELECT name, 0 as total_qty, 0 as total_revenue FROM products ORDER BY price DESC LIMIT " . intval($limit);
         return $conn->query($fallback_query)->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -228,6 +222,12 @@ class Sale
         global $conn;
 
         $where_clauses = ["1=1"];
+        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
+            $context = User::access_context($_SESSION['user']['id']);
+            $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
+        } elseif (!empty($filters['branch_id'])) {
+            $where_clauses[] = 's.branch_id = ' . (int)$filters['branch_id'];
+        }
 
         // Search term
         if (!empty($filters['search'])) {
@@ -305,7 +305,8 @@ class Sale
         $order_by_clean = isset($allowed_columns[$order_by]) ? $allowed_columns[$order_by] : 's.id';
         $order_dir_clean = strtoupper($order_dir) === 'ASC' ? 'ASC' : 'DESC';
 
-        $query = "SELECT s.*, u.name as cashier_name, u.branch as branch_name 
+        $query = "SELECT s.*, u.name as cashier_name, u.branch as branch_name,
+                  (SELECT GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') FROM sales_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = s.id) as products
                   FROM sales s 
                   LEFT JOIN users u ON s.cashier_id = u.id 
                   WHERE $where_str 
@@ -321,6 +322,12 @@ class Sale
         global $conn;
 
         $where_clauses = ["1=1"];
+        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
+            $context = User::access_context($_SESSION['user']['id']);
+            $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
+        } elseif (!empty($filters['branch_id'])) {
+            $where_clauses[] = 's.branch_id = ' . (int)$filters['branch_id'];
+        }
 
         // Search term
         if (!empty($filters['search'])) {
@@ -414,6 +421,32 @@ class Sale
         return $res ? (int) $res->fetch_assoc()['count'] : 0;
     }
 
+    public static function get_top_branches_by_sales($limit = 10, $branch_id = null, $start_date = null, $end_date = null)
+    {
+        global $conn;
+        $sql = "SELECT b.id, b.name, 
+                       COALESCE(COUNT(s.id), 0) as total_orders, 
+                       COALESCE(SUM(s.final_amount), 0) as total_revenue
+                FROM branches b
+                LEFT JOIN sales s ON s.branch_id = b.id
+                WHERE b.status = 'Active'";
+
+        if ($branch_id !== null) $sql .= " AND b.id = " . (int) $branch_id;
+
+        if ($start_date) {
+            $sd = $conn->real_escape_string($start_date);
+            $sql .= " AND (s.created_at IS NULL OR DATE(s.created_at) >= '$sd')";
+        }
+        if ($end_date) {
+            $ed = $conn->real_escape_string($end_date);
+            $sql .= " AND (s.created_at IS NULL OR DATE(s.created_at) <= '$ed')";
+        }
+
+        $sql .= " GROUP BY b.id ORDER BY total_revenue DESC LIMIT " . intval($limit);
+        $result = $conn->query($sql);
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
     public static function get_today_stats()
     {
         global $conn;
@@ -452,11 +485,100 @@ class Sale
         ];
     }
 
-    public static function get_dt_sales($start, $length, $search, $order_col, $order_dir, $branch_id = null, $start_date = null, $end_date = null)
+    public static function get_filtered_stats($filters = [])
     {
         global $conn;
 
-        $sql = "SELECT s.*, u.name as cashier_name 
+        $where_clauses = ["1=1"];
+        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
+            $context = User::access_context($_SESSION['user']['id']);
+            $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
+        } elseif (!empty($filters['branch_id'])) {
+            $where_clauses[] = 's.branch_id = ' . (int)$filters['branch_id'];
+        }
+
+        // Date range
+        if (!empty($filters['date_from'])) {
+            $df = $conn->real_escape_string($filters['date_from']);
+            $where_clauses[] = "DATE(s.created_at) >= '$df'";
+        }
+        if (!empty($filters['date_to'])) {
+            $dt = $conn->real_escape_string($filters['date_to']);
+            $where_clauses[] = "DATE(s.created_at) <= '$dt'";
+        }
+
+        // Payment Status
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'All') {
+            $status = $filters['payment_status'];
+            if ($status === 'Paid') {
+                $where_clauses[] = "s.status = 'Completed'";
+            } else {
+                $st = $conn->real_escape_string($status);
+                $where_clauses[] = "s.status = '$st'";
+            }
+        }
+
+        // Sales Channel (order_type)
+        if (!empty($filters['channels'])) {
+            $mapped_channels = [];
+            foreach ($filters['channels'] as $c) {
+                if ($c === 'POS Terminal') {
+                    $mapped_channels[] = "'Dine-in'";
+                    $mapped_channels[] = "'Take-out'";
+                } elseif ($c === 'Online Store') {
+                    $mapped_channels[] = "'Online'";
+                } else {
+                    $mapped_channels[] = "'" . $conn->real_escape_string($c) . "'";
+                }
+            }
+            if (!empty($mapped_channels)) {
+                $where_clauses[] = "s.order_type IN (" . implode(",", $mapped_channels) . ")";
+            }
+        }
+
+        // Store Location (branch name via user's branch column — matches get_filtered_sales behaviour)
+        if (!empty($filters['locations'])) {
+            $location_list = array_map(function ($l) use ($conn) {
+                return "'" . $conn->real_escape_string($l) . "'";
+            }, $filters['locations']);
+            $where_clauses[] = "u.branch IN (" . implode(",", $location_list) . ")";
+        }
+
+        $where_str = implode(" AND ", $where_clauses);
+
+        $query = "SELECT
+                    SUM(CASE WHEN s.status = 'Completed' THEN s.final_amount ELSE 0 END) as revenue,
+                    COUNT(*) as orders_count,
+                    SUM(CASE WHEN s.status IN ('Refunded', 'Cancelled') THEN 1 ELSE 0 END) as refund_count
+                  FROM sales s
+                  LEFT JOIN users u ON s.cashier_id = u.id
+                  WHERE $where_str";
+
+        $res = $conn->query($query);
+        if ($res && $row = $res->fetch_assoc()) {
+            $revenue = (float)($row['revenue'] ?? 0);
+            $orders_count = (int)($row['orders_count'] ?? 0);
+            $refund_count = (int)($row['refund_count'] ?? 0);
+            $refund_rate = $orders_count > 0 ? round(($refund_count / $orders_count) * 100, 1) : 0;
+
+            return [
+                'revenue' => $revenue,
+                'orders' => $orders_count,
+                'refund_rate' => $refund_rate
+            ];
+        }
+
+        return ['revenue' => 0, 'orders' => 0, 'refund_rate' => 0];
+    }
+
+    public static function get_dt_sales($start, $length, $search, $order_col, $order_dir, $branch_id = null, $start_date = null, $end_date = null)
+    {
+        global $conn;
+        $order_dir = strtoupper((string)$order_dir) === 'ASC' ? 'ASC' : 'DESC';
+
+        $sql = "SELECT s.*, u.name as cashier_name,
+                (SELECT GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') FROM sales_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = s.id) as products,
+                (SELECT SUM(quantity) FROM sales_items WHERE sale_id = s.id) as total_qty
                 FROM sales s 
                 LEFT JOIN users u ON s.cashier_id = u.id 
                 WHERE 1=1";
@@ -479,7 +601,7 @@ class Sale
             $sql .= " AND (s.id LIKE ? OR u.name LIKE ? OR s.payment_method LIKE ? OR s.status LIKE ?)";
         }
 
-        $order_cols = ['s.id', 'u.name', 's.total_amount', 's.discount_amount', 's.final_amount', 's.payment_method', 's.status', 's.created_at'];
+        $order_cols = ['s.id', 'u.name', 's.id', 's.total_amount', 's.discount_amount', 's.final_amount', 's.payment_method', 's.status', 's.created_at'];
         $order_by = $order_cols[$order_col] ?? 's.id';
         $sql .= " ORDER BY $order_by $order_dir LIMIT ?, ?";
 
@@ -569,11 +691,17 @@ class Sale
 
     public static function update_status($sale_id, $status)
     {
-        global $conn;
-        $stmt = $conn->prepare("UPDATE sales SET status = ? WHERE id = ?");
-        $stmt->bind_param("si", $status, $sale_id);
-        $res = $stmt->execute();
-        $stmt->close();
-        return $res;
+        return RecipeInventory::atomic(function () use ($sale_id,$status) {
+            $rows=RecipeInventory::rows('SELECT * FROM sales WHERE id = ? FOR UPDATE','i',[$sale_id]);
+            if (!$rows) return false;
+            RecipeInventory::branch($rows[0]['branch_id']);
+            $current=$rows[0]['status'];
+            if ($current === $status) return true;
+            if (!(($current === 'Completed' && $status === 'Refunded') || ($current === 'Pending' && $status === 'Cancelled'))) return false;
+            // Status-only refunds never return prepared food to usable inventory.
+            RecipeInventory::query('UPDATE sales SET status = ? WHERE id = ?','si',[$status,$sale_id]);
+            if($status==='Refunded'){require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($sale_id,(int)($_SESSION['user']['id'] ?? 0));}
+            return true;
+        });
     }
 }

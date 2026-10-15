@@ -1,0 +1,8 @@
+Options -Indexes
+RewriteEngine On
+# Protect internal PHP, private files, local utilities and deployment metadata.
+RewriteRule ^(?:config|controllers|models|middleware|views|tools|scratch|auroratabs)(?:/|$) - [F,L,NC]
+RewriteRule (^|/)\. - [F,L]
+RewriteRule \.(?:sql|log|bak|zip|md|json|ya?ml|ini|env)$ - [F,L,NC]
+# Only index.php and the application's AJAX endpoints are public PHP entry points.
+RewriteRule ^(?!(?:index\.php|ajax/[A-Za-z0-9_-]+\.php)$).*\.(?:php[0-9]*|phtml|phar)(?:/|$) - [F,L,NC]

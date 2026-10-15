@@ -1,0 +1,25 @@
+--- Categories ---
+ID: 4 | Name: Production Number | Weight: 20.00%
+ID: 5 | Name: Talent | Weight: 20.00%
+ID: 6 | Name: Evening Gown | Weight: 30.00%
+ID: 7 | Name: Question &amp; Answer | Weight: 30.00%
+
+--- Criteria ---
+Cat: Production Number | CritID: 9 | Name: Stage Presence | Weight: 40.00%
+Cat: Production Number | CritID: 10 | Name: Confidence | Weight: 30.00%
+Cat: Production Number | CritID: 11 | Name: Audience Impact | Weight: 30.00%
+Cat: Talent | CritID: 6 | Name: Skill Level | Weight: 40.00%
+Cat: Talent | CritID: 7 | Name: Creativity | Weight: 30.00%
+Cat: Talent | CritID: 8 | Name: Audience Impact | Weight: 30.00%
+Cat: Evening Gown | CritID: 12 | Name: Elegance &amp; Poise | Weight: 40.00%
+Cat: Evening Gown | CritID: 13 | Name: Walk &amp; Bearing | Weight: 30.00%
+Cat: Evening Gown | CritID: 14 | Name: Overall Impact | Weight: 30.00%
+Cat: Question &amp; Answer | CritID: 15 | Name: Content | Weight: 40.00%
+Cat: Question &amp; Answer | CritID: 16 | Name: Delivery | Weight: 30.00%
+Cat: Question &amp; Answer | CritID: 17 | Name: Confidence | Weight: 30.00%
+
+--- Candidates Results ---
+#2 Candidate 2 Test (ID: 4): 83.80%
+#1 Candidate 1 Test (ID: 5): 85.30%
+#3 Candidate 3 Test (ID: 6): 84.60%
+#4 Candidate 4 Test (ID: 7): 81.00%

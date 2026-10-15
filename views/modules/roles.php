@@ -1,11 +1,12 @@
 <?php
-$title = "Roles & Permissions Management";
+$title = "Roles and Permissions";
 ob_start();
 ?>
+<section class="access-workspace roles-workspace">
 
 <!-- Inject Tailwind & Montserrat/Inter Fonts -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- jQuery is provided by the shared admin layout. -->
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet" />
 
 <script id="tailwind-config">
@@ -24,7 +25,7 @@ ob_start();
                     "secondary-fixed-dim": "#e0b6ff",
                     "background": "#f8f9fa",
                     "on-background": "#191c1d",
-                    "surface-tint": "#ba1340",
+                    "surface-tint": "#5d87ff",
                     "surface-container": "#edeeef",
                     "secondary-fixed": "#f2daff",
                     "on-secondary-fixed-variant": "#6b00af",
@@ -54,8 +55,8 @@ ob_start();
                     "surface-bright": "#f8f9fa",
                     "on-error-container": "#93000a",
                     "on-tertiary-fixed": "#271900",
-                    "primary": "#ff4d6d",
-                    "secondary": "#7209b7",
+                    "primary": "#5d87ff",
+                    "secondary": "#5279e8",
                     "surface-container-highest": "#e1e3e4",
                     "on-error": "#ffffff",
                     "tertiary": "#ffb703",
@@ -156,7 +157,7 @@ ob_start();
 
     .card-shadow-hover:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 32px -4px rgba(182, 14, 61, 0.08);
+        box-shadow: 0 12px 32px -4px rgba(93, 135, 255, 0.08);
     }
 
     /* DISCLOSURE CARD STYLES */
@@ -171,8 +172,8 @@ ob_start();
     }
 
     .disclosure-card.is-open {
-        box-shadow: 0 12px 32px rgba(255, 77, 109, 0.08);
-        border-color: rgba(255, 77, 109, 0.2);
+        box-shadow: 0 12px 32px rgba(93, 135, 255, 0.08);
+        border-color: rgba(93, 135, 255, 0.2);
     }
 
     .disclosure-header {
@@ -200,7 +201,7 @@ ob_start();
 
     .disclosure-card.is-open .disclosure-chevron {
         transform: rotate(180deg);
-        color: #ff4d6d;
+        color: #5d87ff;
     }
 
     .disclosure-body {
@@ -219,8 +220,8 @@ ob_start();
     }
 
     .premium-switch .form-check-input:checked {
-        background-color: #ff4d6d !important;
-        border-color: #ff4d6d !important;
+        background-color: #5d87ff !important;
+        border-color: #5d87ff !important;
     }
 
     /* Matrix Toggles with Animation */
@@ -229,8 +230,8 @@ ob_start();
     }
 
     .form-check-input:checked {
-        background-color: #ff4d6d !important;
-        border-color: #ff4d6d !important;
+        background-color: #5d87ff !important;
+        border-color: #5d87ff !important;
         transform: scale(1.05);
     }
 
@@ -252,11 +253,11 @@ ob_start();
     }
 
     .role-card.active-role {
-        background: linear-gradient(135deg, #ff4d6d 0%, #ff758c 100%) !important;
-        border-color: #ff4d6d !important;
+        background: linear-gradient(135deg, #5d87ff 0%, #7a9cff 100%) !important;
+        border-color: #5d87ff !important;
         color: white !important;
         z-index: 10;
-        box-shadow: 0 10px 25px -5px rgba(255, 77, 109, 0.4) !important;
+        box-shadow: 0 10px 25px -5px rgba(93, 135, 255, 0.4) !important;
     }
 
     .role-card.active-role .role-name,
@@ -298,55 +299,38 @@ ob_start();
         .btn-rbac-action {
             background-color: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 77, 109, 0.2);
+            border: 1px solid rgba(93, 135, 255, 0.2);
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .btn-rbac-action:hover {
             background-color: white;
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(255, 77, 109, 0.1);
+            box-shadow: 0 10px 20px rgba(93, 135, 255, 0.1);
         }
 
         .btn-rbac-action .icon-circle {
-            background-color: rgba(255, 77, 109, 0.1);
-            color: #ff4d6d;
+            background-color: rgba(93, 135, 255, 0.1);
+            color: #5d87ff;
             transition: all 0.3s ease;
         }
 
         .btn-rbac-action:hover .icon-circle {
-            background-color: #ff4d6d;
+            background-color: #5d87ff;
             color: white;
         }
     </style>
 
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div class="space-y-1">
-            <h2 class="font-headline-lg text-headline-lg text-on-background mb-0">Role-Based Access Control</h2>
-            <p class="font-body-md text-body-md text-on-surface-variant mb-0">Define and manage detailed permissions for the Stacey Halu Halu team.</p>
-        </div>
-        <div class="flex gap-3">
-            <button class="btn btn-rbac-action flex items-center justify-center gap-2 rounded-full px-6 py-3 font-bold text-[12px] uppercase tracking-wider" data-bs-toggle="modal" data-bs-target="#addPermissionModal">
-                <div class="icon-circle w-7 h-7 rounded-full flex items-center justify-center">
-                    <span class="material-symbols-outlined" style="font-size: 16px;">security</span>
-                </div>
-                Add Permission
-            </button>
-            <button class="flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-[#ff758c] text-white rounded-full px-8 py-3 font-bold text-[12px] uppercase tracking-[0.1em] hover:brightness-110 hover:shadow-xl hover:-translate-y-0.5 active:scale-95 transition-all shadow-lg shadow-primary/20 border-0" data-bs-toggle="modal" data-bs-target="#createRoleModal">
-                <span class="material-symbols-outlined" style="font-size: 18px;">add_moderator</span>
-                Create New Role
-            </button>
-        </div>
-    </header>
+    <header class="access-heading"><div class="access-title"><span class="material-symbols-outlined">admin_panel_settings</span><div><h1>Roles and Permissions</h1><p>Choose what each staff role can view and manage.</p></div></div><div class="access-heading-actions"><button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addPermissionModal">Add Permission</button><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">+ Add Role</button></div></header>
 
     <!-- Bento Layout Grid -->
-    <div class="grid grid-cols-12 gap-gutter">
+    <div class="grid grid-cols-12 gap-gutter roles-layout">
         <!-- Left Column: System Roles List -->
         <section class="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
             <div class="glass-card rounded-2xl p-md card-shadow">
                 <div class="flex items-center justify-between mb-md">
                     <div>
-                        <h3 class="font-headline-md text-headline-md text-on-surface mb-0 font-bold">Active Roles</h3>
+                        <h3 class="font-headline-md text-headline-md text-on-surface mb-0 font-bold">Staff Roles</h3>
                         <p class="text-[11px] text-on-surface-variant opacity-60 mb-0">Select a role to modify its permissions.</p>
                     </div>
                     <span id="total-roles-badge" class="px-2.5 py-1 bg-primary/10 text-primary rounded-lg font-label-sm text-[10px] fw-black tracking-widest">00 TOTAL</span>
@@ -365,7 +349,7 @@ ob_start();
                     <!-- Roles will be loaded here via AJAX -->
                     <div class="p-5 text-center opacity-30">
                         <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
-                        <p class="small mb-0">Syncing roles...</p>
+                        <p class="small mb-0">Loading roles...</p>
                     </div>
                 </div>
             </div>
@@ -375,10 +359,10 @@ ob_start();
                 <div class="relative z-10">
                     <div class="flex items-center gap-2 mb-2 text-primary">
                         <span class="material-symbols-outlined" style="font-size: 20px;">security</span>
-                        <h4 class="font-label-md text-label-md mb-0 font-bold uppercase tracking-wider">Security Best Practice</h4>
+                        <h4 class="font-label-md text-label-md mb-0 font-bold uppercase tracking-wider">Access Tip</h4>
                     </div>
                     <p class="font-body-md text-body-md text-on-surface-variant opacity-90 mb-0">
-                        Follow the <strong>'Principle of Least Privilege'</strong>. Only grant 'Delete' access to roles that absolutely require it for system maintenance.
+                        Give each role only the access its staff need for their work.
                     </p>
                 </div>
                 <div class="absolute -right-4 -bottom-4 text-primary opacity-5 pointer-events-none rotate-12">
@@ -386,14 +370,6 @@ ob_start();
                 </div>
             </div>
 
-            <!-- Summary Info Card -->
-            <div class="bg-secondary-container text-on-secondary-container rounded-xl p-md card-shadow flex items-start gap-md overflow-hidden relative">
-                <div class="relative z-10">
-                    <h4 class="font-headline-md text-headline-md mb-xs font-semibold">Security Audit</h4>
-                    <p class="font-body-md text-body-md opacity-90">Last role verification: <strong>Today, <?= date('H:i') ?></strong>. All patterns match security standards.</p>
-                </div>
-                <i class="fa-solid fa-shield-halved text-8xl absolute -right-4 -bottom-4 opacity-10 pointer-events-none"></i>
-            </div>
         </section>
 
         <!-- Right Column: Permission Matrix -->
@@ -412,21 +388,21 @@ ob_start();
                     <div class="flex flex-col md:flex-row md:items-center justify-between mb-lg border-b border-outline-variant pb-md relative z-10 gap-3">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-[9px] fw-black uppercase tracking-tighter shadow-sm">RBAC MATRIX</span>
+                                <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-[9px] fw-black uppercase tracking-tighter shadow-sm">ROLE ACCESS</span>
                                 <span class="text-on-surface-variant opacity-30 h6 mb-0">/</span>
-                                <span class="text-primary font-label-sm fw-bold animate-pulse" id="matrix-active-role">None Selected</span>
+                                <span class="text-primary font-label-sm fw-bold animate-pulse" id="matrix-active-role">Choose a role</span>
                             </div>
-                            <h3 class="font-headline-md text-headline-md text-on-surface font-black tracking-tight mb-0" id="matrix-title">System Permissions</h3>
+                            <h3 class="font-headline-md text-headline-md text-on-surface font-black tracking-tight mb-0" id="matrix-title">Role Permissions</h3>
                         </div>
                         <div class="flex gap-2">
-                            <button type="button" id="btn-matrix-reset" class="px-5 py-2.5 border border-outline/20 rounded-xl font-label-sm text-label-sm hover:bg-surface-container transition-active text-on-surface font-bold bg-white/50 backdrop-blur-sm">Discard</button>
+                            <button type="button" id="btn-matrix-reset" class="px-5 py-2.5 border border-outline/20 rounded-xl font-label-sm text-label-sm hover:bg-surface-container transition-active text-on-surface font-bold bg-white/50 backdrop-blur-sm">Reset Changes</button>
                             <button type="submit" class="px-8 py-2.5 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:brightness-110 active:scale-95 transition-active border-0 font-bold shadow-lg shadow-primary/20">Save Changes</button>
                         </div>
                     </div>
                     <div class="flex-grow relative">
                         <div class="relative mb-4">
                             <span class="material-symbols-outlined absolute left-0 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-40" style="font-size: 18px;">filter_list</span>
-                            <input type="text" id="permission-search" class="w-full bg-transparent border-0 border-b border-outline/10 rounded-0 py-2 ps-7 pe-4 text-sm focus:ring-0 focus:border-primary transition-active" placeholder="Filter permissions by module name...">
+                            <input type="text" id="permission-search" class="w-full bg-transparent border-0 border-b border-outline/10 rounded-0 py-2 ps-7 pe-4 text-sm focus:ring-0 focus:border-primary transition-active" placeholder="Search permissions by section...">
                         </div>
 
                         <div class="matrix-container pe-2">
@@ -434,7 +410,7 @@ ob_start();
                                 <!-- Disclosure Cards will be loaded here via AJAX -->
                                 <div class="text-center py-5 opacity-30">
                                     <div class="spinner-border spinner-border-sm text-primary mb-2"></div>
-                                    <p class="small mb-0">Organizing access points...</p>
+                                    <p class="small mb-0">Loading permissions...</p>
                                 </div>
                             </div>
                         </div>
@@ -442,28 +418,29 @@ ob_start();
                         <div class="flex items-center justify-between mt-xl pt-md border-top border-outline-variant relative z-10">
                             <div class="flex items-center gap-2 text-on-surface-variant opacity-60" style="font-size: 11px;">
                                 <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                                <span>Last update detected via security audit recently.</span>
+                                <span>Select a role, then turn permissions on or off.</span>
                             </div>
                             <div class="text-on-surface-variant opacity-60" style="font-size: 11px;">
-                                All changes are logged in the security audit trail.
+                                Save Changes applies your choices.
                             </div>
                         </div>
                     </div>
+                </div>
             </form>
         </section>
     </div>
 
-    <!-- Permission Registry Section (New Management Feed) -->
+    <!-- Available Permissions Section (New Management Feed) -->
     <div class="mt-xl">
         <div class="flex items-center justify-between mb-lg">
             <div>
-                <h3 class="font-headline-md text-headline-md text-on-surface mb-0 font-bold tracking-tight">Permission Registry</h3>
-                <p class="text-[11px] text-on-surface-variant opacity-60 mb-0">Manage the global list of system access tokens and their module assignments.</p>
+                <h3 class="font-headline-md text-headline-md text-on-surface mb-0 font-bold tracking-tight">Available Permissions</h3>
+                <p class="text-[11px] text-on-surface-variant opacity-60 mb-0">Manage the actions that can be assigned to staff roles.</p>
             </div>
             <div class="flex gap-2">
                 <button type="button" class="px-4 py-2 bg-surface-container border border-outline/10 rounded-xl font-label-md text-[11px] fw-black uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-high transition-active flex items-center gap-2" onclick="loadInitialData()">
                     <span class="material-symbols-outlined" style="font-size: 14px;">sync</span>
-                    Sync Registry
+                    Refresh List
                 </button>
             </div>
         </div>
@@ -472,7 +449,7 @@ ob_start();
             <!-- Loaded via AJAX -->
             <div class="col-span-full py-12 text-center opacity-20">
                 <div class="spinner-border text-primary mb-3"></div>
-                <p class="font-bold tracking-widest uppercase text-[10px]">Accessing Database Registry...</p>
+                <p class="font-bold tracking-widest uppercase text-[10px]">Loading permissions...</p>
             </div>
         </div>
     </div>
@@ -483,7 +460,7 @@ ob_start();
             <div class="modal-content overflow-hidden rounded-[32px] border-0 bg-surface-container-lowest shadow-2xl">
                 <style>
                     .edit-perm-banner {
-                        background: linear-gradient(135deg, #7209b7 0%, #3f37c9 100%);
+                        background: linear-gradient(135deg, #5279e8 0%, #3f37c9 100%);
                         padding: 25px 35px;
                         color: white;
                         position: relative;
@@ -494,7 +471,7 @@ ob_start();
                         <span class="material-symbols-outlined" style="font-size: 28px;">edit_square</span>
                     </div>
                     <div>
-                        <h4 class="mb-0 font-bold" style="letter-spacing: -0.5px;">Update Definition</h4>
+                        <h4 class="mb-0 font-bold" style="letter-spacing: -0.5px;">Edit Permission</h4>
                         <p class="mb-0 text-[10px] opacity-75 fw-bold uppercase tracking-widest">Modification Protocol Active</p>
                     </div>
                     <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -507,7 +484,7 @@ ob_start();
 
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-60 mb-2 block">Assigned Module</label>
+                            <label class="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-60 mb-2 block">Section</label>
                             <input type="text" list="module-list" name="module" id="edit-perm-module"
                                 class="w-full bg-surface-container border border-outline-variant/30 rounded-2xl py-4 px-4 font-bold text-on-surface focus:outline-none focus:border-primary/50 transition-all text-sm"
                                 placeholder="Module Name" required>
@@ -533,7 +510,7 @@ ob_start();
                             <button type="button" class="btn btn-light w-100 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest" data-bs-dismiss="modal">Cancel</button>
                         </div>
                         <div class="col-8">
-                            <button type="submit" class="btn btn-deploy w-100 py-3 text-white" style="background: #7209b7; box-shadow: 0 10px 20px rgba(114, 9, 183, 0.2);">Commit Changes</button>
+                            <button type="submit" class="btn btn-deploy w-100 py-3 text-white" style="background: #5279e8; box-shadow: 0 10px 20px rgba(114, 9, 183, 0.2);">Commit Changes</button>
                         </div>
                     </div>
                 </form>
@@ -558,19 +535,19 @@ ob_start();
 
                     <div class="flex gap-3">
                         <button type="button" class="flex-1 py-3 border border-outline/10 rounded-2xl font-bold text-[11px] uppercase tracking-widest hover:bg-surface-container transition-active" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="flex-1 py-3 bg-error text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-error/20 hover:brightness-110 active:scale-95 transition-active border-0">Delete Token</button>
+                        <button type="submit" class="flex-1 py-3 bg-error text-white rounded-2xl font-bold text-[11px] uppercase tracking-widest shadow-lg shadow-error/20 hover:brightness-110 active:scale-95 transition-active border-0">Delete Permission</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Create New Role Modal -->
+    <!-- Add Role Modal -->
     <div class="modal fade" id="createRoleModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
             <div class="modal-content border-0 rounded-2xl shadow-lg bg-surface-container-lowest p-6 text-on-surface">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-0">Create New Role</h2>
+                    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-0">Add Role</h2>
                     <button type="button" class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-active border-0 bg-transparent text-on-surface-variant" data-bs-dismiss="modal">
                         <i class="fa-solid fa-xmark fs-5"></i>
                     </button>
@@ -614,7 +591,7 @@ ob_start();
         <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
             <div class="modal-content border-0 rounded-2xl shadow-lg bg-surface-container-lowest p-6 text-on-surface">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-0">Edit Role Details</h2>
+                    <h2 class="font-headline-md text-headline-md text-on-surface font-semibold mb-0">Edit Role</h2>
                     <button type="button" class="w-10 h-10 rounded-full hover:bg-surface-container flex items-center justify-center transition-active border-0 bg-transparent text-on-surface-variant" data-bs-dismiss="modal">
                         <i class="fa-solid fa-xmark fs-5"></i>
                     </button>
@@ -699,7 +676,6 @@ ob_start();
                 renderRolesList(rolesData);
                 renderPermissionsMatrix(permsData);
                 renderPermissionRegistry(permsData);
-                ad
                 populateCloneSelect(rolesData);
 
                 // Select first role
@@ -728,7 +704,7 @@ ob_start();
                             </div>
                             <div>
                                 <h4 class="font-bold text-on-surface mb-0 tracking-tight text-sm">${module}</h4>
-                                <p class="text-[10px] text-on-surface-variant opacity-50 uppercase fw-black tracking-widest">${modulePermissions.length} Tokens Defined</p>
+                                <p class="text-[10px] text-on-surface-variant opacity-50 uppercase fw-black tracking-widest">${modulePermissions.length} Permissions</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
@@ -753,10 +729,10 @@ ob_start();
                                                 onclick="openEditPermissionModal(${p.id}, '${p.name}', '${p.description || ''}', '${p.module}')">
                                             <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
                                         </button>
-                                        <button type="button" class="btn-perm-delete w-8 h-8 rounded-lg flex items-center justify-center transition-all border-0"
+                                        ${!p.is_core ? `<button type="button" class="btn-perm-delete w-8 h-8 rounded-lg flex items-center justify-center transition-all border-0"
                                                 onclick="openDeletePermissionModal(${p.id}, '${p.name}')">
                                             <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
-                                        </button>
+                                        </button>` : ''}
                                     </div>
                                 </div>
                             `).join('')}
@@ -799,10 +775,12 @@ ob_start();
             }
         };
 
-        // Global Modal Triggers for Permission Registry
+        // Global Modal Triggers for Available Permissions
         window.openEditPermissionModal = function(id, name, desc, module) {
             $('#edit-perm-id').val(id);
             $('#edit-perm-name').val(name);
+            const permission=Object.values(permsData).flat().find(p => Number(p.id) === Number(id));
+            $('#edit-perm-name').prop('readOnly', !!(permission && permission.is_core));
             $('#edit-perm-desc').val(desc);
             $('#edit-perm-module').val(module);
             $('#editPermissionModal').modal('show');
@@ -875,11 +853,11 @@ ob_start();
                         <div class="flex flex-col items-end gap-1.5 min-w-[80px]">
                             <span class="role-user-badge px-2 py-0.5 bg-surface-container text-on-surface-variant rounded-pill font-label-sm text-[10px] fw-bold tracking-tight">${String(r.user_count).padStart(2, '0')} Users</span>
                             <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
-                                <button type="button" class="text-secondary hover:bg-secondary/10 p-1.5 flex items-center justify-center rounded-full transition-active border-0 bg-transparent"
+                                ${r.can_edit !== false && r.name.toLowerCase().replace(/[\s_-]/g, '') !== 'superadmin' ? `<button type="button" class="text-secondary hover:bg-secondary/10 p-1.5 flex items-center justify-center rounded-full transition-active border-0 bg-transparent"
                                         onclick="openEditModal(${r.id})">
                                     <i class="fa-solid fa-pen" style="font-size:11px;"></i>
-                                </button>
-                                ${r.is_system == 0 ? `
+                                </button>` : ''}
+                                ${r.can_delete !== false && r.is_system == 0 && r.name.toLowerCase().replace(/[\s_-]/g, '') !== 'superadmin' ? `
                                     <button type="button" class="text-error hover:bg-error/10 p-1.5 flex items-center justify-center rounded-full transition-active border-0 bg-transparent"
                                             onclick="openDeleteModal(${r.id}, '${r.name}')">
                                         <i class="fa-solid fa-trash" style="font-size:11px;"></i>
@@ -934,17 +912,17 @@ ob_start();
                                 <div class="text-[10px] text-on-surface-variant font-medium opacity-60">${perms.length} Permissions Available</div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4" onclick="event.stopPropagation()">
-                            <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2" onclick="event.stopPropagation()">
                                 <button type="button" class="btn-bulk text-[10px] fw-bold text-primary px-3 py-1.5 rounded-xl hover:bg-primary/5 border border-primary/20 bg-transparent transition-all duration-300" 
                                         onclick="toggleModulePerms('${module}', true, this)">ALL</button>
                                 <button type="button" class="btn-bulk text-[10px] fw-bold text-outline px-3 py-1.5 rounded-xl hover:bg-surface-container border border-outline/20 bg-transparent transition-all duration-300" 
                                         onclick="toggleModulePerms('${module}', false, this)">NONE</button>
                             </div>
-                            <span class="material-symbols-outlined disclosure-chevron" style="font-size: 24px;">expand_more</span>
+                            <button type="button" class="disclosure-toggle" aria-label="Expand or collapse permissions" aria-expanded="false" aria-controls="permission-section-${index}"><span class="material-symbols-outlined disclosure-chevron" aria-hidden="true" style="font-size: 24px;">expand_more</span></button>
                         </div>
                     </div>
-                    <div class="disclosure-body">
+                    <div class="disclosure-body" id="permission-section-${index}">
                         <div class="p-2">`;
 
                 perms.forEach(p => {
@@ -997,8 +975,10 @@ ob_start();
             const card = $(this).closest('.disclosure-card');
             const body = card.find('.disclosure-body');
 
-            card.toggleClass('is-open');
-            body.stop().slideToggle(300, 'swing');
+            const expanded = !card.hasClass('is-open');
+            card.toggleClass('is-open', expanded);
+            card.find('.disclosure-toggle').attr('aria-expanded', String(expanded));
+            body.stop(true, true)[expanded ? 'slideDown' : 'slideUp'](200);
         });
 
         window.toggleModulePerms = function(module, state, btn) {
@@ -1010,7 +990,7 @@ ob_start();
 
             if (state) {
                 // "ALL" indicator
-                $btn.attr('style', 'background-color: #ff4d6d !important; color: #ffffff !important; border-color: #ff4d6d !important; box-shadow: 0 4px 12px rgba(255, 77, 109, 0.3) !important;');
+                $btn.attr('style', 'background-color: #5d87ff !important; color: #ffffff !important; border-color: #5d87ff !important; box-shadow: 0 4px 12px rgba(93, 135, 255, 0.3) !important;');
                 $btn.html('<i class="fa-solid fa-check-double me-1"></i> APPLIED');
             } else {
                 // "NONE" indicator - High contrast dark
@@ -1068,10 +1048,14 @@ ob_start();
             activeCard.find('.role-user-badge').addClass('bg-white/20 text-white').removeClass('bg-surface-container text-on-surface-variant');
 
             $('#matrix-active-role').text(role.name);
-            $('#matrix-title').text(`${role.name} Matrix`);
+            $('#matrix-title').text(`${role.name} Permissions`);
             $('#matrix_role_id').val(role.id);
             $('#matrix_role_name').val(role.name);
             $('#matrix_role_desc').val(role.description);
+            const superRole = role.name.toLowerCase().replace(/[\s_-]/g, '') === 'superadmin';
+            const protectedRole = superRole || role.can_edit === false;
+            $('#permission-matrix-form button[type=submit], #btn-matrix-reset, #permission-matrix-form .btn-bulk, #permission-matrix-form .matrix-checkbox').prop('disabled', protectedRole);
+            $('#matrix-title').text(superRole ? 'Superadmin — Full Access (Protected)' : `${role.name} Permissions${protectedRole ? ' (View Only)' : ''}`);
 
             $('.matrix-checkbox').prop('checked', false);
             if (role.permission_ids) {
@@ -1083,7 +1067,7 @@ ob_start();
 
         window.openEditModal = function(id) {
             const r = rolesData.find(x => x.id == id);
-            if (!r) return;
+            if (!r || r.can_edit === false || r.name.toLowerCase().replace(/[\s_-]/g, '') === 'superadmin') return;
             $('#edit_role_id').val(r.id);
             $('#edit_role_name').val(r.name);
             $('#edit_role_desc').val(r.description);
@@ -1098,6 +1082,11 @@ ob_start();
         };
 
         window.openDeleteModal = function(id, name) {
+            const role = rolesData.find(r => Number(r.id) === Number(id));
+            if (!role || role.can_delete === false || Number(role.is_system) !== 0 || role.name.toLowerCase().replace(/[\s_-]/g, '') === 'superadmin') {
+                showToast('This role is protected and cannot be deleted.', 'error');
+                return;
+            }
             $('#delete_role_id').val(id);
             $('#delete_role_name').text(name);
             new bootstrap.Modal('#deleteRoleModal').show();
@@ -1158,7 +1147,7 @@ ob_start();
     }
 
     #addPermissionModal .premium-banner {
-        background: linear-gradient(135deg, #ff4d6d 0%, #7209b7 100%);
+        background: linear-gradient(135deg, #5d87ff 0%, #5279e8 100%);
         padding: 30px 40px;
         color: white;
         position: relative;
@@ -1204,7 +1193,7 @@ ob_start();
         content: '';
         width: 4px;
         height: 12px;
-        background: #ff4d6d;
+        background: #5d87ff;
         border-radius: 2px;
         margin-right: 8px;
     }
@@ -1218,7 +1207,7 @@ ob_start();
         position: absolute;
         left: 18px;
         top: 16px;
-        color: #ff4d6d;
+        color: #5d87ff;
         opacity: 0.5;
         transition: opacity 0.3s;
     }
@@ -1242,8 +1231,8 @@ ob_start();
 
     #addPermissionModal .input-custom:focus {
         background: #ffffff;
-        border-color: #ff4d6d;
-        box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.08);
+        border-color: #5d87ff;
+        box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.08);
         outline: none;
     }
 
@@ -1262,13 +1251,13 @@ ob_start();
     }
 
     #addPermissionModal .btn-chip:hover {
-        border-color: #ff4d6d;
-        color: #ff4d6d;
-        background: rgba(255, 77, 109, 0.05);
+        border-color: #5d87ff;
+        color: #5d87ff;
+        background: rgba(93, 135, 255, 0.05);
     }
 
     #addPermissionModal .btn-deploy {
-        background: linear-gradient(90deg, #ff4d6d 0%, #ff758c 100%);
+        background: linear-gradient(90deg, #5d87ff 0%, #7a9cff 100%);
         border: none;
         color: white;
         padding: 16px 32px;
@@ -1277,13 +1266,13 @@ ob_start();
         text-transform: uppercase;
         letter-spacing: 1px;
         font-size: 12px;
-        box-shadow: 0 10px 20px rgba(255, 77, 109, 0.3);
+        box-shadow: 0 10px 20px rgba(93, 135, 255, 0.3);
         transition: all 0.3s;
     }
 
     #addPermissionModal .btn-deploy:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(255, 77, 109, 0.4);
+        box-shadow: 0 12px 24px rgba(93, 135, 255, 0.4);
         filter: brightness(1.05);
     }
 
@@ -1307,12 +1296,12 @@ ob_start();
     /* Unique stand-out buttons */
     .btn-perm-edit {
         background: rgba(114, 9, 183, 0.08);
-        color: #7209b7;
+        color: #5279e8;
         border: 1px solid rgba(114, 9, 183, 0.1);
     }
 
     .btn-perm-edit:hover {
-        background: #7209b7;
+        background: #5279e8;
         color: white;
         box-shadow: 0 4px 12px rgba(114, 9, 183, 0.2);
         transform: translateY(-2px) scale(1.05);
@@ -1340,8 +1329,8 @@ ob_start();
                     <span class="material-symbols-outlined" style="font-size: 32px;">shield_person</span>
                 </div>
                 <div>
-                    <h4 class="mb-1" style="font-weight: 900; letter-spacing: -0.5px;">Security Protocol</h4>
-                    <p class="mb-0 text-[10px] opacity-75 fw-bold uppercase tracking-widest">Register New Permission</p>
+                    <h4 class="mb-1" style="font-weight: 900; letter-spacing: -0.5px;">Add Permission</h4>
+                    <p class="mb-0 text-[10px] opacity-75 fw-bold uppercase tracking-widest">Choose the section and action below.</p>
                 </div>
                 <!-- Fixed Close Button -->
                 <button type="button"
@@ -1355,7 +1344,7 @@ ob_start();
                 <input type="hidden" name="action" value="add_permission">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
-                <div class="form-label-custom">Module Classification</div>
+                <div class="form-label-custom">Section</div>
                 <div class="input-group-custom">
                     <input type="text" list="module-list" name="module" id="perm-module-input"
                         class="input-custom"
@@ -1371,7 +1360,7 @@ ob_start();
                     <button type="button" class="btn btn-chip" onclick="$('#perm-module-input').val('Users')">Users</button>
                 </div>
 
-                <div class="form-label-custom" style="&::before{background: #7209b7;}">Permission Identity</div>
+                <div class="form-label-custom" style="&::before{background: #5279e8;}">Permission Name</div>
                 <div class="input-group-custom">
                     <input type="text" name="name"
                         class="input-custom"
@@ -1388,10 +1377,10 @@ ob_start();
 
                 <div class="row g-3 mt-4">
                     <div class="col-5">
-                        <button type="button" class="btn btn-abort w-100" data-bs-dismiss="modal">Abort</button>
+                        <button type="button" class="btn btn-abort w-100" data-bs-dismiss="modal">Cancel</button>
                     </div>
                     <div class="col-7">
-                        <button type="submit" class="btn btn-deploy w-100">Deploy Permission</button>
+                        <button type="submit" class="btn btn-deploy w-100">Save Permission</button>
                     </div>
                 </div>
             </form>
@@ -1497,16 +1486,16 @@ ob_start();
                     if (response.success) {
                         $('#deletePermissionModal').modal('hide');
                         showToast(response.message, 'success');
-                        $btn.prop('disabled', false).text('Delete Token');
+                        $btn.prop('disabled', false).text('Delete Permission');
                         window.loadInitialData(); // Dynamic Refresh
                     } else {
                         showToast(response.message, 'danger');
-                        $btn.prop('disabled', false).text('Delete Token');
+                        $btn.prop('disabled', false).text('Delete Permission');
                     }
                 },
                 error: function() {
                     showToast('Deletion protocol failed on server.', 'danger');
-                    $btn.prop('disabled', false).text('Delete Token');
+                    $btn.prop('disabled', false).text('Delete Permission');
                 }
             });
         });
@@ -1524,7 +1513,8 @@ ob_start();
                 type: 'POST',
                 data: $(this).serialize(),
                 success: function(response) {
-                    showToast('Matrix synchronized successfully!', 'success');
+                    if (!response || response.success !== true) { showToast(response && response.message || 'Could not save permissions.', 'error'); $btn.prop('disabled', false).text(originalText); return; }
+                    showToast('Permissions saved.', 'success');
                     $btn.prop('disabled', false).text(originalText);
                     window.loadInitialData(); // Refresh State
                 },
@@ -1536,6 +1526,8 @@ ob_start();
         });
     });
 </script>
+<link rel="stylesheet" href="<?= url('assets/css/access-management.css') ?>">
+</section>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

@@ -1,0 +1,27 @@
+Found Candidate: Candidate 1 Test (ID: 5) in Competition: Matahum sa Union
+Using Formula: Final Score1 -> ( score * category_weight / 100 ) * judge_count
+
+--- Calculation Breakdown ---
+  Context used: {"category_weight":20,"judge_count":1,"criteria_score":93,"criteria_weighted":18.6,"category_score":93,"category_weighted":18.6,"total_category_score":93,"total_criteria_score":93,"average_score":93,"total_score":18.6}
+Category: Production Number (Weight: 20%)
+  Judge Totals (SUM of criteria per judge): 93 (Count: 1)
+  AVG of Judge Totals: 93
+  Category Contribution to Total (Cat Final Score): 18.6
+  Context used: {"category_weight":20,"judge_count":1,"criteria_score":86,"criteria_weighted":17.2,"category_score":86,"category_weighted":17.2,"total_category_score":86,"total_criteria_score":86,"average_score":86,"total_score":17.2}
+Category: Talent (Weight: 20%)
+  Judge Totals (SUM of criteria per judge): 86 (Count: 1)
+  AVG of Judge Totals: 86
+  Category Contribution to Total (Cat Final Score): 17.2
+  Context used: {"category_weight":30,"judge_count":1,"criteria_score":85,"criteria_weighted":25.5,"category_score":85,"category_weighted":25.5,"total_category_score":85,"total_criteria_score":85,"average_score":85,"total_score":25.5}
+Category: Evening Gown (Weight: 30%)
+  Judge Totals (SUM of criteria per judge): 85 (Count: 1)
+  AVG of Judge Totals: 85
+  Category Contribution to Total (Cat Final Score): 25.5
+  Context used: {"category_weight":30,"judge_count":1,"criteria_score":80,"criteria_weighted":24,"category_score":80,"category_weighted":24,"total_category_score":80,"total_criteria_score":80,"average_score":80,"total_score":24}
+Category: Question &amp; Answer (Weight: 30%)
+  Judge Totals (SUM of criteria per judge): 80 (Count: 1)
+  AVG of Judge Totals: 80
+  Category Contribution to Total (Cat Final Score): 24
+
+Total Overall Score (Sum of Category scores): 85.3
+Formatted: 85.30%

@@ -22,7 +22,9 @@ class Role
         $query = "SELECT * FROM permissions ORDER BY module ASC, id ASC";
         $results = $conn->query($query)->fetch_all(MYSQLI_ASSOC);
         $grouped = [];
+        $catalog=require __DIR__.'/../config/permissions.php';
         foreach ($results as $row) {
+            $row['is_core']=isset($catalog[$row['name']]);
             $grouped[$row['module']][] = $row;
         }
         return $grouped;
@@ -65,32 +67,29 @@ class Role
     public static function update($role_id, $name, $description, $permissions = [])
     {
         global $conn;
-        $stmt = $conn->prepare("UPDATE roles SET name = ?, description = ? WHERE id = ?");
-        $stmt->bind_param("ssi", $name, $description, $role_id);
-        $success = $stmt->execute();
-        $stmt->close();
-
-        if ($success) {
-            $conn->query("DELETE FROM role_permissions WHERE role_id = " . intval($role_id));
-            if (!empty($permissions)) {
-                $stmt_perm = $conn->prepare("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)");
-                foreach ($permissions as $p_id) {
-                    $stmt_perm->bind_param("ii", $role_id, $p_id);
-                    $stmt_perm->execute();
-                }
-                $stmt_perm->close();
-            }
-        }
-        return $success;
+        $conn->begin_transaction();
+        try {
+            $stmt=$conn->prepare('SELECT name FROM roles WHERE id=? FOR UPDATE');
+            $stmt->bind_param('i',$role_id);$stmt->execute();$role=$stmt->get_result()->fetch_assoc();$stmt->close();
+            if (!$role) { $conn->rollback(); return false; }
+            $protected=preg_replace('/[ _-]/','',strtolower($role['name']))==='superadmin';
+            if ($protected) { $name=$role['name']; $permissions=array_column($conn->query('SELECT id FROM permissions')->fetch_all(MYSQLI_ASSOC),'id'); }
+            $stmt=$conn->prepare('UPDATE roles SET name=?, description=?, is_system=CASE WHEN ?=1 THEN 1 ELSE is_system END WHERE id=?');
+            $flag=$protected?1:0;$stmt->bind_param('ssii',$name,$description,$flag,$role_id);$stmt->execute();$stmt->close();
+            $stmt=$conn->prepare('DELETE FROM role_permissions WHERE role_id=?');$stmt->bind_param('i',$role_id);$stmt->execute();$stmt->close();
+            $stmt=$conn->prepare('INSERT INTO role_permissions(role_id,permission_id) VALUES (?,?)');
+            foreach(array_unique(array_map('intval',(array)$permissions)) as $permission) { $stmt->bind_param('ii',$role_id,$permission);$stmt->execute(); }
+            $stmt->close();$conn->commit();return true;
+        } catch(Throwable $error) { $conn->rollback();throw $error; }
     }
 
     public static function delete($role_id)
     {
         global $conn;
         // Prevent deleting system roles
-        $stmt = $conn->prepare("DELETE FROM roles WHERE id = ? AND is_system = 0");
+        $stmt = $conn->prepare("DELETE FROM roles WHERE id = ? AND is_system = 0 AND LOWER(REPLACE(REPLACE(REPLACE(name, ' ', ''), '_', ''), '-', '')) <> 'superadmin'");
         $stmt->bind_param("i", $role_id);
-        $success = $stmt->execute();
+        $success = $stmt->execute() && $stmt->affected_rows > 0;
         $stmt->close();
         return $success;
     }
@@ -101,6 +100,10 @@ class Role
         $stmt = $conn->prepare("INSERT INTO permissions (name, description, module) VALUES (?, ?, ?)");
         $stmt->bind_param("sss", $name, $description, $module);
         $success = $stmt->execute();
+        if ($success) {
+            $permission_id=(int)$stmt->insert_id;
+            $conn->query("INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT id,".$permission_id." FROM roles WHERE LOWER(REPLACE(REPLACE(REPLACE(name,' ',''),'_',''),'-',''))='superadmin'");
+        }
         $stmt->close();
         return $success;
     }
@@ -115,6 +118,9 @@ class Role
     public static function update_permission($id, $name, $description, $module)
     {
         global $conn;
+        $catalog=require __DIR__.'/../config/permissions.php';
+        $check=$conn->prepare('SELECT name FROM permissions WHERE id=?');$check->bind_param('i',$id);$check->execute();$old=$check->get_result()->fetch_assoc();$check->close();
+        if($old && isset($catalog[$old['name']]) && $old['name']!==$name) return false;
         $stmt = $conn->prepare("UPDATE permissions SET name = ?, description = ?, module = ? WHERE id = ?");
         $stmt->bind_param("sssi", $name, $description, $module, $id);
         $success = $stmt->execute();
@@ -125,6 +131,9 @@ class Role
     public static function delete_permission($id)
     {
         global $conn;
+        $catalog=require __DIR__.'/../config/permissions.php';
+        $check=$conn->prepare('SELECT name FROM permissions WHERE id=?');$check->bind_param('i',$id);$check->execute();$old=$check->get_result()->fetch_assoc();$check->close();
+        if($old && isset($catalog[$old['name']])) return false;
         $stmt = $conn->prepare("DELETE FROM permissions WHERE id = ?");
         $stmt->bind_param("i", $id);
         $success = $stmt->execute();

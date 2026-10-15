@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html class="light" lang="en">
 <head>
+<?php require __DIR__.'/../partials/site_favicon.php'; ?>
+    <meta name="csrf-token" content="<?= csrf_token() ?>">
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title><?= $title ?? 'POS Cashier | Stacey Halu Halu' ?></title>
@@ -107,6 +109,78 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* === Premium POS Styling === */
+        .page-header-gradient {
+            background: linear-gradient(135deg, #ffffff 0%, #fcf2f5 100%);
+            border-bottom: 1px solid rgba(182, 14, 61, 0.08);
+            position: relative;
+            overflow: hidden;
+        }
+        .page-header-gradient::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(182, 14, 61, 0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .pos-header-accent {
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #b60e3d, transparent);
+            opacity: 0.3;
+        }
+        .product-count-badge {
+            background: linear-gradient(135deg, #b60e3d, #8429c8);
+        }
+        .cat-tab-scroll {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .cat-tab-scroll::-webkit-scrollbar { display: none; }
+        .cart-accent-bar {
+            height: 3px;
+            background: linear-gradient(90deg, #b60e3d, #8429c8);
+            opacity: 0.5;
+        }
+        .cart-item-card {
+            transition: all 0.2s ease;
+        }
+        .cart-item-card:hover {
+            background: #fcf2f5;
+        }
+        .summary-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(182, 14, 61, 0.15), transparent);
+        }
+        .empty-cart-glow {
+            box-shadow: 0 0 40px rgba(182, 14, 61, 0.04);
+        }
+        .modal-backdrop-premium {
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* Product grid custom scrollbar */
+        .product-grid-scroll {
+            overflow-y: auto;
+        }
+        .product-grid-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .product-grid-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .product-grid-scroll::-webkit-scrollbar-thumb {
+            background: rgba(182, 14, 61, 0.2);
+            border-radius: 3px;
+        }
+        .product-grid-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(182, 14, 61, 0.35);
+        }
+
         /* Branch modal styles */
         #branchModal {
             display: none;
@@ -151,6 +225,7 @@
     <meta name="csrf-token" content="<?= csrf_token() ?>">
     <!-- jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="<?= url('assets/js/request-security.js') ?>"></script>
     <script src="<?= url('assets/js/main.js') ?>?v=1.5"></script>
 
     <script>
@@ -165,19 +240,14 @@
         if (!m) return;
         m.classList.remove('is-open');
     }
-
-    function closeBranchModal() {
-        var m = document.getElementById('branchModal');
-        if (!m) return;
-        m.classList.remove('is-open');
-    }
     </script>
+<link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
 </head>
 <body class="bg-background text-on-background font-body-md h-screen flex flex-col overflow-hidden">
 <?php require_once __DIR__ . '/../partials/toast.php'; ?>
 <?php
 // Always resolve admin status first — needed for both the Switch button and modal data
-$layout_is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+$layout_is_admin = User::has_all_branch_access($_SESSION['user']['id']);
 if (!isset($branches)) {
     $branches = [];
     if ($layout_is_admin) {
@@ -231,10 +301,11 @@ if (!isset($branches)) {
 <!-- Top Navigation / Header -->
 <header class="h-20 flex items-center justify-between px-margin-desktop bg-surface border-b border-outline-variant border-opacity-35 shrink-0 z-20">
     <div class="flex items-center gap-md">
-        <a class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container hover:bg-primary-fixed text-primary font-bold text-xs text-decoration-none transition-all duration-300 border border-outline-variant border-opacity-25 shadow-xs cursor-pointer" href="<?= url('?route=dashboard') ?>">
+        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a>
+        <?php if(User::has_permission($_SESSION['user']['id'],'view_dashboard')): ?><a class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container hover:bg-primary-fixed text-primary font-bold text-xs text-decoration-none transition-all duration-300 border border-outline-variant border-opacity-25 shadow-xs cursor-pointer" href="<?= url('?route=dashboard') ?>">
             <span class="material-symbols-outlined text-[16px] font-bold">arrow_back</span>
             <span>Dashboard</span>
-        </a>
+        </a><?php endif; ?>
         <div class="flex flex-col">
             <h1 class="font-bold text-lg text-primary leading-tight m-0 font-headline-md"><?= htmlspecialchars($store_name ?? 'Stacey Halu') ?></h1>
             <div class="flex items-center gap-1.5 mt-0.5">
@@ -268,6 +339,10 @@ if (!isset($branches)) {
         <div class="hidden lg:flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant border-opacity-35 text-on-surface-variant font-label-md text-xs">
             <span class="material-symbols-outlined text-[16px] text-primary animate-pulse">schedule</span>
             <span id="liveClock" class="font-bold text-[11px] opacity-80">Loading clock...</span>
+            <span class="w-px h-4 bg-outline-variant opacity-30 mx-1"></span>
+            <button onclick="openHotkeysModal()" class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors bg-transparent border-0 cursor-pointer p-0" title="Keyboard Shortcuts">
+                <span class="material-symbols-outlined text-[14px]">info</span>
+            </button>
         </div>
 
         <div class="relative w-60 xl:w-72">
@@ -309,12 +384,6 @@ if (!isset($branches)) {
     tick();
 })();
 
-<?php if (!empty($layout_is_admin) && empty($_SESSION['pos_branch_id'])): ?>
-// Auto-open modal for admin with no branch selected
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(openBranchModal, 400);
-});
-<?php endif; ?>
 </script>
 
 </body>

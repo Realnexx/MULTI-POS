@@ -1,0 +1,114 @@
+/* Shared compact Users and Roles workspace. */
+.access-workspace {color:#34435a;font-family:inherit;}
+.access-workspace .access-heading,#tw-roles .access-heading {display:flex!important;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px!important;}
+.access-workspace .access-title {display:flex;align-items:center;gap:12px;}
+.access-workspace .access-title>.material-symbols-outlined {display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex-shrink:0;border-radius:12px;background:#edf2ff;color:#5d87ff;font-size:24px;}
+.access-workspace .access-title h1 {line-height:1.3;font-size:22px;font-weight:700;margin:0 0 5px;}
+.access-workspace .access-title p {color:#8994a5;font-size:12px;margin:0;}
+.access-workspace .access-heading-actions {display:flex;gap:8px;}
+.access-workspace .btn,#tw-roles .access-heading .btn {border-radius:8px!important;font-size:12px!important;font-weight:600!important;padding:9px 14px;box-shadow:none!important;}
+.access-workspace .btn-primary,#tw-roles .access-heading .btn-primary {background:#5d87ff!important;background-image:none!important;border-color:#5d87ff!important;color:white!important;}
+.access-workspace .btn-light {background:#f3f6fb!important;color:#69788f!important;border-color:#e5ebf4!important;}
+.access-workspace .card {border:1px solid #e8eef6!important;border-radius:12px!important;box-shadow:none!important;}
+.access-workspace .card-header {padding:15px 18px!important;border-bottom:1px solid #edf1f7!important;border-radius:12px 12px 0 0!important;}
+.access-workspace .card-header h5 {font-size:14px;}
+.access-workspace #stats-cards-container {margin-bottom:16px!important;row-gap:12px;}
+.access-workspace #stats-cards-container .card {padding:14px 16px!important;}
+.access-workspace #stats-cards-container .rounded-circle {width:36px!important;height:36px!important;border-radius:10px!important;}
+.access-workspace #stats-cards-container .small {font-size:11px;color:#8994a5!important;}
+.access-workspace #stats-cards-container .h4 {font-size:22px;margin-top:5px;}
+.access-workspace .users-table-scroll {overflow-x:auto;}
+.access-workspace #user-table {min-width:740px;font-size:12px;width:100%!important;}
+.access-workspace #user-table th {background:#f7f9fc;color:#8d99ad;padding:12px 16px!important;font-size:10px;}
+.access-workspace #user-table td {padding:12px 16px!important;border-color:#edf1f7;box-shadow:none;}
+.access-workspace #user-table .action-btn {width:30px;height:30px;border-radius:7px;}
+.access-workspace #user-table .action-btn:hover {transform:none;box-shadow:none;}
+.access-workspace #user-table .action-btn .material-symbols-outlined {font-size:17px;}
+.access-workspace #user-table .btn-edit-member {color:#5d87ff;background:#edf2ff;border-color:#e0e9ff;}
+.access-workspace .users-table-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid #edf1f7;color:#8994a5;font-size:11px;}
+.access-workspace .users-table-footer .dataTables_info,.access-workspace .users-table-footer .dataTables_paginate {padding:0;}
+.access-workspace .users-table-footer label {margin:0;}
+.access-workspace #userSearch {font-size:12px!important;border:1px solid #e1e8f2!important;border-radius:8px!important;background:white!important;}
+.access-workspace .modal .modal-content {border:1px solid #e8eef6!important;border-radius:16px!important;box-shadow:0 18px 60px #26344920!important;min-width:0!important;color:#34435a;font-family:inherit!important;}
+.access-workspace .modal .modal-header,.access-workspace .modal .modal-footer {padding:16px 20px!important;border-color:#edf1f7!important;background:white!important;}
+.access-workspace .modal .modal-body {padding:20px!important;}
+.access-workspace .modal h2,.access-workspace .modal h3,.access-workspace .modal h4,.access-workspace .modal h5 {font-family:inherit!important;font-size:18px!important;letter-spacing:0!important;}
+.access-workspace .modal .form-control,.access-workspace .modal .form-select {font-size:12px!important;border-radius:8px!important;border:1px solid #e1e8f2!important;padding:9px 11px!important;}
+.access-workspace .modal .form-label {font-size:11px!important;font-weight:500!important;color:#8994a5!important;}
+.access-workspace .modal .rounded-pill {border-radius:8px!important;}
+.access-workspace .modal .modal-dialog {max-height:calc(100% - 2rem);}
+.access-workspace .modal .modal-content {max-height:calc(100dvh - 2rem);overflow-y:auto!important;}
+.access-workspace .custom-check-pill input:checked+label {background:#edf2ff!important;color:#3563e9!important;border-color:#a7bdff!important;box-shadow:none!important;}
+.access-workspace .custom-check-pill label {border-radius:8px!important;font-size:12px;}
+.access-workspace .profile-card {padding:12px;border-radius:9px;box-shadow:none;}
+.access-workspace .profile-info-value {font-size:12px;overflow-wrap:anywhere;}
+.access-workspace .profile-info-label {font-size:9px;letter-spacing:.5px;}
+.access-workspace #viewUserModal .modal-body {padding:0!important;}
+.access-workspace #viewUserModal .modal-body>.position-relative {height:100px!important;background:#edf2ff!important;}
+.access-workspace #viewUserModal .px-5 {padding-left:20px!important;padding-right:20px!important;}
+.access-workspace #viewUserModal .pb-5 {padding-bottom:20px!important;}
+.access-workspace #viewUserModal .mb-5 {margin-bottom:20px!important;gap:14px!important;}
+.access-workspace #view_avatar_initials {width:80px!important;height:80px!important;font-size:28px!important;}
+/* Roles retain their existing permission controls and Tailwind utilities. */
+.roles-workspace #tw-roles {background:transparent!important;font-family:inherit!important;}
+.roles-workspace #tw-roles .roles-layout {display:grid!important;grid-template-columns:minmax(250px,320px) minmax(0,1fr)!important;gap:16px!important;}
+.roles-workspace #tw-roles .roles-layout>section {grid-column:auto!important;min-width:0;gap:14px!important;}
+.roles-workspace #tw-roles .glass-card {background:white!important;border:1px solid #e8eef6!important;border-radius:12px!important;box-shadow:none!important;backdrop-filter:none!important;padding:16px!important;}
+.roles-workspace #tw-roles h3 {font-family:inherit!important;font-size:14px!important;font-weight:600!important;letter-spacing:0!important;}
+.roles-workspace #tw-roles h4 {font-size:12px!important;letter-spacing:0!important;}
+.roles-workspace #tw-roles .font-body-md {font-size:12px!important;line-height:1.6!important;}
+.roles-workspace #tw-roles .mb-lg {margin-bottom:16px!important;}
+.roles-workspace #tw-roles .mb-md {margin-bottom:12px!important;}
+.roles-workspace #tw-roles .mt-xl {margin-top:18px!important;}
+.roles-workspace #tw-roles .p-md {padding:16px!important;}
+.roles-workspace #tw-roles .role-card {padding:11px!important;border:1px solid #e8eef6!important;border-radius:9px!important;box-shadow:none!important;background:white!important;}
+.roles-workspace #tw-roles .role-card.active-role {background:#edf2ff!important;border-color:#b2c5ff!important;color:#3563e9!important;}
+.roles-workspace #tw-roles .role-card.active-role :is(.role-name,.role-desc,i) {color:#3563e9!important;}
+.roles-workspace #tw-roles #role-cards-container>.relative {margin-left:0!important;}
+.roles-workspace #tw-roles #role-cards-container>.relative>.absolute {display:none!important;}
+.roles-workspace #tw-roles .role-card .opacity-0 {opacity:1!important;}
+.roles-workspace #tw-roles .role-name {font-size:12px!important;}
+.roles-workspace #tw-roles .role-desc {font-size:10px!important;max-width:145px;overflow-wrap:anywhere;}
+.roles-workspace #tw-roles .role-card .w-11 {width:32px!important;height:32px!important;border-radius:8px!important;}
+.roles-workspace #tw-roles .disclosure-card {border:1px solid #e8eef6;border-radius:10px;box-shadow:none;margin-bottom:10px;}
+.roles-workspace #tw-roles .disclosure-header {padding:12px;gap:12px;flex-wrap:wrap;}
+.roles-workspace #tw-roles .permission-item {padding:9px 12px!important;gap:10px;}
+.roles-workspace #tw-roles .matrix-container {max-height:540px;overflow:auto;}
+.roles-workspace #tw-roles #permission-registry-list {gap:12px!important;}
+.roles-workspace #tw-roles .reg-header {padding:0 0 10px!important;gap:10px;}
+.roles-workspace #tw-roles .reg-body {padding:0!important;}
+.roles-workspace #tw-roles :is(input[type=text],input[type=password],textarea,select) {font-size:12px!important;border-radius:8px!important;border-color:#e1e8f2!important;}
+.roles-workspace #tw-roles #role-search {padding:9px 12px 9px 42px!important;}
+.roles-workspace #tw-roles button:not(.form-check-input) {letter-spacing:0!important;text-transform:none!important;border-radius:8px!important;box-shadow:none!important;transform:none!important;}
+.roles-workspace #tw-roles button[type=submit] {padding:9px 14px!important;font-size:12px!important;}
+.roles-workspace #tw-roles .modal .modal-content {padding:20px!important;}
+.roles-workspace #tw-roles .modal input:not([type=hidden]):not([type=checkbox]),.roles-workspace #tw-roles .modal textarea {padding:9px 11px!important;}
+.roles-workspace #tw-roles #editPermissionModal form {padding:18px 0 0!important;}
+.roles-workspace #tw-roles #editPermissionModal .bg-primary {background:#edf2ff!important;color:#5d87ff!important;padding:16px!important;border-radius:10px!important;}
+.roles-workspace #addPermissionModal .premium-banner {background:#edf2ff!important;color:#34435a!important;padding:18px 20px!important;}
+.roles-workspace #addPermissionModal .premium-banner::after {display:none;}
+.roles-workspace #addPermissionModal .premium-banner .icon-box {width:40px;height:40px;background:white;color:#5d87ff;border-radius:10px;box-shadow:none;margin-right:12px;}
+.roles-workspace #addPermissionModal .btn-close {filter:none!important;}
+.roles-workspace #addPermissionModal form {padding:20px!important;}
+.roles-workspace #addPermissionModal .form-label-custom {font-size:11px;letter-spacing:0;text-transform:none;color:#8994a5;}
+.roles-workspace #addPermissionModal .input-custom {padding-top:10px;padding-bottom:10px;font-size:12px;border-radius:8px;}
+.roles-workspace #addPermissionModal .btn-deploy {background:#5d87ff!important;border-radius:8px!important;box-shadow:none!important;font-size:12px;padding:10px;}
+.roles-workspace #addPermissionModal .btn-abort {border-radius:8px;font-size:12px;padding:10px;}
+.access-workspace :is(button,a,input,select,textarea):focus-visible {outline:2px solid #5d87ff;outline-offset:2px;}
+@media(max-width:1000px){.roles-workspace #tw-roles .roles-layout {grid-template-columns:minmax(0,1fr)!important;}.roles-workspace #tw-roles #permission-registry-list {grid-template-columns:repeat(2,minmax(0,1fr))!important;}}
+@media(max-width:600px){.access-workspace .access-heading,#tw-roles .access-heading {align-items:stretch;flex-direction:column;}.access-workspace .access-heading>.btn {align-self:flex-start;}.access-workspace .card-header>.d-flex {align-items:stretch!important;flex-direction:column;gap:12px;}.access-workspace #userSearch {width:100%!important;}.access-workspace #stats-cards-container>.col-md-4 {width:50%;}.access-workspace .modal .modal-dialog {margin:8px;}.access-workspace .modal .modal-content {max-height:calc(100dvh - 16px);}.access-workspace #viewUserModal .modal-body .px-5 {padding:16px!important;}.roles-workspace #tw-roles #permission-registry-list {grid-template-columns:minmax(0,1fr)!important;}.roles-workspace #tw-roles .permission-item>div:first-child {min-width:0;}.roles-workspace #tw-roles .permission-item span {overflow-wrap:anywhere;}.roles-workspace #tw-roles .role-desc {max-width:none;}}
+
+.access-workspace :is(button,input,textarea,select,h1,h2,h3,h4,h5,h6,p,label,small,strong) {font-family:inherit!important;}
+.roles-workspace #tw-roles [class*="font-"]:not(.material-symbols-outlined):not(i) {font-family:inherit!important;}
+.roles-workspace #tw-roles .role-card.active-role .role-user-badge {background:#dce6ff!important;color:#3563e9!important;}
+.roles-workspace #tw-roles .roles-layout button[type=submit] {background:#5d87ff!important;color:#fff!important;}
+.roles-workspace #tw-roles #permissions-container {margin-top:8px!important;}
+.access-workspace .users-table-footer .dataTables_length label {display:flex;align-items:center;gap:8px;}
+.access-workspace .users-table-footer .dataTables_length select {width:auto;display:inline-block;}
+.access-workspace #stats-cards-container {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-left:0;margin-right:0;}
+.access-workspace #stats-cards-container>.col-md-4 {width:auto;padding:0;margin-top:0;}
+.access-workspace .modal label.btn.rounded-circle {padding:5px!important;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%!important;}
+@media(max-width:600px){.access-workspace #stats-cards-container {grid-template-columns:repeat(2,minmax(0,1fr));}.access-workspace #stats-cards-container>.col-md-4 {width:auto;}}
+
+.roles-workspace #tw-roles .disclosure-toggle {display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;background:transparent;border:0;cursor:pointer;flex-shrink:0;}
+.roles-workspace #tw-roles .disclosure-toggle:hover {background:#edf2ff;}

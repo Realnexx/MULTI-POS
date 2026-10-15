@@ -148,6 +148,7 @@ $end_date = $end_date ?? null;
             @page { margin: 1cm; }
         }
     </style>
+<link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
 </head>
 <body onload="window.print()">
     <div class="report-wrapper">
@@ -253,11 +254,11 @@ $end_date = $end_date ?? null;
                         <tr>
                             <th style="width: 80px;">Trans ID</th>
                             <th>Operator</th>
+                            <th>Products</th>
                             <th class="text-end">Gross</th>
                             <th class="text-end">Discount</th>
                             <th class="text-end">Final Net</th>
                             <th style="width: 100px;">Method</th>
-                            <th style="width: 90px;">Status</th>
                             <th class="text-end" style="width: 140px;">Timestamp</th>
                         </tr>
                     </thead>
@@ -269,18 +270,11 @@ $end_date = $end_date ?? null;
                                 <tr>
                                     <td class="fw-bold">#<?= str_pad($sale['id'], 6, '0', STR_PAD_LEFT) ?></td>
                                     <td><?= htmlspecialchars($sale['cashier_name'] ?? 'System') ?></td>
+                                    <td class="small text-muted"><?= htmlspecialchars($sale['products'] ?? '—') ?></td>
                                     <td class="text-end">₱<?= number_format($sale['total_amount'], 2) ?></td>
                                     <td class="text-end text-danger">-<?= number_format($sale['discount_amount'], 2) ?></td>
-                                    <td class="text-end fw-bold text-primary">₱<?= number_format($sale['final_amount'], 2) ?></td>
+                                    <td class="text-end fw-bold">₱<?= number_format($sale['final_amount'], 2) ?></td>
                                     <td><?= htmlspecialchars($sale['payment_method']) ?></td>
-                                    <td>
-                                        <?php 
-                                        $status_cls = 'badge-completed';
-                                        if ($sale['status'] === 'Refunded') $status_cls = 'badge-refunded';
-                                        if ($sale['status'] === 'Cancelled') $status_cls = 'badge-cancelled';
-                                        ?>
-                                        <span class="badge-status <?= $status_cls ?>"><?= $sale['status'] ?></span>
-                                    </td>
                                     <td class="text-end text-muted"><?= date('M d, y | h:i A', strtotime($sale['created_at'])) ?></td>
                                 </tr>
                             <?php endforeach; ?>

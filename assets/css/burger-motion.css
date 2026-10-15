@@ -1,0 +1,21 @@
+/* Scroll reveals are enabled only after the local AOS runtime is available. */
+.burger-home:not(.motion-ready) [data-aos]{opacity:1!important;transform:none!important;pointer-events:auto!important}
+.burger-home.motion-ready [data-aos="fade-up"]{transform:translate3d(0,24px,0);will-change:auto}
+.burger-home.motion-ready [data-aos="fade-up"].aos-animate{transform:none}
+.motion-reveal{min-width:0}.motion-reveal>.product-card,.motion-reveal>.location-card{height:100%}
+.burger-home [data-aos].motion-focused{opacity:1!important;transform:none!important;transition:none!important;pointer-events:auto!important}
+.burger-home :is(.desktop-nav a,.login-link,.cart-link,.footer-top nav a,.mobile-nav a,.account-menu a){transition:color .2s ease,background-color .2s ease,opacity .2s ease}
+.burger-home :is(.desktop-nav a,.footer-top nav a):hover{color:var(--red)}
+.burger-home :is(.button,.text-link) span{display:inline-block;transition:transform .2s ease}
+@media(hover:hover){.burger-home :is(.button,.text-link):hover span{transform:translate(2px,-2px)}.burger-home .product-card:focus-within{box-shadow:0 12px 25px #38251a14;border-color:#cdb99f}.burger-home .branch-card:hover .branch-number{color:var(--ink)}}
+.burger-home .button:active{transform:translateY(0) scale(.98)}
+.burger-home :is(.category-links a,.quick-add button,.quantity-picker button,.remove-item){transition:background-color .2s ease,color .2s ease,transform .16s ease}
+.burger-home .quantity-picker button:active:not(:disabled){transform:scale(.92)}
+.burger-home :is(.shop-form input,.shop-form select,.shop-form textarea,.menu-search input){transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease}
+.burger-home :is(.shop-form input,.shop-form select,.shop-form textarea,.menu-search input):focus{border-color:var(--red);box-shadow:0 0 0 3px #bc29230a}
+.burger-home .mobile-nav:not([hidden]),.burger-home .account-menu[open]>div{animation:shop-panel-enter .22s ease-out both;transform-origin:top}
+.burger-home .shop-toast:not([hidden]){animation:shop-toast-enter .22s ease-out both}
+@keyframes shop-panel-enter{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes shop-toast-enter{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}.burger-home [data-aos]{opacity:1!important;transform:none!important;transition:none!important;pointer-events:auto!important}.burger-home *,.burger-home *:before,.burger-home *:after{animation:none!important;transition:none!important}}
+@media print{.burger-home [data-aos]{opacity:1!important;transform:none!important}}

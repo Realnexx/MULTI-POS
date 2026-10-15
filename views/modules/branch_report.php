@@ -188,6 +188,7 @@ $report_date = date('F j, Y g:i A');
         .btn-close { background: white; color: var(--zinc-900); }
         .btn-action:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
     </style>
+<link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
 </head>
 <body>
 

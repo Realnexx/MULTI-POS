@@ -1,8 +1,8 @@
+let posCheckoutKey = '';
 // Global CSRF Token Helper
 function getCsrfToken() {
     return $('meta[name="csrf-token"]').attr('content') || '';
 }
-
 // Set Order Type (Dine-in vs Take-out)
 function setOrderType(type) {
     const btnDineIn = $('#btnOrderTypeDineIn');
@@ -47,11 +47,9 @@ function setOrderType(type) {
         }
     });
 }
-
 // Load Cart State
 function loadCart() {
     if (!$('#cartItemsList').length) return;
-
     $.ajax({
         url: '?route=ajax/pos_cart',
         method: 'POST',
@@ -59,6 +57,7 @@ function loadCart() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total);
             }
         },
@@ -67,14 +66,12 @@ function loadCart() {
         }
     });
 }
-
 // Add Item to Cart
-function addToCart(productId, productName, price, stock) {
+function addToCart(productId, productName, price, stock, modifiersJson = '') {
     if (stock <= 0) {
         showWarningModal('This item is currently sold out!', 'Out of Stock', 'Review Inventory', 'inventory_2');
         return;
     }
-
     $.ajax({
         url: '?route=ajax/pos_cart',
         method: 'POST',
@@ -84,11 +81,13 @@ function addToCart(productId, productName, price, stock) {
             product_name: productName,
             price: price,
             stock: stock,
+            modifiers: modifiersJson,
             csrf_token: getCsrfToken()
         },
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total);
             } else {
                 showWarningModal(response.message || 'Failed to add item.', 'Stock Limitation', 'Review Inventory', 'inventory_2');
@@ -99,7 +98,60 @@ function addToCart(productId, productName, price, stock) {
         }
     });
 }
-
+// ─── MODIFIER MODAL ───────────────────────────────────────────────────────
+let _pendingModifier = null;
+function openModifierModal(productId, productName, basePrice, stock, modifiers) {
+    _pendingModifier = { productId, productName, basePrice, stock, modifiers, selected: [] };
+    $('#modifierModalTitle').text(productName);
+    $('#modifierModalSubtitle').text('Customize your order — ' + modifiers.length + ' add-on(s) available');
+    const list = $('#modifierList');
+    list.empty();
+    modifiers.forEach((m, i) => {
+        const price = parseFloat(m.additional_price) || 0;
+        list.append(`
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-outline-variant border-opacity-30 hover:border-primary hover:border-opacity-50 transition-all cursor-pointer bg-surface-container-low modifier-option ${price > 0 ? '' : ''}">
+                <input type="checkbox" class="modifier-checkbox shadow-none" data-index="${i}" data-price="${price}" style="accent-color: var(--color-primary, #6366f1); width: 18px; height: 18px; cursor: pointer;">
+                <div class="flex-grow min-w-0">
+                    <div class="font-bold text-sm text-on-surface">${m.modifier_name}</div>
+                    ${m.ingredient_product_id ? '<div class="text-[10px] text-on-surface-variant opacity-60">Deducts from ingredient stock</div>' : ''}
+                </div>
+                <div class="font-extrabold text-sm text-primary shrink-0">${price > 0 ? '+₱' + price.toFixed(2) : '<span class="text-on-surface-variant opacity-50 font-normal">Free</span>'}</div>
+            </label>
+        `);
+    });
+    $('#modifierTotalPrice').text('₱' + basePrice.toFixed(2));
+    updateModifierTotal();
+    $('#modifierModal').removeClass('hidden opacity-0').addClass('flex opacity-100');
+    $('#modifierModalContent').removeClass('scale-95').addClass('scale-100');
+    $(document).on('change', '.modifier-checkbox', updateModifierTotal);
+}
+function updateModifierTotal() {
+    if (!_pendingModifier) return;
+    let extra = 0;
+    $('.modifier-checkbox:checked').each(function() {
+        extra += parseFloat($(this).data('price')) || 0;
+    });
+    const total = _pendingModifier.basePrice + extra;
+    $('#modifierTotalPrice').text('₱' + total.toFixed(2));
+}
+function closeModifierModal() {
+    $('#modifierModal').addClass('hidden opacity-0').removeClass('flex opacity-100');
+    $('#modifierModalContent').addClass('scale-95').removeClass('scale-100');
+    $(document).off('change', '.modifier-checkbox', updateModifierTotal);
+    _pendingModifier = null;
+}
+function confirmAddWithModifiers() {
+    if (!_pendingModifier) return;
+    const selected = [];
+    $('.modifier-checkbox:checked').each(function() {
+        const idx = parseInt($(this).data('index'));
+        selected.push(_pendingModifier.modifiers[idx]);
+    });
+    _pendingModifier.selected = selected;
+    const modStr = selected.length > 0 ? JSON.stringify(selected) : '';
+    addToCart(_pendingModifier.productId, _pendingModifier.productName, _pendingModifier.basePrice, _pendingModifier.stock, modStr);
+    closeModifierModal();
+}
 // Update Item Quantity
 function updateCartQty(productId, quantity) {
     $.ajax({
@@ -114,6 +166,7 @@ function updateCartQty(productId, quantity) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total);
             } else {
                 showWarningModal(response.message || 'Failed to update quantity.', 'Stock Limitation', 'Review Inventory', 'inventory_2');
@@ -122,7 +175,6 @@ function updateCartQty(productId, quantity) {
         }
     });
 }
-
 // Remove Item from Cart
 function removeFromCart(productId) {
     $.ajax({
@@ -136,17 +188,16 @@ function removeFromCart(productId) {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total);
             }
         }
     });
 }
-
 // Open Custom Confirm Clear Modal
 function clearCart() {
     openConfirmModal();
 }
-
 // Execute Cart Clear AJAX request
 function executeClearCart() {
     $.ajax({
@@ -156,6 +207,7 @@ function executeClearCart() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart([], 0, 0, 0);
                 $('#cartDiscount').val(0);
                 $('#amountTendered').val('');
@@ -165,11 +217,9 @@ function executeClearCart() {
         }
     });
 }
-
 // Update Discount
 function updateCartDiscount() {
     const discount = parseFloat($('#cartDiscount').val()) || 0;
-
     $.ajax({
         url: '?route=ajax/pos_cart',
         method: 'POST',
@@ -181,39 +231,36 @@ function updateCartDiscount() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total);
             }
         }
     });
 }
-
 // Render Cart UI Helper
 function renderCart(cartItems, subtotal, discount, total) {
     const container = $('#cartItemsList');
     container.empty();
-
     if (!cartItems || cartItems.length === 0) {
-        container.html(`
-            <div class="h-full flex flex-col items-center justify-center text-center opacity-40 py-10">
-                <span class="material-symbols-outlined text-6xl mb-md">shopping_basket</span>
-                <p class="font-headline-md text-body-lg">Cart is empty</p>
-                <p class="text-label-sm">Select items to start an order</p>
-            </div>
-        `);
         $('#checkoutBtn').prop('disabled', true);
         $('#proceedToPayBtn').prop('disabled', true);
+        $('#cartItemCount').text('0');
+        $('#cartItemCountPlural').text('s');
     } else {
         $('#checkoutBtn').prop('disabled', false);
         $('#proceedToPayBtn').prop('disabled', false);
+        $('#cartItemCount').text(cartItems.length);
+        $('#cartItemCountPlural').text(cartItems.length === 1 ? '' : 's');
         cartItems.forEach(item => {
             container.append(`
-                <div class="flex items-center gap-sm bg-surface-container-low p-2 rounded-xl border border-outline-variant border-opacity-20 hover:border-primary hover:border-opacity-35 transition-all duration-300">
-                    <div class="w-12 h-12 bg-surface-container rounded-lg overflow-hidden shrink-0 border border-outline-variant border-opacity-30">
+                <div class="cart-item-card flex items-center gap-sm bg-surface-container-low p-2.5 rounded-xl border border-outline-variant/20 hover:border-primary/35 transition-all duration-300">
+                    <div class="w-12 h-12 bg-surface-container rounded-lg overflow-hidden shrink-0 border border-outline-variant/30">
                         <img src="${item.image_url || 'https://images.unsplash.com/photo-1551024506-0bccd828d307?q=80&w=100&auto=format&fit=crop'}" class="w-full h-full object-cover" alt="${item.name}">
                     </div>
                     <div class="flex-grow min-w-0">
                         <h4 class="font-bold text-sm text-on-surface truncate m-0 font-label-md">${item.name}</h4>
-                        <p class="text-xs text-primary font-bold m-0 mt-0.5">₱${(item.price * item.quantity).toFixed(2)}</p>
+                        ${item.modifiers && item.modifiers.length > 0 ? `<div class="text-[10px] text-on-surface-variant opacity-70 mt-0.5 leading-tight">${item.modifiers.map(m => '+' + m.modifier_name).join(', ')}</div>` : ''}
+                        <p class="text-xs text-primary font-bold m-0 mt-0.5">₱${(item.subtotal || item.price * item.quantity).toFixed(2)}</p>
                     </div>
                     <div class="flex items-center gap-1.5 bg-surface-container-high rounded-full px-2 py-0.5 shrink-0">
                         <button onclick="updateCartQty(${item.id}, ${item.quantity - 1})" class="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-variant hover:text-primary transition-all text-on-surface-variant border-0 p-0" style="background:none;">
@@ -224,27 +271,24 @@ function renderCart(cartItems, subtotal, discount, total) {
                             <span class="material-symbols-outlined text-[14px] font-bold">add</span>
                         </button>
                     </div>
-                    <button onclick="removeFromCart(${item.id})" class="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant opacity-50 hover:opacity-100 hover:text-error hover:bg-error-container hover:bg-opacity-10 transition-all border-0 p-0 cursor-pointer" style="background:none;" title="Delete item">
+                    <button onclick="removeFromCart(${item.id})" class="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant opacity-50 hover:opacity-100 hover:text-error hover:bg-error-container/10 transition-all border-0 p-0 cursor-pointer" style="background:none;" title="Delete item">
                         <span class="material-symbols-outlined text-[18px]">delete</span>
                     </button>
                 </div>
             `);
         });
     }
-
     $('#cartSubtotal').text('₱' + parseFloat(subtotal).toFixed(2));
     $('#cartTotal').text('₱' + parseFloat(total).toFixed(2));
     
     // Recalculate change if amount tendered is already filled
     calculateChange();
 }
-
 // Calculate Change Amount
 function calculateChange() {
     const totalText = $('#cartTotal').text().replace('₱', '').replace(',', '');
     const total = parseFloat(totalText) || 0;
     const tendered = parseFloat($('#amountTendered').val()) || 0;
-
     if (tendered >= total && total > 0) {
         const change = tendered - total;
         $('#changeAmount').text('₱' + change.toFixed(2));
@@ -254,7 +298,6 @@ function calculateChange() {
         $('#checkoutBtn').prop('disabled', total <= 0);
     }
 }
-
 // Quick Cash Handler
 function selectQuickCash(amount) {
     const totalText = $('#cartTotal').text().replace('₱', '').replace(',', '');
@@ -263,18 +306,15 @@ function selectQuickCash(amount) {
     if (total <= 0) {
         return;
     }
-
     let tenderedValue = 0;
     if (amount === 'exact') {
         tenderedValue = total;
     } else {
         tenderedValue = parseFloat(amount) || 0;
     }
-
     $('#amountTendered').val(tenderedValue.toFixed(2));
     calculateChange();
 }
-
 // Show modular validation warning modal overlay
 function showWarningModal(message, title = 'Validation Error', buttonText = 'Correct Payment Amount', icon = 'undo') {
     $('#validationModalTitle').text(title);
@@ -295,7 +335,6 @@ function showWarningModal(message, title = 'Validation Error', buttonText = 'Cor
     modal.addClass('opacity-100').removeClass('opacity-0');
     modalContent.addClass('scale-100').removeClass('scale-95');
 }
-
 // Close validation warning modal overlay
 function closeValidationModal() {
     const modal = $('#validationModal');
@@ -314,7 +353,6 @@ function closeValidationModal() {
         }
     }, 300);
 }
-
 // Open Custom Confirm Clear Modal
 function openConfirmModal() {
     const modal = $('#confirmModal');
@@ -326,7 +364,6 @@ function openConfirmModal() {
     modal.addClass('opacity-100').removeClass('opacity-0');
     modalContent.addClass('scale-100').removeClass('scale-95');
 }
-
 // Close Custom Confirm Clear Modal
 function closeConfirmModal() {
     const modal = $('#confirmModal');
@@ -339,7 +376,6 @@ function closeConfirmModal() {
         modal.addClass('hidden');
     }, 300);
 }
-
 // Process Checkout
 function processCheckout() {
     const totalText = $('#cartTotal').text().replace('₱', '').replace(',', '');
@@ -347,27 +383,24 @@ function processCheckout() {
     const tendered = parseFloat($('#amountTendered').val()) || 0;
     const paymentMethod = $('#paymentMethod').val() || 'Cash';
     const orderType = $('#orderType').val() || 'Dine-in';
-
     if (total <= 0) {
         showWarningModal('Cannot checkout an empty cart.', 'Validation Error', 'Correct Payment Amount', 'undo');
         return;
     }
-
     if (tendered < total) {
         showWarningModal('Amount tendered is less than the total due amount.', 'Validation Error', 'Correct Payment Amount', 'undo');
         return;
     }
-
     $('#checkoutBtn').prop('disabled', true).html(`
         <span class="animate-spin material-symbols-outlined text-[20px]">sync</span>
         <span>Processing...</span>
     `);
-
     $.ajax({
         url: '?route=ajax/pos_cart',
         method: 'POST',
         data: {
             action: 'checkout',
+            request_key: posCheckoutKey,
             payment_method: paymentMethod,
             amount_tendered: tendered,
             order_type: orderType,
@@ -376,6 +409,7 @@ function processCheckout() {
         dataType: 'json',
         success: function(response) {
             if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                 // Show a stunning custom success transition overlay inside the modal instead of a blocking browser alert
                 $('#paymentSuccessScreen').removeClass('hidden');
                 
@@ -405,18 +439,15 @@ function processCheckout() {
         }
     });
 }
-
 // Update Product Stocks Dynamically in the DOM without a page refresh
 function updateProductStocks(updatedStocks) {
     if (!updatedStocks || !Array.isArray(updatedStocks)) return;
-
     updatedStocks.forEach(item => {
         const card = $(`.product-card[data-product-id="${item.id}"]`);
         if (card.length) {
             // Update stock attributes
             card.attr('data-product-stock', item.stock);
             card.data('product-stock', item.stock); // update jQuery cache
-
             // Update opacity & badge wrapper
             const badgeWrapper = card.find('.stock-badge-wrapper');
             if (item.stock <= 0) {
@@ -444,7 +475,6 @@ function updateProductStocks(updatedStocks) {
         }
     });
 }
-
 // Set Payment Method Selector (Cash, GCash, Card)
 function setPaymentMethod(method) {
     $('#paymentMethod').val(method);
@@ -492,7 +522,6 @@ function setPaymentMethod(method) {
     
     calculateChange();
 }
-
 // Open Payment Modal
 function openPaymentModal() {
     const modal = $('#paymentModal');
@@ -523,7 +552,6 @@ function openPaymentModal() {
         $('#amountTendered').focus().select();
     }, 200);
 }
-
 // Close Payment Modal
 function closePaymentModal() {
     const modal = $('#paymentModal');
@@ -537,9 +565,9 @@ function closePaymentModal() {
         $('#paymentSuccessScreen').addClass('hidden');
     }, 300);
 }
-
 // Fetch and Show Receipt Modal
 function showReceiptModal(saleId) {
+    window.currentActiveReceiptSaleId = saleId;
     $.ajax({
         url: '?route=ajax/pos_cart',
         method: 'POST',
@@ -570,6 +598,18 @@ function showReceiptModal(saleId) {
                 // Construct items list HTML
                 let itemsHtml = '';
                 sale.items.forEach(item => {
+                    let modsHtml = '';
+                    if (item.modifiers && item.modifiers.length > 0) {
+                        item.modifiers.forEach(mod => {
+                            const modPrice = parseFloat(mod.additional_price || 0);
+                            modsHtml += `
+                                <div class="flex justify-between items-center text-[10px] pl-3 mt-0.5" style="color: #8a6e70;">
+                                    <span class="font-medium">+ ${mod.modifier_name}</span>
+                                    ${modPrice > 0 ? `<span class="font-semibold" style="color: #b60e3d;">₱${modPrice.toFixed(2)}</span>` : ''}
+                                </div>
+                            `;
+                        });
+                    }
                     itemsHtml += `
                         <div class="flex flex-col text-xs pb-3 border-b border-dashed border-outline-variant border-opacity-30 last:border-0 last:pb-0 last:border-b-0">
                             <div class="flex justify-between items-baseline gap-2">
@@ -580,6 +620,7 @@ function showReceiptModal(saleId) {
                             <div class="flex justify-between items-center mt-1 text-[11px] text-on-surface-variant opacity-80">
                                 <span class="font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded">${item.quantity} x ₱${parseFloat(item.price).toFixed(2)}</span>
                             </div>
+                            ${modsHtml}
                         </div>
                     `;
                 });
@@ -593,7 +634,6 @@ function showReceiptModal(saleId) {
                     icon: 'payments',
                     glow: 'shadow-[0_4px_12px_rgba(16,185,129,0.04)]'
                 };
-
                 if (sale.payment_method === 'GCash') {
                     paymentTheme = {
                         bg: 'bg-blue-50/80',
@@ -657,9 +697,8 @@ function showReceiptModal(saleId) {
                             top: -4px;
                         }
                         .stamp-paid {
-                            border: 3px dashed rgba(182, 14, 61, 0.25);
-                            color: rgba(182, 14, 61, 0.55);
                             font-family: 'Montserrat', sans-serif;
+                            color: #b60e3d;
                         }
                         @media print {
                             .thermal-ticket {
@@ -669,18 +708,18 @@ function showReceiptModal(saleId) {
                             }
                         }
                     </style>
-
                     <div class="thermal-ticket p-5 md:p-6 relative overflow-hidden my-2 select-none">
                         <!-- Top serrated edge -->
                         <div class="serrated-edge serrated-top"></div>
                         
-                        <!-- Vintage "PAID" Ink Stamp -->
-                        <div class="absolute right-6 top-[108px] pointer-events-none select-none transform rotate-[-15deg] stamp-paid px-4 py-1.5 rounded-xl text-center font-black text-xs uppercase tracking-widest flex flex-col items-center justify-center animate-in fade-in duration-500 delay-300">
-                            <span class="text-[8px] font-bold opacity-80 tracking-widest">OFFICIAL</span>
-                            <span class="text-sm tracking-wider font-extrabold">PAID</span>
-                            <span class="text-[8px] font-bold opacity-85 mt-0.5 tracking-wider">${sale.payment_method}</span>
+                        <!-- Vintage "PAID" Watermark Stamp -->
+                        <div class="absolute inset-0 pointer-events-none select-none flex items-center justify-center z-0 opacity-15 stamp-paid">
+                            <div class="transform rotate-[-20deg] scale-[2.2] text-center font-black uppercase tracking-widest flex flex-col items-center justify-center">
+                                <span class="text-sm font-bold tracking-widest">OFFICIAL</span>
+                                <span class="text-2xl tracking-wider font-extrabold mt-1">PAID</span>
+                                <span class="text-xs font-bold mt-1 tracking-wider">${sale.payment_method}</span>
+                            </div>
                         </div>
-
                         <!-- Header -->
                         <div class="text-center mb-6 pb-5 border-b border-dashed border-outline-variant border-opacity-40 relative">
                             <h3 class="font-extrabold text-2xl text-primary m-0 font-headline-md tracking-wider uppercase font-headline-lg">${res.store.name}</h3>
@@ -689,7 +728,6 @@ function showReceiptModal(saleId) {
                                 <p class="m-0 flex items-center justify-center gap-1.5 font-medium"><span class="material-symbols-outlined text-[13px] text-primary">call</span> ${res.store.phone}</p>
                             </div>
                         </div>
-
                         <!-- Transaction Metadata -->
                         <div class="bg-[#f5f4ed] bg-opacity-40 rounded-2xl p-4 border border-[#e8e7df] space-y-2.5 mb-5 text-xs text-[#444648]">
                             <div class="flex justify-between items-center">
@@ -699,6 +737,13 @@ function showReceiptModal(saleId) {
                             <div class="flex justify-between items-center">
                                 <span class="opacity-80 font-bold uppercase tracking-wider text-[10px]">Date & Time:</span>
                                 <span class="font-bold text-on-surface text-[11px]">${formattedDate}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="opacity-80 font-bold uppercase tracking-wider text-[10px]">Branch:</span>
+                                <span class="font-bold text-on-surface flex items-center gap-1.5 text-[11px]">
+                                    <span class="material-symbols-outlined text-[14px] text-primary">store</span>
+                                    ${sale.branch_name || 'Main'}
+                                </span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="opacity-80 font-bold uppercase tracking-wider text-[10px]">Cashier:</span>
@@ -715,7 +760,6 @@ function showReceiptModal(saleId) {
                                 </span>
                             </div>
                         </div>
-
                         <!-- Itemized List -->
                         <div class="mb-5">
                             <div class="flex justify-between text-uppercase text-[10px] font-extrabold text-on-surface-variant opacity-70 mb-3.5 tracking-widest pb-2 border-b border-[#e8e7df]">
@@ -726,7 +770,6 @@ function showReceiptModal(saleId) {
                                 ${itemsHtml}
                             </div>
                         </div>
-
                         <!-- Totals Section -->
                         <div class="bg-[#fcfbf7] rounded-2xl p-4 border border-[#e8e7df] space-y-2.5 mb-5 text-xs text-[#444648] shadow-xs">
                             <div class="flex justify-between">
@@ -742,7 +785,6 @@ function showReceiptModal(saleId) {
                                 <span class="text-primary text-xl font-black tracking-wide">₱${parseFloat(sale.final_amount).toFixed(2)}</span>
                             </div>
                         </div>
-
                         <!-- Payment details and Change Banner -->
                         <div class="bg-[#fcfbf7] border border-[#e8e7df] rounded-2xl p-4 space-y-2.5 mb-5 text-xs text-[#444648] shadow-xs">
                             <div class="flex justify-between items-center">
@@ -765,7 +807,6 @@ function showReceiptModal(saleId) {
                                 <span class="font-black text-lg ${paymentTheme.accent}">₱${parseFloat(sale.change_amount).toFixed(2)}</span>
                             </div>
                         </div>
-
                         <!-- Simulated Barcode -->
                         <div class="flex flex-col items-center justify-center my-6 py-2.5 bg-white rounded-2xl border border-[#e8e7df] border-opacity-40">
                             <div class="flex justify-center items-center gap-[1.5px] opacity-80 h-8 px-4">
@@ -806,7 +847,6 @@ function showReceiptModal(saleId) {
                             </div>
                             <span class="font-mono text-[9px] tracking-[6px] text-on-surface-variant font-bold mt-1.5 opacity-80 text-center uppercase pr-[-6px]">*SHH-${receiptNo}*</span>
                         </div>
-
                         <!-- Footer -->
                         <div class="text-center text-on-surface-variant opacity-85 mt-4">
                             <div class="flex items-center justify-center gap-1.5 mb-1.5">
@@ -850,7 +890,6 @@ function showReceiptModal(saleId) {
         }
     });
 }
-
 // Open Receipt Modal
 function openReceiptModal() {
     const modal = $('#receiptModal');
@@ -862,7 +901,6 @@ function openReceiptModal() {
     modal.addClass('opacity-100').removeClass('opacity-0');
     modalContent.addClass('scale-100').removeClass('scale-95');
 }
-
 // Close Receipt Modal
 function closeReceiptModal() {
     const modal = $('#receiptModal');
@@ -876,9 +914,12 @@ modal.addClass('opacity-0').removeClass('opacity-100');
         loadCart(); // Sync dashboard active cart
     }, 300);
 }
-
-// Print Modal Receipt in Isolated Print Frame
+// Print Modal Receipt in Dedicated Workstation or Isolated Print Frame
 function printModalReceipt() {
+    if (window.currentActiveReceiptSaleId) {
+        window.location.href = '?route=pos/receipt&id=' + window.currentActiveReceiptSaleId;
+        return;
+    }
     const receiptContent = $('#historyReceiptModalBody').length ? $('#historyReceiptModalBody').html() : $('#receiptModalBody').html();
     
     let iframe = document.getElementById('receiptPrintIframe');
@@ -939,7 +980,6 @@ function printModalReceipt() {
                     margin: 0 auto;
                     overflow: hidden !important;
                 }
-
                 /* Premium Thermal Ticket Styling for Modal Receipt */
                 .thermal-ticket {
                     background-color: #fdfdfa !important;
@@ -1512,7 +1552,6 @@ function printModalReceipt() {
                     .no-print {
                         display: none !important;
                     }
-
                     /* Semantic receipt class support */
                     .stamp-title, .stamp-method {
                         font-size: 6px !important;
@@ -1714,7 +1753,6 @@ function toggleHotkeysGuide(forceState = null) {
         localStorage.setItem('pos_hotkeys_expanded', 'false');
     }
 }
-
 // Auto-restore Hotkeys Guide State on load
 function initHotkeysGuide() {
     const expanded = localStorage.getItem('pos_hotkeys_expanded');
@@ -1724,7 +1762,6 @@ function initHotkeysGuide() {
         toggleHotkeysGuide(true); // Default to expanded (true) if null or 'true'
     }
 }
-
 // POS Keyboard Hotkeys Dispatcher
 $(document).keydown(function(e) {
     // 1. Focus Search (F7)
@@ -1766,7 +1803,6 @@ $(document).keydown(function(e) {
             processCheckout();
         }
     }
-
     // 7. Close Modals (F10)
     if (e.key === "F10") {
         e.preventDefault();
@@ -1776,12 +1812,10 @@ $(document).keydown(function(e) {
         closeConfirmModal();
     }
 });
-
 // Product Detail page Add to POS Cart button listener
 $(document).ready(function() {
     // Init Hotkeys Guide State
     initHotkeysGuide();
-
     // Dynamic click listener for POS product cards
     $(document).on('click', '.product-card', function() {
         const card = $(this);
@@ -1789,19 +1823,25 @@ $(document).ready(function() {
         const name = card.data('product-name');
         const price = parseFloat(card.data('product-price'));
         const stock = parseInt(card.data('product-stock'));
-
-        if (stock > 0) {
-            addToCart(id, name, price, stock);
-        } else {
+        if (stock <= 0) {
             showWarningModal('This item is currently sold out!', 'Out of Stock', 'Review Inventory', 'inventory_2');
+            return;
         }
+        // Check if product has modifiers
+        $.post('?route=ajax/inventory_action', { action: 'get_product_modifiers', product_id: id, csrf_token: getCsrfToken() }, function(res) {
+            if (res.success && res.modifiers && res.modifiers.length > 0) {
+                openModifierModal(id, name, price, stock, res.modifiers);
+            } else {
+                addToCart(id, name, price, stock);
+            }
+        }, 'json').fail(function() {
+            addToCart(id, name, price, stock);
+        });
     });
-
     $('.add-to-pos-btn').click(function() {
         const id = $(this).data('id');
         const name = $(this).data('name');
         const price = $(this).data('price');
-
         $.ajax({
             url: '?route=ajax/pos_cart',
             method: 'POST',
@@ -1816,6 +1856,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 if (response.success) {
+                if (response.request_key) posCheckoutKey = response.request_key;
                     alert('Product added to POS Cart successfully!');
                     window.location.href = '?route=pos';
                 } else {
@@ -1824,7 +1865,6 @@ $(document).ready(function() {
             }
         });
     });
-
     // Close Payment Modal when Escape key is pressed
     $(document).keyup(function(e) {
         if (e.key === "Escape") { 
@@ -1834,28 +1874,24 @@ $(document).ready(function() {
             closeConfirmModal();
         }
     });
-
     // Close Payment Modal when clicking on the backdrop overlay
     $('#paymentModal').click(function(e) {
         if (e.target === this) {
             closePaymentModal();
         }
     });
-
     // Close Receipt Modal when clicking on the backdrop overlay
     $('#receiptModal').click(function(e) {
         if (e.target === this) {
             closeReceiptModal();
         }
     });
-
     // Close Validation Modal when clicking on the backdrop overlay
     $('#validationModal').click(function(e) {
         if (e.target === this) {
             closeValidationModal();
         }
     });
-
     // Close Confirm Modal when clicking on the backdrop overlay
     $('#confirmModal').click(function(e) {
         if (e.target === this) {

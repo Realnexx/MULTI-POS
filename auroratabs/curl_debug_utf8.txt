@@ -1,0 +1,317 @@
+﻿curl.exe : Note: 
+Unnecessary use of -X 
+or --request, POST is 
+already inferred.
+At line:1 char:1
++ curl.exe -v -L -X 
+POST -H 
+"Content-Type: 
+application/json" -d 
+"{\"ema ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: (Note: Unne   
+ cessa...ready inf    
+erred.:String) []    
+, RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+* URL rejected: Port 
+number was not a 
+decimal number 
+between 0 and 65535
+* closing connection 
+#-1
+curl: (3) URL 
+rejected: Port number 
+was not a decimal 
+number between 0 and 
+65535
+Note: Unnecessary use 
+of -X or --request, 
+POST is already 
+inferred.
+  % Total    % 
+Received % Xferd  
+Average Speed   Time  
+  Time     Time  
+Current
+                      
+           Dload  
+Upload   Total   
+Spent    Left  Speed
+
+  0     0    0     0  
+  0     0      0      
+0 --:--:-- --:--:-- 
+--:--:--     0* Host 
+script.google.com:443 
+was resolved.
+* IPv6: (none)
+* IPv4: 142.251.221.46
+*   Trying 
+142.251.221.46:443...
+* schannel: disabled 
+automatic use of 
+client certificate
+* ALPN: curl offers 
+http/1.1
+* ALPN: server 
+accepted http/1.1
+* Connected to 
+script.google.com 
+(142.251.221.46) port 
+443
+* using HTTP/1.x
+> POST /macros/s/AKfyc
+bx_Crrx5oNzhygP5jFsyaY
+tCBNilMjyDqlplpVlIbnXZ
+QRQuBKTPk60I7oRog4ScMg
+/exec HTTP/1.1
+
+> Host: 
+script.google.com
+
+> User-Agent: 
+curl/8.13.0
+
+> Accept: */*
+
+> Content-Type: 
+application/json
+
+> Content-Length: 2
+
+> 
+
+} [2 bytes data]
+* upload completely 
+sent off: 2 bytes
+* schannel: remote 
+party requests 
+renegotiation
+* schannel: 
+renegotiating SSL/TLS 
+connection
+* schannel: SSL/TLS 
+connection 
+renegotiated
+< HTTP/1.1 302 Moved 
+Temporarily
+
+< Content-Type: 
+text/html; 
+charset=UTF-8
+
+< Access-Control-Allow
+-Origin: *
+
+< Cache-Control: 
+no-cache, no-store, 
+max-age=0, 
+must-revalidate
+
+< Pragma: no-cache
+
+< Expires: Mon, 01 
+Jan 1990 00:00:00 GMT
+
+< Date: Mon, 19 Jan 
+2026 07:13:22 GMT
+
+* Need to rewind 
+upload for next 
+request
+< Location: https://sc
+ript.googleusercontent
+.com/macros/echo?user_
+content_key=AehSKLjeSP
+8JiEffC37adKNQbbjbW7O_
+yk9NmaZoVDoYhO8TwmradJ
+zHoEn6wvGneIQTyn_Bu6q9
+0fAUn0jm7Gbvu5R99p1iS2
+Tb_6FzTl-9HUOT0mhqjZau
+69HEOETUWqUpVjUOLbmFCO
+XhodmDQ4sdJ9CsKTc2nRBc
+XfsT_WzqiN2fChh80GyCgb
+LOsgvbajKpTdvfl21Tl1-p
+PC_g-OOqY9TpLMZiBNe_Kx
+AajTAkdzL11XMQuvMFcny-
+plLDD_O6GGdug5vsDUTT81
+Dt6G8svKhmQtb9Og&lib=M
+e_Afn76W-gWbZNNjyOAkvn
+648eygWYkD
+
+< X-Content-Type-Optio
+ns: nosniff
+
+< X-Frame-Options: 
+SAMEORIGIN
+
+< Content-Security-Pol
+icy: frame-ancestors 
+'self'
+
+< X-XSS-Protection: 
+1; mode=block
+
+< Server: GSE
+
+< Alt-Svc: h3=":443"; 
+ma=2592000,h3-29=":443
+"; ma=2592000
+
+< Accept-Ranges: none
+
+< Vary: 
+Accept-Encoding
+
+< Transfer-Encoding: 
+chunked
+
+* Ignoring the 
+response-body
+< 
+
+
+100   609    0   607  
+100     2    553      
+1  0:00:02  0:00:01  
+0:00:01   556
+100   609    0   607  
+100     2    553      
+1  0:00:02  0:00:01  
+0:00:01   556
+* Connection #0 to 
+host 
+script.google.com 
+left intact
+* Issue another 
+request to this URL: '
+https://script.googleu
+sercontent.com/macros/
+echo?user_content_key=
+AehSKLjeSP8JiEffC37adK
+NQbbjbW7O_yk9NmaZoVDoY
+hO8TwmradJzHoEn6wvGneI
+QTyn_Bu6q90fAUn0jm7Gbv
+u5R99p1iS2Tb_6FzTl-9HU
+OT0mhqjZau69HEOETUWqUp
+VjUOLbmFCOXhodmDQ4sdJ9
+CsKTc2nRBcXfsT_WzqiN2f
+Chh80GyCgbLOsgvbajKpTd
+vfl21Tl1-pPC_g-OOqY9Tp
+LMZiBNe_KxAajTAkdzL11X
+MQuvMFcny-plLDD_O6GGdu
+g5vsDUTT81Dt6G8svKhmQt
+b9Og&lib=Me_Afn76W-gWb
+ZNNjyOAkvn648eygWYkD'
+* Stick to POST 
+instead of GET
+* Host script.googleus
+ercontent.com:443 was 
+resolved.
+* IPv6: (none)
+* IPv4: 
+142.251.221.1, 
+142.251.220.129
+*   Trying 
+142.251.221.1:443...
+* schannel: disabled 
+automatic use of 
+client certificate
+* ALPN: curl offers 
+http/1.1
+* ALPN: server 
+accepted http/1.1
+* Connected to script.
+googleusercontent.com 
+(142.251.221.1) port 
+443
+* using HTTP/1.x
+> POST /macros/echo?us
+er_content_key=AehSKLj
+eSP8JiEffC37adKNQbbjbW
+7O_yk9NmaZoVDoYhO8Twmr
+adJzHoEn6wvGneIQTyn_Bu
+6q90fAUn0jm7Gbvu5R99p1
+iS2Tb_6FzTl-9HUOT0mhqj
+Zau69HEOETUWqUpVjUOLbm
+FCOXhodmDQ4sdJ9CsKTc2n
+RBcXfsT_WzqiN2fChh80Gy
+CgbLOsgvbajKpTdvfl21Tl
+1-pPC_g-OOqY9TpLMZiBNe
+_KxAajTAkdzL11XMQuvMFc
+ny-plLDD_O6GGdug5vsDUT
+T81Dt6G8svKhmQtb9Og&li
+b=Me_Afn76W-gWbZNNjyOA
+kvn648eygWYkD HTTP/1.1
+
+> Host: script.googleu
+sercontent.com
+
+> User-Agent: 
+curl/8.13.0
+
+> Accept: */*
+
+> Content-Type: 
+application/json
+
+> 
+
+* Request completely 
+sent off
+* schannel: remote 
+party requests 
+renegotiation
+* schannel: 
+renegotiating SSL/TLS 
+connection
+* schannel: SSL/TLS 
+connection 
+renegotiated
+* HTTP 1.0, assume 
+close after body
+< HTTP/1.0 411 Length 
+Required
+
+< Content-Type: 
+text/html; 
+charset=UTF-8
+
+< Referrer-Policy: 
+no-referrer
+
+< Content-Length: 1564
+
+< Date: Mon, 19 Jan 
+2026 07:13:22 GMT
+
+< 
+
+{ [1564 bytes data]
+
+100  1564  100  1564  
+  0     0   1154      
+0  0:00:01  0:00:01 
+--:--:--  1154
+* shutting down 
+connection #1
+<!DOCTYPE html>
+<html lang=en>
+  <meta charset=utf-8>
+  <meta name=viewport content="initial-scale=1, minimum-scale=1, width=device-width">
+  <title>Error 411 (Length Required)!!1</title>
+  <style>
+    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width:772px){body{background:none;margin-top:0;max-width:none;padding-right:0}}#logo{background:url(//www.google.com/images/branding/googlelogo/1x/googlelogo_color_150x54dp.png) no-repeat;margin-left:-5px}@media only screen and (min-resolution:192dpi){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat 0% 0%/100% 100%;-moz-border-image:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) 0}}@media only screen and (-webkit-min-device-pixel-ratio:2){#logo{background:url(//www.google.com/images/branding/googlelogo/2x/googlelogo_color_150x54dp.png) no-repeat;-webkit-background-size:100% 100%}}#logo{display:inline-block;height:54px;width:150px}
+  </style>
+  <a href=//www.google.com/><span id=logo aria-label=Google></span></a>
+  <p><b>411.</b> <ins>ThatΓÇÖs an error.</ins>
+  <p>POST requests require a <code>Content-length</code> header.  <ins>ThatΓÇÖs all we know.</ins>

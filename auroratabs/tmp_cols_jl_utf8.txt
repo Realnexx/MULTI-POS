@@ -1,0 +1,9 @@
+﻿
+--- judge_locks ---
+  id (bigint(20) unsigned)
+  judge_id (bigint(20) unsigned)
+  competition_id (bigint(20) unsigned)
+  category_id (bigint(20) unsigned)
+  candidate_id (bigint(20) unsigned)
+  is_locked (tinyint(1))
+  locked_at (timestamp)

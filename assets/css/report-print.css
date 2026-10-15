@@ -1,0 +1,33 @@
+*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#27364b;font:12px/1.45 Arial,sans-serif}.print-toolbar{max-width:1060px;margin:18px auto;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:0 16px}.print-toolbar a,.print-toolbar button{font:600 12px Arial,sans-serif;padding:9px 14px;border-radius:8px;border:1px solid #dfe7f2;background:white;color:#52647d;text-decoration:none;cursor:pointer}.print-toolbar button{background:#3563e9;color:white;border-color:#3563e9;box-shadow:0 3px 9px #3563e929}.print-sheet{max-width:1060px;margin:0 auto 24px;background:white;padding:26px;border:1px solid #e1e8f2;border-radius:12px}.print-heading{display:flex;justify-content:space-between;gap:18px;border-bottom:2px solid #5d87ff;padding-bottom:14px;margin-bottom:14px}.print-heading h1{font-size:21px;margin:0 0 4px}.print-heading p{margin:0;color:#7d8ba0}.print-meta{text-align:right;color:#7d8ba0;font-size:11px}.print-filters{font-size:11px;color:#63738b;background:#f7f9fc;border:1px solid #edf1f7;border-radius:8px;padding:10px 12px;margin-bottom:14px}.print-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}.print-stat{padding:12px;border:1px solid #e5ebf4;border-radius:8px;break-inside:avoid}.print-stat span{display:block;font-size:10px;color:#7d8ba0;margin-bottom:6px}.print-stat strong{font-size:17px;overflow-wrap:anywhere}.print-section{margin-top:18px}.print-section h2{font-size:13px;margin:0 0 9px}.print-table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#f4f7fc;color:#63738b;text-align:left;font-size:10px}th,td{padding:8px 9px;border-bottom:1px solid #e7edf5;vertical-align:top;overflow-wrap:anywhere}thead{display:table-header-group}tr{break-inside:avoid}tfoot{font-weight:bold}td.empty{text-align:center;padding:22px;color:#8996aa}.print-note{font-size:10px;color:#7d8ba0;margin-top:14px}.print-footer{margin-top:20px;padding-top:10px;border-top:1px solid #e7edf5;font-size:10px;color:#8996aa}.number{text-align:right;white-space:nowrap}@media(max-width:600px){.print-sheet{padding:16px;border-radius:0}.print-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.print-heading{flex-direction:column;gap:6px}.print-meta{text-align:left}table{min-width:600px}.print-toolbar{flex-wrap:wrap}}@media print{@page{size:A4 landscape;margin:10mm}body{background:white;font-size:10px}.print-toolbar{display:none}.print-sheet{max-width:none;margin:0;padding:0;border:0;border-radius:0}.print-heading h1{font-size:18px}.print-heading{flex-direction:row}.print-meta{text-align:right}.print-stats{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.print-stat{padding:8px}.print-stat strong{font-size:14px}.print-table-wrap{overflow:visible}table{min-width:0;font-size:9px}th{font-size:9px}th,td{padding:5px 6px}a{color:inherit;text-decoration:none}.print-filters,th,.print-stat{-webkit-print-color-adjust:exact;print-color-adjust:exact}.print-section h2{break-after:avoid}}
+
+.print-toolbar button:hover{background:#244fd0;border-color:#244fd0}.print-toolbar button:focus-visible{outline:3px solid #b2c4ff;outline-offset:3px}
+
+/* Keep each sale on one line; reserve space for complete amounts and dates. */
+.print-table-wrap th {white-space:nowrap;overflow-wrap:normal;}
+.report-sales-table {table-layout:fixed;min-width:1000px;}
+.report-sales-table th,.report-sales-table td {white-space:nowrap;overflow-wrap:normal;overflow:hidden;text-overflow:ellipsis;padding-left:6px;padding-right:6px;}
+.report-sales-table th:nth-child(1) {width:5%;}
+.report-sales-table th:nth-child(2) {width:12%;}
+.report-sales-table th:nth-child(3) {width:20%;}
+.report-sales-table th:nth-child(4) {width:6%;}
+.report-sales-table th:nth-child(5) {width:8%;}
+.report-sales-table th:nth-child(6) {width:7%;}
+.report-sales-table th:nth-child(7) {width:8%;}
+.report-sales-table th:nth-child(8) {width:8%;}
+.report-sales-table th:nth-child(9) {width:9%;}
+.report-sales-table th:nth-child(10) {width:17%;}
+@media print {.report-sales-table {min-width:0;}.report-sales-table th,.report-sales-table td {padding-left:4px;padding-right:4px;}}
+
+/* Formal letterhead shared by expense and inventory report printouts. */
+.print-formal-header {display:block;border-bottom:2px solid #34435b;padding-bottom:14px;}
+.print-letterhead {text-align:center;border-bottom:1px solid #e1e8f2;padding:2px 0 14px;margin-bottom:14px;}
+.print-letterhead .print-business-name {font-size:20px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#27364b;overflow-wrap:anywhere;}
+.print-letterhead .print-business-caption {font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:5px;}
+.print-document-heading {display:flex;align-items:center;justify-content:space-between;gap:18px;}
+.print-heading .print-document-label {font-size:9px;font-weight:700;color:#63738b;letter-spacing:1.8px;margin-bottom:5px;}
+.print-document-heading h1 {font-size:19px;margin:0;}
+.print-document-heading .print-meta {display:grid;gap:8px;}
+.print-meta span {display:block;font-size:9px;color:#8996aa;}
+.print-meta strong {display:block;font-size:10px;font-weight:500;color:#34435b;}
+@media(max-width:600px) {.print-document-heading {align-items:flex-start;flex-direction:column;gap:12px;}.print-document-heading .print-meta {grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;text-align:left;}.print-letterhead .print-business-name {font-size:18px;}}
+@media print {.print-formal-header {display:block;}.print-document-heading {flex-direction:row;align-items:center;}.print-document-heading .print-meta {display:grid;grid-template-columns:none;gap:6px;text-align:right;}.print-letterhead {padding-bottom:10px;margin-bottom:10px;}.print-letterhead .print-business-name {font-size:18px;}}

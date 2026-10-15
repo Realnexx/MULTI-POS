@@ -10,9 +10,8 @@ class Expense {
         if ($branch_id) {
             $where[] = "e.branch_id = " . intval($branch_id);
         }
-        if ($start_date && $end_date) {
-            $where[] = "e.expense_date BETWEEN '" . $conn->real_escape_string($start_date) . "' AND '" . $conn->real_escape_string($end_date) . "'";
-        }
+        if ($start_date) $where[] = "e.expense_date >= '" . $conn->real_escape_string($start_date) . "'";
+        if ($end_date) $where[] = "e.expense_date <= '" . $conn->real_escape_string($end_date) . "'";
 
         if (!empty($where)) {
             $sql .= " WHERE " . implode(" AND ", $where);
@@ -40,8 +39,11 @@ class Expense {
         $date = $conn->real_escape_string($data['expense_date']);
         $description = $conn->real_escape_string($data['description'] ?? '');
 
-        return $conn->query("INSERT INTO expenses (branch_id, category, amount, expense_date, description) 
-                             VALUES ($branch_id, '$category', $amount, '$date', '$description')");
+        if ($conn->query("INSERT INTO expenses (branch_id, category, amount, expense_date, description) 
+                             VALUES ($branch_id, '$category', $amount, '$date', '$description')")) {
+            return $conn->insert_id;
+        }
+        return false;
     }
 
     public static function delete($id) {
@@ -73,6 +75,101 @@ class Expense {
                              expense_date = '$date', 
                              description = '$description' 
                              WHERE id = $id");
+    }
+
+    public static function get_dt_expenses($start, $length, $search, $order_col, $order_dir, $branch_id = null, $start_date = null, $end_date = null)
+    {
+        global $conn;
+        $order_dir = strtoupper((string)$order_dir) === 'ASC' ? 'ASC' : 'DESC';
+        $sql = "SELECT e.*, b.name as branch_name 
+                FROM expenses e 
+                LEFT JOIN branches b ON e.branch_id = b.id
+                WHERE 1=1";
+
+        if ($branch_id !== null) {
+            $sql .= " AND e.branch_id = " . (int) $branch_id;
+        }
+        if ($start_date) {
+            $sd = $conn->real_escape_string($start_date);
+            $sql .= " AND e.expense_date >= '$sd'";
+        }
+        if ($end_date) {
+            $ed = $conn->real_escape_string($end_date);
+            $sql .= " AND e.expense_date <= '$ed'";
+        }
+        if (!empty($search)) {
+            $s = "%$search%";
+            $sql .= " AND (e.category LIKE ? OR e.description LIKE ? OR b.name LIKE ?)";
+        }
+
+        $order_cols = ['e.expense_date', 'e.category', 'e.description', 'b.name', 'e.amount'];
+        $order_by = $order_cols[$order_col] ?? 'e.expense_date';
+        $sql .= " ORDER BY $order_by $order_dir LIMIT ?, ?";
+
+        $stmt = $conn->prepare($sql);
+        if (!empty($search)) {
+            $stmt->bind_param("sssii", $s, $s, $s, $start, $length);
+        } else {
+            $stmt->bind_param("ii", $start, $length);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $rows = $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+        $stmt->close();
+        return $rows;
+    }
+
+    public static function count_dt_expenses_filtered($search, $branch_id = null, $start_date = null, $end_date = null)
+    {
+        global $conn;
+        $sql = "SELECT COUNT(*) as count 
+                FROM expenses e 
+                LEFT JOIN branches b ON e.branch_id = b.id
+                WHERE 1=1";
+
+        if ($branch_id !== null) {
+            $sql .= " AND e.branch_id = " . (int) $branch_id;
+        }
+        if ($start_date) {
+            $sd = $conn->real_escape_string($start_date);
+            $sql .= " AND e.expense_date >= '$sd'";
+        }
+        if ($end_date) {
+            $ed = $conn->real_escape_string($end_date);
+            $sql .= " AND e.expense_date <= '$ed'";
+        }
+        if (!empty($search)) {
+            $s = "%$search%";
+            $stmt = $conn->prepare($sql . " AND (e.category LIKE ? OR e.description LIKE ? OR b.name LIKE ?)");
+            $stmt->bind_param("sss", $s, $s, $s);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $count = ($result && $row = $result->fetch_assoc()) ? (int) $row['count'] : 0;
+            $stmt->close();
+            return $count;
+        } else {
+            $result = $conn->query($sql);
+            return ($result && $row = $result->fetch_assoc()) ? (int) $row['count'] : 0;
+        }
+    }
+
+    public static function get_total_expenses_count($branch_id = null, $start_date = null, $end_date = null)
+    {
+        global $conn;
+        $sql = "SELECT COUNT(*) as count FROM expenses e WHERE 1=1";
+        if ($branch_id !== null) {
+            $sql .= " AND e.branch_id = " . (int) $branch_id;
+        }
+        if ($start_date) {
+            $sd = $conn->real_escape_string($start_date);
+            $sql .= " AND e.expense_date >= '$sd'";
+        }
+        if ($end_date) {
+            $ed = $conn->real_escape_string($end_date);
+            $sql .= " AND e.expense_date <= '$ed'";
+        }
+        $result = $conn->query($sql);
+        return ($result && $row = $result->fetch_assoc()) ? (int) $row['count'] : 0;
     }
 
     public static function get_stats($branch_id = null, $start_date = null, $end_date = null) {

@@ -1,0 +1,72 @@
+Array
+(
+    [Field] => id
+    [Type] => bigint(20) unsigned
+    [Null] => NO
+    [Key] => PRI
+    [Default] => 
+    [Extra] => auto_increment
+)
+Array
+(
+    [Field] => candidate_id
+    [Type] => bigint(20) unsigned
+    [Null] => NO
+    [Key] => MUL
+    [Default] => 
+    [Extra] => 
+)
+Array
+(
+    [Field] => vote_count
+    [Type] => int(11)
+    [Null] => YES
+    [Key] => 
+    [Default] => 1
+    [Extra] => 
+)
+Array
+(
+    [Field] => user_id
+    [Type] => bigint(20) unsigned
+    [Null] => YES
+    [Key] => 
+    [Default] => 
+    [Extra] => 
+)
+Array
+(
+    [Field] => package_id
+    [Type] => bigint(20) unsigned
+    [Null] => YES
+    [Key] => 
+    [Default] => 
+    [Extra] => 
+)
+Array
+(
+    [Field] => transaction_id
+    [Type] => bigint(20) unsigned
+    [Null] => YES
+    [Key] => 
+    [Default] => 
+    [Extra] => 
+)
+Array
+(
+    [Field] => ip_address
+    [Type] => varchar(45)
+    [Null] => YES
+    [Key] => 
+    [Default] => 
+    [Extra] => 
+)
+Array
+(
+    [Field] => created_at
+    [Type] => timestamp
+    [Null] => NO
+    [Key] => 
+    [Default] => current_timestamp()
+    [Extra] => 
+)

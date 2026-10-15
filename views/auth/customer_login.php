@@ -1,246 +1,318 @@
 <?php
-$title = "Club Member Login | Stacey Halu Halu - Sweet Efficiency";
+$store_name = $store_name ?? 'MultiPOS';
+$store_logo = $store_logo ?? 'assets/img/logo.png';
+$title = "Customer Login | " . htmlspecialchars($store_name) . " - MultiPOS";
 ?>
-<!DOCTYPE html>
-<html class="light" lang="en">
+<!doctype html>
+<html lang="en">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<?php require __DIR__.'/../partials/site_favicon.php'; ?>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title><?= htmlspecialchars($title) ?></title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
     <meta name="csrf-token" content="<?= csrf_token() ?>">
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    "colors": {
-                        "surface-container-lowest": "#ffffff",
-                        "inverse-primary": "#ffb2b8",
-                        "outline": "#8e6f71",
-                        "surface-container-low": "#f3f4f5",
-                        "surface-container-highest": "#e1e3e4",
-                        "on-surface-variant": "#5a4042",
-                        "outline-variant": "#e2bec0",
-                        "tertiary-fixed-dim": "#ffba27",
-                        "on-secondary-fixed-variant": "#6b00af",
-                        "primary-container": "#da3054",
-                        "on-background": "#191c1d",
-                        "tertiary-fixed": "#ffdea9",
-                        "tertiary": "#7a5500",
-                        "error": "#ba1a1a",
-                        "on-tertiary": "#ffffff",
-                        "on-tertiary-container": "#fffbff",
-                        "tertiary-container": "#996c00",
-                        "surface-dim": "#d9dadb",
-                        "surface": "#f8f9fa",
-                        "inverse-surface": "#2e3132",
-                        "on-primary": "#ffffff",
-                        "secondary-fixed": "#f2daff",
-                        "on-surface": "#191c1d",
-                        "on-primary-fixed": "#40000f",
-                        "surface-container": "#edeeef",
-                        "surface-variant": "#e1e3e4",
-                        "secondary-fixed-dim": "#e0b6ff",
-                        "on-secondary-fixed": "#2e004e",
-                        "on-primary-container": "#fffbff",
-                        "secondary-container": "#9e49e3",
-                        "primary": "#b60e3d",
-                        "background": "#f8f9fa",
-                        "surface-tint": "#ba1340",
-                        "primary-fixed": "#ffdadb",
-                        "on-error": "#ffffff",
-                        "error-container": "#ffdad6",
-                        "primary-fixed-dim": "#ffb2b8",
-                        "on-primary-fixed-variant": "#91002d",
-                        "on-secondary": "#ffffff",
-                        "secondary": "#8429c8",
-                        "on-tertiary-fixed-variant": "#5e4100",
-                        "surface-container-high": "#e7e8e9",
-                        "on-tertiary-fixed": "#271900",
-                        "on-secondary-container": "#fffbff",
-                        "inverse-on-surface": "#f0f1f2",
-                        "surface-bright": "#f8f9fa",
-                        "on-error-container": "#93000a"
-                    },
-                    "borderRadius": {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "2xl": "1rem",
-                        "full": "9999px"
-                    },
-                    "spacing": {
-                        "margin-desktop": "32px",
-                        "xs": "4px",
-                        "gutter": "24px",
-                        "base": "8px",
-                        "margin-mobile": "16px",
-                        "xl": "64px",
-                        "lg": "40px",
-                        "sm": "12px",
-                        "md": "24px"
-                    },
-                    "fontFamily": {
-                        "display-lg": ["Montserrat"],
-                        "headline-md": ["Montserrat"],
-                        "headline-lg": ["Montserrat"],
-                        "body-md": ["Inter"],
-                        "label-sm": ["Inter"],
-                        "label-md": ["Inter"],
-                        "body-lg": ["Inter"]
-                    },
-                    "fontSize": {
-                        "display-lg": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
-                        "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
-                        "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "600"}],
-                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
-                        "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "500"}],
-                        "label-md": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
-                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}]
-                    }
-                }
-            }
-        }
-    </script>
+
+    <!-- Modernize & AuroraTabs Admin Assets -->
+    
+    <link rel="stylesheet" href="<?= url('assets/admin/css/styles.min.css') ?>" />
+    <link rel="stylesheet" href="<?= url('assets/admin/css/custom.css') ?>" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/iconify-icon@1.0.8/dist/iconify-icon.min.js"></script>
+    <script src="<?= url('assets/admin/libs/jquery/dist/jquery.min.js') ?>"></script>
+
     <style>
         body {
-            background-color: #f8f9fa;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            background: #f4f6fa;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            vertical-align: middle;
+
+        /* Ambient Glow & Grid Accents */
+        .auth-bg-ambient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(93, 135, 255, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(19, 222, 185, 0.10) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(93, 135, 255, 0.05) 0%, transparent 60%);
         }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
+
+        .auth-card {
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.05), 0 2px 8px rgba(93, 135, 255, 0.04);
+            background: #ffffff;
+            backdrop-filter: blur(16px);
+            transition: all 0.3s ease;
         }
-        .form-input-shadow:focus {
-            box-shadow: 0 0 0 4px rgba(182, 14, 61, 0.15);
+
+        /* Prevent auto-zoom on iOS Safari by keeping font-size >= 16px */
+        .form-control-modern {
+            height: 48px;
+            border-radius: 12px;
+            border: 1px solid #dfe5ef;
+            padding-left: 44px;
+            font-size: 16px;
+            color: #1e293b;
+            background-color: #f8fafc;
+            transition: all 0.2s ease;
+        }
+
+        .form-control-modern:focus {
+            background-color: #ffffff;
+            border-color: #5d87ff;
+            box-shadow: 0 0 0 4px rgba(93, 135, 255, 0.12);
+        }
+
+        .input-icon-left {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #7c8fac;
+            font-size: 20px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #7c8fac;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 5;
+            transition: color 0.15s ease;
+            border-radius: 8px;
+        }
+
+        .password-toggle-btn:hover {
+            color: #5d87ff;
+        }
+
+        .btn-submit-modern {
+            min-height: 48px;
+            border-radius: 12px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            box-shadow: 0 6px 18px rgba(93, 135, 255, 0.32);
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit-modern:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(93, 135, 255, 0.40);
+        }
+
+        .btn-submit-modern:active {
+            transform: translateY(1px);
+        }
+
+        .btn-portal-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 575.98px) {
+            .auth-card {
+                border-radius: 16px;
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+            }
+            .brand-title-text {
+                max-width: 140px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .btn-portal-pill {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
         }
     </style>
 </head>
-<body class="bg-background text-on-background min-h-screen flex items-center justify-center p-0 md:p-6 lg:p-margin-desktop overflow-x-hidden selection:bg-primary-fixed-dim">
 
-<?php require_once __DIR__ . '/../partials/toast.php'; ?>
+<body>
+    <!-- Background Ambient Glow -->
+    <div class="auth-bg-ambient"></div>
 
-<!-- Split Screen Container -->
-<main class="relative w-full max-w-7xl min-h-screen md:min-h-[800px] md:max-h-[900px] bg-surface-container-lowest flex flex-col md:flex-row shadow-[0_4px_25px_rgba(0,0,0,0.06)] rounded-none md:rounded-2xl overflow-hidden">
-    
-    <!-- Left Side: Immersive Visual (Hidden on mobile, cinematic display on desktop) -->
-    <section class="hidden md:flex md:w-1/2 relative bg-stone-950 overflow-hidden">
-        <img alt="Premium Shaved Ice Dessert" class="absolute inset-0 w-full h-full object-cover opacity-85 transition-transform duration-[15s] ease-out scale-110 contrast-105 brightness-[0.75]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuIt5CSeJJ2kkqxn51omKtMRHh5m0SsqDvn1rngdOAgi9jOAaTvxWiwREtIC9cfUcVYT0V4cZzIWvlBGBBR7Baiy9XGNIrZOFUL5gshsR2Z931tne_i9jroq4EFVRvLDiCgjRbPRzYjMuQPqOyEcCIx7i_6WkP2gjfxIfbRLqUAjvZwEQaztLwojwqJr0DbFMPvnA4grryxznoLc1A-qO-bt5eYNPcFuoOryquvcVakMQr1FBTGJuKw2rcPv_LrVyksZ1FDNWSeOqI"/>
-        <div class="relative z-10 flex flex-col justify-end p-xl w-full bg-gradient-to-t from-black/90 via-black/40 to-transparent h-full">
-            <h1 class="font-display-lg text-display-lg text-white mb-md text-shadow-premium leading-tight">Sweetness Awaits Your Arrival.</h1>
-            <p class="font-body-lg text-body-lg text-surface-variant opacity-90 max-w-md">Log in to customize your signature layers, view nearest store coordinates, select favorite treats, and unlock VIP privileges.</p>
-            <div class="mt-lg flex gap-sm items-center">
-                <div class="h-1.5 w-12 bg-primary rounded-full"></div>
-                <div class="h-1.5 w-4 bg-white/40 rounded-full"></div>
-                <div class="h-1.5 w-4 bg-white/40 rounded-full"></div>
-            </div>
-        </div>
-        <!-- Floating Brand Element -->
-        <div class="absolute top-margin-desktop left-margin-desktop">
-            <div class="flex items-center gap-xs bg-black/40 backdrop-blur-md px-md py-sm rounded-full border border-white/10 shadow-sm">
-                <span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">favorite</span>
-                <span class="font-label-md text-white tracking-widest uppercase text-[12px] font-bold">Stacey Halu Halu Club</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Right Side: Customer Login Form -->
-    <section class="w-full md:w-1/2 flex flex-col justify-between px-margin-mobile md:px-xl py-8 md:py-xl bg-surface-container-lowest min-h-screen md:min-h-0">
-        <!-- Brand Header -->
-        <div class="w-full flex justify-between items-center mb-lg">
-            <a href="<?= url('?route=home') ?>" class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-2 text-decoration-none">
-                <span><i class="fa-solid fa-ice-cream"></i></span>
-                <span class="text-xl">Stacey Halu Halu</span>
+    <div class="position-relative min-vh-100 d-flex flex-column justify-content-between p-2 p-sm-3 p-md-4 z-1">
+        <!-- Top Navigation Bar -->
+        <header class="container-fluid max-w-7xl d-flex justify-content-between align-items-center py-2 px-2 px-sm-3">
+            <a href="<?= url('?route=home') ?>" class="d-flex align-items-center gap-2 text-decoration-none min-w-0">
+                <img src="<?= url($store_logo) ?>" alt="<?= htmlspecialchars($store_name) ?>"
+                    onerror="this.src='<?= url('assets/admin/images/logos/favicon.png') ?>'"
+                    style="max-height: 36px; width: auto; object-fit: contain;" class="flex-shrink-0">
+                <span class="fw-bold text-dark fs-5 fs-sm-5 tracking-tight brand-title-text"><?= htmlspecialchars($store_name) ?></span>
             </a>
-            <a href="<?= url('?route=login') ?>" class="font-label-sm text-label-sm text-outline hover:text-primary border border-outline/30 px-sm py-1.5 rounded-full transition-all text-decoration-none font-bold">
-                Admin Portal
-            </a>
-        </div>
 
-        <div class="w-full max-w-md mx-auto my-auto py-4">
-            <div class="mb-lg">
-                <h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Welcome Back!</h2>
-                <p class="font-body-md text-on-surface-variant">Log in to access your custom signature profile, select closest local branches, and order with sweet efficiency.</p>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <a href="<?= url('?route=login') ?>" class="btn-portal-pill btn-light-primary text-primary" title="Switch to Staff Portal">
+                    <i class="ti ti-shield-lock"></i>
+                    <span class="d-none d-sm-inline">Staff Login</span>
+                    <span class="d-inline d-sm-none">Staff</span>
+                </a>
             </div>
+        </header>
 
-            <form class="space-y-md" action="<?= url('?route=customer_login') ?>" method="POST" id="loginForm">
-                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+        <!-- Main Authentication Form Container -->
+        <main class="container py-2 py-sm-4 my-auto px-2 px-sm-3">
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5">
+                    <div class="card auth-card border-0 mb-0">
+                        <div class="card-body p-3 p-sm-4 p-md-5">
 
-                <!-- Username / Email Field -->
-                <div class="space-y-xs">
-                    <label class="font-label-md text-label-md text-on-surface-variant block ml-1" for="username">Username or Email</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" style="font-size: 20px;">account_circle</span>
-                        <input class="w-full pl-12 pr-4 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 rounded-xl font-body-md text-on-surface form-input-shadow transition-all duration-200" 
-                               id="username" name="username" placeholder="Enter username or email" required type="text" autofocus/>
+                            <!-- Brand / Title Section -->
+                            <div class="text-center mb-3 mb-sm-4">
+                                <div class="d-inline-flex p-3 rounded-circle bg-light-primary text-primary mb-2 mb-sm-3">
+                                    <iconify-icon icon="solar:bag-heart-bold-duotone" class="fs-8"></iconify-icon>
+                                </div>
+                                <h3 class="fw-bold text-dark mb-1 fs-5 fs-sm-4">Customer Portal</h3>
+                                <p class="text-muted fs-3 mb-0">Sign in to browse products, track orders, and order online</p>
+                            </div>
+
+                            <!-- Flash Message Banner -->
+                            <?php $flash = get_flash();
+                            if ($flash): ?>
+                                <div class="alert alert-<?= $flash['type'] === 'danger' ? 'danger' : 'success' ?> alert-dismissible fade show rounded-3 py-3 px-3 mb-3 mb-sm-4 d-flex align-items-center gap-2" role="alert">
+                                    <i class="fa-solid <?= $flash['type'] === 'danger' ? 'fa-circle-exclamation text-danger' : 'fa-circle-check text-success' ?> fs-5"></i>
+                                    <div class="fs-3 text-dark fw-medium"><?= htmlspecialchars($flash['message']) ?></div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Login Form -->
+                            <form action="<?= url('?route=customer_login') ?>" method="POST" id="customerLoginForm">
+                                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+
+                                <!-- Username / Email Field -->
+                                <div class="mb-3">
+                                    <label class="form-label text-dark fw-semibold fs-3 mb-2" for="username">Username or Email</label>
+                                    <div class="position-relative">
+                                        <i class="ti ti-user input-icon-left"></i>
+                                        <input class="form-control form-control-modern" id="username" name="username"
+                                            placeholder="Enter your username or email" required type="text" autofocus />
+                                    </div>
+                                </div>
+
+                                <!-- Password Field -->
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                                        <label class="form-label text-dark fw-semibold fs-3 mb-0" for="password">Password</label>
+                                        <a href="#" class="text-primary fw-semibold fs-2 text-decoration-none">Forgot Password?</a>
+                                    </div>
+                                    <div class="position-relative">
+                                        <i class="ti ti-lock input-icon-left"></i>
+                                        <input class="form-control form-control-modern" style="padding-right: 48px;"
+                                            id="password" name="password" placeholder="••••••••" required type="password" />
+                                        <button class="password-toggle-btn" onclick="togglePassword()" type="button" aria-label="Toggle password visibility">
+                                            <i class="ti ti-eye" id="pw-toggle-icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Remember Device -->
+                                <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                                    <div class="form-check mb-0">
+                                        <input class="form-check-input primary" type="checkbox" id="remember" checked />
+                                        <label class="form-check-label text-dark fs-3 cursor-pointer select-none" for="remember">
+                                            Remember this device
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" class="btn btn-primary btn-submit-modern w-100 fs-4 mb-3 d-flex align-items-center justify-content-center gap-2" id="submitBtn">
+                                    <span>Sign In to Your Account</span>
+                                    <i class="ti ti-arrow-right fs-5"></i>
+                                </button>
+
+                                <!-- Create Account Option -->
+                                <div class="text-center mb-3">
+                                    <span class="text-muted fs-3">Don't have an account yet?</span>
+                                    <a href="<?= url('?route=register') ?>" class="text-primary fw-bold fs-3 text-decoration-none ms-1">Create Account</a>
+                                </div>
+
+                                <!-- Back to Home Link -->
+                                <div class="text-center">
+                                    <a href="<?= url('?route=home') ?>" class="text-muted fw-semibold fs-3 text-decoration-none hover-text-primary d-inline-flex align-items-center gap-1 py-1">
+                                        <i class="ti ti-arrow-left"></i>
+                                        <span>Back to Website</span>
+                                    </a>
+                                </div>
+                            </form>
+
+                        </div>
                     </div>
                 </div>
-
-                <!-- Password Field -->
-                <div class="space-y-xs">
-                    <div class="flex justify-between items-center px-1">
-                        <label class="font-label-md text-label-md text-on-surface-variant" for="password">Password</label>
-                        <a class="font-label-sm text-label-sm text-primary hover:underline transition-all text-decoration-none font-semibold" href="#">Forgot Password?</a>
-                    </div>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" style="font-size: 20px;">lock</span>
-                        <input class="w-full pl-12 pr-12 py-3.5 bg-surface-container-low border-transparent focus:border-primary focus:ring-0 rounded-xl font-body-md text-on-surface form-input-shadow transition-all duration-200" 
-                               id="password" name="password" placeholder="••••••••" required type="password"/>
-                        <button class="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors" onclick="togglePassword()" type="button">
-                            <span class="material-symbols-outlined" id="pw-toggle-icon" style="font-size: 20px;">visibility</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Complete Button -->
-                <button class="w-full bg-primary hover:bg-primary-container text-white py-3.5 rounded-xl font-label-md text-label-md font-bold transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-[0.98] duration-150 flex items-center justify-center gap-xs" 
-                        type="submit">
-                    <span>Log In to Stacey Halu Halu</span>
-                    <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
-                </button>
-            </form>
-
-            <div class="mt-xl text-center">
-                <p class="font-body-md text-on-surface-variant">
-                    Not a member of the Club yet? 
-                    <a href="<?= url('?route=register') ?>" class="text-primary hover:underline font-bold transition-all ml-1 text-decoration-none">
-                        Join the Club
-                    </a>
-                </p>
             </div>
-        </div>
+        </main>
 
-        <!-- Footer terms info -->
-        <div class="w-full text-center mt-lg border-t border-outline/10 pt-md">
-            <p class="font-label-sm text-[11px] text-outline">&copy; <?= date('Y') ?> Stacey Halu Halu. Enjoyed with love and sweet efficiency.</p>
-        </div>
-    </section>
-</main>
+        <!-- Footer -->
+        <footer class="container-fluid max-w-7xl py-2 text-center text-muted fs-2 px-2">
+            <div>&copy; <?= date('Y') ?> <?= htmlspecialchars($store_name) ?> · All rights reserved.</div>
+        </footer>
+    </div>
 
-<script>
-    function togglePassword() {
-        const pwField = document.getElementById("password");
-        const toggleIcon = document.getElementById("pw-toggle-icon");
-        if (pwField && toggleIcon) {
-            if (pwField.type === "password") {
-                pwField.type = "text";
-                toggleIcon.textContent = "visibility_off";
+    <!-- Bootstrap Bundle JS -->
+    <script src="<?= url('assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.min.js') ?>"></script>
+
+    <script>
+        // Password Visibility Toggle
+        function togglePassword() {
+            const pwInput = document.getElementById('password');
+            const icon = document.getElementById('pw-toggle-icon');
+            if (pwInput.type === 'password') {
+                pwInput.type = 'text';
+                icon.className = 'ti ti-eye-off';
             } else {
-                pwField.type = "password";
-                toggleIcon.textContent = "visibility";
+                pwInput.type = 'password';
+                icon.className = 'ti ti-eye';
             }
         }
-    }
-</script>
+
+        // Button Loading State on Submit
+        const customerLoginForm = document.getElementById('customerLoginForm');
+        if (customerLoginForm) {
+            customerLoginForm.addEventListener('submit', () => {
+                const btn = document.getElementById('submitBtn');
+                if (btn) {
+                    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Signing in...</span>`;
+                    btn.classList.add('opacity-75');
+                    btn.disabled = true;
+                }
+            });
+        }
+    </script>
 </body>
+
 </html>

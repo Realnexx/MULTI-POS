@@ -1,4 +1,13 @@
 <?php
+if (PHP_SAPI !== 'cli' || !in_array('--seed-demo', $argv ?? [], true)) {
+    http_response_code(403);
+    exit('Demo initialization requires an explicit CLI invocation.');
+}
+
+require_once __DIR__ . '/app.php';
+if (APP_ENV !== 'local') {
+    exit('Demo seeding is disabled in production.');
+}
 require_once __DIR__ . '/db.php';
 
 // Create tables
@@ -180,9 +189,7 @@ $tables = [
     ) ENGINE=InnoDB;"
 ];
 
-// Re-create tables to adapt schema migrations
-$conn->query("DROP TABLE IF EXISTS ingredients");
-$conn->query("DROP TABLE IF EXISTS branches");
+// Existing tables and records are preserved. Demo seeding is local-only.
 
 foreach ($tables as $sql) {
     if (!$conn->query($sql)) {
@@ -412,3 +419,12 @@ foreach ($ingredients as $ing) {
 $stmt->close();
 
 echo "Database initialization and seeding completed successfully.";
+
+require_once __DIR__ . '/../models/PermissionSeeder.php';
+PermissionSeeder::run($conn);
+
+require_once __DIR__.'/../models/AuthSecurity.php';
+AuthSecurity::migrate($conn);
+
+require_once __DIR__.'/../models/OnlineOrder.php';
+OnlineOrder::migrate($conn);

@@ -10,14 +10,17 @@ function require_login() {
 
 function require_guest() {
     if (!empty($_SESSION['user'])) {
-        redirect('?route=dashboard');
+        require_once __DIR__ . '/../models/User.php';
+        redirect('?route=' . User::landing_route($_SESSION['user']['id']));
     }
 }
 
 function enforce_csrf() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
-        if (!verify_csrf($token)) {
+        if (!is_string($token) || !verify_csrf($token)) {
+            if (function_exists('access_denied')) access_denied('Your security token expired. Refresh and try again.',419);
+            http_response_code(419);
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'CSRF token mismatch.']);

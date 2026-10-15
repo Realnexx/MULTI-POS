@@ -4,18 +4,31 @@ require_once __DIR__ . '/../middleware/rbac.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Sale.php';
 require_once __DIR__ . '/../models/Setting.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 class PosController {
     public function index() {
         require_permission('access_pos');
+
+        // Require PIN verification before accessing POS (when enabled)
+        $require_pos_pin = Setting::get('require_pos_pin', '1');
+        if ($require_pos_pin === '1' && empty($_SESSION['pos_pin_verified'])) {
+            $require_pin = true;
+            $store_name = Setting::get('store_name', 'Stacey Halu');
+            require __DIR__ . '/../views/modules/pos.php';
+            return;
+        }
         
-        $is_admin = User::has_permission($_SESSION['user']['id'], 'manage_users');
+        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
 
         // Handle Branch Reset for Admin
         if ($is_admin && isset($_GET['reset_branch'])) {
             unset($_SESSION['pos_branch_id']);
             redirect('?route=pos');
         }
+
+        $store_name = Setting::get('store_name', 'Stacey Halu');
+        $branch_select_mode = false;
 
         // Handle Branch Selection for Admin
         if ($is_admin) {
@@ -26,37 +39,46 @@ class PosController {
                 require_once __DIR__ . '/../models/Branch.php';
                 $b = Branch::find_by_id($bid);
                 $bname = $b['name'] ?? 'Selected';
+                ActivityLog::log('POS Terminal Selected', "Selected branch '{$bname}' as POS terminal");
                 set_flash('success', $bname . " terminal is now in use.");
                 session_write_close();
                 redirect('?route=pos');
             }
 
             if (!isset($_SESSION['pos_branch_id'])) {
-                // We'll handle this with a modal in the view now
+                // Admin hasn't selected a terminal yet — show branch selector as main page
+                $branch_select_mode = true;
+                require_once __DIR__ . '/../models/Branch.php';
+                $branches = Branch::for_current_user();
+                require __DIR__ . '/../views/modules/pos.php';
+                return;
             }
         } else {
             // For Cashier/Staff, always use their assigned branch
-            $_SESSION['pos_branch_id'] = $_SESSION['user']['branch_id'] ?? null;
+            $user_data = User::find_by_id($_SESSION['user']['id']);
+            $_SESSION['pos_branch_id'] = $user_data['branch_id'] ?? null;
         }
 
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
         }
 
-        $store_name = Setting::get('store_name', 'Stacey Halu');
         $active_branch_id = $_SESSION['pos_branch_id'] ?? null;
 
         $category_id = isset($_GET['category_id']) ? intval($_GET['category_id']) : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
+        $product_type = isset($_GET['product_type']) ? trim($_GET['product_type']) : null;
 
-        $categories = Product::get_all_categories() ?: [];
-        $products = Product::get_all_products($category_id, $search) ?: [];
+        $categories = Product::get_all_categories($active_branch_id) ?: [];
+        $type_counts = Product::get_product_type_counts($active_branch_id) ?: [];
+        $products = Product::get_all_products($category_id, $search, $active_branch_id, $product_type) ?: [];
+        $products = array_values(array_filter($products, function ($p) { return $p['status'] === 'active' && $p['is_sellable'] && $p['product_type'] !== 'ingredient'; }));
 
         // Fetch branches for modal if admin
         $branches = [];
         if ($is_admin) {
             require_once __DIR__ . '/../models/Branch.php';
-            $branches = Branch::get_all_active();
+            $branches = Branch::for_current_user();
         }
 
         require __DIR__ . '/../views/modules/pos.php';
@@ -84,6 +106,8 @@ class PosController {
 
         // Check if CSV export is requested
         if (isset($_GET['export']) && $_GET['export'] === 'csv') {
+            ActivityLog::log('Transactions Exported', "Exported filtered transactions to CSV by user #" . ($_SESSION['user']['id'] ?? '?'));
+
             // Get ALL filtered sales for export
             $all_filtered_sales = Sale::get_filtered_sales($filters, 1, 999999);
             
@@ -143,12 +167,12 @@ class PosController {
             exit;
         }
 
-        // Fetch stats for view
-        $today_stats = Sale::get_today_stats();
+        // Fetch stats based on current filters (defaults to all time when no filters are active)
+        $today_stats = Sale::get_filtered_stats($filters);
 
         // Fetch active branches for the location filter options
         require_once __DIR__ . '/../models/Branch.php';
-        $active_branches = Branch::get_all_active();
+        $active_branches = Branch::for_current_user();
 
         require __DIR__ . '/../views/modules/history.php';
     }
@@ -202,6 +226,18 @@ class PosController {
 
             $items_html = '';
             foreach ($sale['items'] as $item) {
+                $modifiers_html = '';
+                if (!empty($item['modifiers'])) {
+                    foreach ($item['modifiers'] as $mod) {
+                        $mod_price = (float)($mod['additional_price'] ?? 0);
+                        $modifiers_html .= '
+                            <div class="item-modifier-row">
+                                <span class="item-modifier-name">+ ' . htmlspecialchars($mod['modifier_name']) . '</span>
+                                ' . ($mod_price > 0 ? '<span class="item-modifier-price">₱' . number_format($mod_price, 2) . '</span>' : '') . '
+                            </div>
+                        ';
+                    }
+                }
                 $items_html .= '
                     <div class="item-row">
                         <div class="item-main-row">
@@ -212,19 +248,22 @@ class PosController {
                         <div class="item-sub-row">
                             <span class="item-qty-price">' . $item['quantity'] . ' x ₱' . number_format($item['price'], 2) . '</span>
                         </div>
+                        ' . $modifiers_html . '
                     </div>
                 ';
             }
             ?>
-            <div class="thermal-ticket">
+            <div class="thermal-ticket" style="position:relative;overflow:hidden;">
                 <!-- Top serrated edge -->
                 <div class="serrated-edge serrated-top"></div>
                 
-                <!-- Vintage "PAID" Ink Stamp -->
-                <div class="stamp-paid">
-                    <span class="stamp-title">OFFICIAL</span>
-                    <span class="stamp-main">PAID</span>
-                    <span class="stamp-method"><?= htmlspecialchars($sale['payment_method']) ?></span>
+                <!-- Vintage "PAID" Ink Stamp (Watermark) -->
+                <div class="stamp-paid" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;opacity:0.15;">
+                    <div style="transform:rotate(-20deg) scale(2.2);text-align:center;font-family:'Montserrat',sans-serif;color:#b60e3d;font-weight:900;text-transform:uppercase;letter-spacing:0.1em;display:flex;flex-direction:column;align-items:center;">
+                        <span style="font-size:14px;font-weight:800;">OFFICIAL</span>
+                        <span style="font-size:28px;font-weight:900;margin-top:4px;">PAID</span>
+                        <span style="font-size:12px;font-weight:800;margin-top:4px;"><?= htmlspecialchars($sale['payment_method']) ?></span>
+                    </div>
                 </div>
 
                 <!-- Header -->
@@ -253,6 +292,13 @@ class PosController {
                     <div class="meta-row">
                         <span class="meta-label">Date & Time:</span>
                         <span class="meta-value"><?= date('M d, Y h:i A', strtotime($sale['created_at'])) ?></span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">Branch:</span>
+                        <span class="meta-value">
+                            <span class="material-symbols-outlined">store</span>
+                            <?= htmlspecialchars($sale['branch_name'] ?? 'Main') ?>
+                        </span>
                     </div>
                     <div class="meta-row">
                         <span class="meta-label">Cashier:</span>
@@ -389,8 +435,8 @@ class PosController {
         $limit = $length;
         
         // Capture advanced filters
-        $raw_channels = isset($params['channels']) && is_array($params['channels']) ? $params['channels'] : [];
-        $raw_locations = isset($params['locations']) && is_array($params['locations']) ? $params['locations'] : [];
+        $raw_channels = isset($params['channels']) ? (is_array($params['channels']) ? $params['channels'] : [$params['channels']]) : [];
+        $raw_locations = isset($params['locations']) ? (is_array($params['locations']) ? $params['locations'] : [$params['locations']]) : [];
         
         // Extract search term from DataTable standard query or our custom search input
         $search_term = '';
@@ -468,10 +514,13 @@ class PosController {
             // View Receipt button
             $action_buttons[] = '<button class="btn btn-xs action-btn-view view-receipt-btn action-btn d-inline-flex align-items-center gap-1 shadow-none" data-id="' . $sale['id'] . '" data-bs-toggle="tooltip" data-bs-title="View Receipt Summary"><i class="fa-solid fa-receipt"></i> View</button>';
             
+            // Direct Print button
+            $action_buttons[] = '<a href="?route=pos/receipt&id=' . $sale['id'] . '" class="btn btn-xs action-btn-print action-btn d-inline-flex align-items-center gap-1 shadow-none text-decoration-none" data-bs-toggle="tooltip" data-bs-title="Print Receipt (Normal / Thermal)"><i class="fa-solid fa-print"></i> Print</a>';
+            
             // Refund/Cancel button based on status
-            if ($sale['status'] === 'Completed') {
+            if ($sale['status'] === 'Completed' && User::has_permission($_SESSION['user']['id'], 'refund_sales')) {
                 $action_buttons[] = '<button class="btn btn-xs action-btn-refund refund-btn action-btn d-inline-flex align-items-center gap-1 shadow-none" data-id="' . $sale['id'] . '" data-bs-toggle="tooltip" data-bs-title="Refund Completed Transaction"><i class="fa-solid fa-undo"></i> Refund</button>';
-            } elseif ($sale['status'] === 'Pending') {
+            } elseif ($sale['status'] === 'Pending' && User::has_permission($_SESSION['user']['id'], 'refund_sales')) {
                 $action_buttons[] = '<button class="btn btn-xs action-btn-cancel cancel-btn action-btn d-inline-flex align-items-center justify-content-center shadow-none" style="width: 28px; height: 28px; padding: 0 !important;" data-id="' . $sale['id'] . '" data-bs-toggle="tooltip" data-bs-title="Cancel Pending Transaction"><i class="fa-solid fa-xmark" style="font-size: 12px;"></i></button>';
             }
             
@@ -506,8 +555,31 @@ class PosController {
         exit;
     }
 
-    public function updateStatus() {
+    public function historyStats() {
         require_permission('access_pos');
+
+        $raw_channels = isset($_REQUEST['channels']) ? (is_array($_REQUEST['channels']) ? $_REQUEST['channels'] : [$_REQUEST['channels']]) : [];
+        $raw_locations = isset($_REQUEST['locations']) ? (is_array($_REQUEST['locations']) ? $_REQUEST['locations'] : [$_REQUEST['locations']]) : [];
+
+        $filters = [
+            'search' => isset($_REQUEST['search']) ? trim($_REQUEST['search']) : '',
+            'date_from' => isset($_REQUEST['date_from']) ? trim($_REQUEST['date_from']) : '',
+            'date_to' => isset($_REQUEST['date_to']) ? trim($_REQUEST['date_to']) : '',
+            'payment_status' => isset($_REQUEST['payment_status']) ? trim($_REQUEST['payment_status']) : 'All',
+            'channels' => array_filter($raw_channels),
+            'locations' => array_filter($raw_locations),
+        ];
+
+        $stats = Sale::get_filtered_stats($filters);
+
+        header('Content-Type: application/json');
+        echo json_encode($stats);
+        exit;
+    }
+
+    public function updateStatus() {
+        require_permission('refund_sales');
+        require_write_request();
         
         $params = !empty($_POST) ? $_POST : $_GET;
         $id = isset($params['id']) ? intval($params['id']) : 0;
@@ -517,6 +589,9 @@ class PosController {
         
         if ($id > 0 && in_array($status, $allowed_statuses)) {
             $success = Sale::update_status($id, $status);
+            if ($success) {
+                ActivityLog::log('Order Status Updated', "Order #{$id} status changed to '{$status}'");
+            }
             header('Content-Type: application/json');
             echo json_encode(['success' => $success]);
             exit;

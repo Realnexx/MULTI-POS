@@ -3,6 +3,13 @@ require_once __DIR__ . '/../config/db.php';
 
 class Branch
 {
+    public static function for_current_user($activeOnly = true) {
+        require_once __DIR__ . '/User.php';
+        $rows = $activeOnly ? self::get_all_active() : self::get_all();
+        $context = User::access_context($_SESSION['user']['id'] ?? 0);
+        if ($context['global']) return $rows;
+        return array_values(array_filter($rows, function($row) use ($context) { return (int)$row['id'] === $context['branch_id']; }));
+    }
     public static function get_all_active()
     {
         global $conn;
@@ -86,7 +93,7 @@ class Branch
                                 JOIN user_roles ur ON u.id = ur.user_id 
                                 JOIN roles r ON ur.role_id = r.id 
                                 LEFT JOIN branches b ON u.branch_id = b.id
-                                WHERE r.name IN ('Staff', 'Cashier', 'Manager')
+                                WHERE u.deleted_at IS NULL AND r.name <> 'Customer' AND NOT EXISTS (SELECT 1 FROM user_roles xr JOIN roles x ON x.id = xr.role_id WHERE xr.user_id = u.id AND LOWER(REPLACE(REPLACE(REPLACE(x.name, ' ', ''), '_', ''), '-', '')) IN ('admin', 'superadmin'))
                                 GROUP BY u.id");
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }

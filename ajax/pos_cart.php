@@ -3,8 +3,12 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Sale.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 header('Content-Type: application/json');
+$action = $_POST['action'] ?? '';
+require_once __DIR__ . '/../middleware/access_policy.php';
+authorize_action('pos_cart', $action);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -16,16 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // CSRF Validation
-if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-    echo json_encode(['success' => false, 'message' => 'CSRF token mismatch']);
-    exit;
-}
+
 
 // RBAC Check
-if (empty($_SESSION['user']) || !User::has_permission($_SESSION['user']['id'], 'access_pos')) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-    exit;
-}
+
 
 if (!isset($_SESSION['pos_cart'])) {
     $_SESSION['pos_cart'] = [];
@@ -37,7 +35,9 @@ if (!isset($_SESSION['pos_order_type'])) {
     $_SESSION['pos_order_type'] = 'Dine-in';
 }
 
-$action = $_POST['action'] ?? '';
+$_SESSION['pos_checkout_key'] = $_SESSION['pos_checkout_key'] ?? bin2hex(random_bytes(16));
+
+try {
 
 switch ($action) {
     case 'load':
@@ -57,18 +57,53 @@ switch ($action) {
 
     case 'add':
         $id = (int)($_POST['product_id'] ?? 0);
-        $name = $_POST['product_name'] ?? '';
-        $price = (float)($_POST['price'] ?? 0);
-        $max_stock = (int)($_POST['stock'] ?? 0);
+        $name = '';
+        $price = 0;
+        $branch = RecipeInventory::branch($_SESSION['pos_branch_id'] ?? null);
+        $product = RecipeInventory::product($id);
+        $max_stock = RecipeInventory::availability($product,$branch);
+        $name = $product['name'];
+        $price = (float)$product['price'];
+        $modifiers_raw = $_POST['modifiers'] ?? '';
+        $modifiers = $modifiers_raw ? json_decode($modifiers_raw, true) : [];
+        if (!is_array($modifiers)) throw new DomainException('Invalid modifiers.');
+        $quote = RecipeInventory::quoteItem($id,1,$modifiers,$branch);
+        $modifiers = $quote['modifiers'];
+        if (empty($_SESSION['pos_cart'])) $_SESSION['pos_checkout_key'] = bin2hex(random_bytes(16));
+        $productId = $id;
+        $signature = array_column($modifiers,'id'); sort($signature);
+        $lineId = null;
+        foreach ($_SESSION['pos_cart'] as $cartId=>$cartItem) {
+            $existing = array_column($cartItem['modifiers'] ?? [],'id'); sort($existing);
+            if ((int)($cartItem['product_id'] ?? $cartItem['id']) === $productId && $existing === $signature) $lineId = $cartId;
+        }
+        if ($lineId === null) {
+            $_SESSION['pos_line_seq'] = max((int)($_SESSION['pos_line_seq'] ?? 0), ...array_merge([0], array_map('intval', array_keys($_SESSION['pos_cart'])))) + 1;
+            $lineId = $_SESSION['pos_line_seq'];
+        }
+        $id = $lineId;
 
+        // Calculate modifier extra cost
+        $modifier_extra = 0;
+        foreach ($modifiers as $m) {
+            $modifier_extra += (float)($m['additional_price'] ?? 0);
+        }
+
+        if ($max_stock <= 0) throw new DomainException('This product has no available stock at the selected branch.');
         if ($id > 0 && $max_stock > 0) {
-            $product = Product::find_by_id($id);
-            $image_url = $product ? get_product_image($product['image_url'], $id) : '';
+            $product = Product::find_by_id($productId);
+            $image_url = $product ? get_product_image($product['image_url'], $product['id']) : '';
 
             if (isset($_SESSION['pos_cart'][$id])) {
                 if ($_SESSION['pos_cart'][$id]['quantity'] < $max_stock) {
                     $_SESSION['pos_cart'][$id]['quantity']++;
-                    $_SESSION['pos_cart'][$id]['subtotal'] = $_SESSION['pos_cart'][$id]['quantity'] * $price;
+                    // Recalculate subtotal including stored modifiers
+                    $existing_modifiers = $_SESSION['pos_cart'][$id]['modifiers'] ?? [];
+                    $mod_total = $price;
+                    foreach ($existing_modifiers as $em) {
+                        $mod_total += (float)($em['additional_price'] ?? 0);
+                    }
+                    $_SESSION['pos_cart'][$id]['subtotal'] = $_SESSION['pos_cart'][$id]['quantity'] * $mod_total;
                     $_SESSION['pos_cart'][$id]['image_url'] = $image_url;
                 } else {
                     echo json_encode(['success' => false, 'message' => 'Cannot exceed available stock']);
@@ -77,12 +112,14 @@ switch ($action) {
             } else {
                 $_SESSION['pos_cart'][$id] = [
                     'id' => $id,
+                    'product_id' => $productId,
                     'name' => $name,
                     'price' => $price,
                     'quantity' => 1,
-                    'subtotal' => $price,
+                    'subtotal' => $price + $modifier_extra,
                     'max_stock' => $max_stock,
-                    'image_url' => $image_url
+                    'image_url' => $image_url,
+                    'modifiers' => $modifiers
                 ];
             }
         }
@@ -90,13 +127,22 @@ switch ($action) {
 
     case 'update_qty':
         $id = (int)($_POST['product_id'] ?? 0);
-        $qty = (int)($_POST['quantity'] ?? 0);
+        $rawQuantity = (string)($_POST['quantity'] ?? '0');
+        if (!preg_match('/^(0|[1-9][0-9]{0,5})$/D',$rawQuantity)) throw new DomainException('Enter a whole sale quantity.');
+        $qty = (int)$rawQuantity;
 
         if (isset($_SESSION['pos_cart'][$id])) {
-            $max_stock = $_SESSION['pos_cart'][$id]['max_stock'];
+            $branch = RecipeInventory::branch($_SESSION['pos_branch_id'] ?? null);
+            $max_stock = RecipeInventory::availability(RecipeInventory::product($_SESSION['pos_cart'][$id]['product_id'] ?? $id),$branch);
+            $_SESSION['pos_cart'][$id]['max_stock'] = $max_stock;
             if ($qty > 0 && $qty <= $max_stock) {
                 $_SESSION['pos_cart'][$id]['quantity'] = $qty;
-                $_SESSION['pos_cart'][$id]['subtotal'] = $qty * $_SESSION['pos_cart'][$id]['price'];
+                $mod_total = $_SESSION['pos_cart'][$id]['price'];
+                $existing_modifiers = $_SESSION['pos_cart'][$id]['modifiers'] ?? [];
+                foreach ($existing_modifiers as $em) {
+                    $mod_total += (float)($em['additional_price'] ?? 0);
+                }
+                $_SESSION['pos_cart'][$id]['subtotal'] = $qty * $mod_total;
             } elseif ($qty <= 0) {
                 unset($_SESSION['pos_cart'][$id]);
             } else {
@@ -147,6 +193,13 @@ switch ($action) {
         break;
 
     case 'checkout':
+        $requestKey = $_POST['request_key'] ?? '';
+        if (!hash_equals($_SESSION['pos_checkout_key'], $requestKey)) throw new DomainException('Cart changed. Reload before checkout.');
+        $prior = RecipeInventory::rows('SELECT id, cashier_id FROM sales WHERE request_key = ?', 's', [$requestKey]);
+        if ($prior && (int)$prior[0]['cashier_id'] === (int)$_SESSION['user']['id']) {
+            echo json_encode(['success'=>true,'sale_id'=>(int)$prior[0]['id'],'message'=>'Order already completed.']);
+            exit;
+        }
         if (empty($_SESSION['pos_cart'])) {
             echo json_encode(['success' => false, 'message' => 'Cart is empty']);
             exit;
@@ -160,39 +213,39 @@ switch ($action) {
         $discount = $_SESSION['pos_discount'];
         $final_amount = max(0, $subtotal - $discount);
 
-        if ($amount_tendered < $final_amount) {
-            echo json_encode(['success' => false, 'message' => 'Amount tendered is less than total due']);
-            exit;
-        }
-
         $change_amount = $amount_tendered - $final_amount;
         $cashier_id = $_SESSION['user']['id'];
-        $branch_id = $_SESSION['pos_branch_id'] ?? ($_SESSION['user']['branch_id'] ?? null);
+        $branch_id = RecipeInventory::branch($_SESSION['pos_branch_id'] ?? null);
 
         $items = [];
         foreach ($_SESSION['pos_cart'] as $item) {
             $items[] = [
-                'product_id' => $item['id'],
+                'product_id' => $item['product_id'] ?? $item['id'],
                 'quantity' => $item['quantity'],
-                'price' => $item['price']
+                'price' => $item['price'],
+                'modifiers' => $item['modifiers'] ?? []
             ];
         }
 
         $sale_id = Sale::create_sale($cashier_id, $branch_id, $subtotal, $discount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items, $order_type);
 
         if ($sale_id) {
+            $actual=RecipeInventory::rows('SELECT final_amount FROM sales WHERE id = ?','i',[$sale_id])[0];
+            $final_amount=(float)$actual['final_amount'];
             $_SESSION['pos_cart'] = [];
             $_SESSION['pos_discount'] = 0.00;
             $_SESSION['pos_order_type'] = 'Dine-in';
 
+            ActivityLog::log('Order Completed', "Order #{$sale_id} completed — ₱" . number_format($final_amount, 2) . " via {$payment_method}");
+
             // Retrieve updated stock levels
             $updated_stocks = [];
-            $res_stocks = $conn->query("SELECT id, stock, low_stock_threshold FROM products");
+            $res_stocks = $conn->query("SELECT * FROM products");
             if ($res_stocks) {
                 while ($row = $res_stocks->fetch_assoc()) {
                     $updated_stocks[] = [
                         'id' => (int)$row['id'],
-                        'stock' => (int)$row['stock'],
+                        'stock' => RecipeInventory::availability($row,$branch_id),
                         'threshold' => (int)$row['low_stock_threshold']
                     ];
                 }
@@ -206,7 +259,7 @@ switch ($action) {
             ]);
             exit;
         } else {
-            echo json_encode(['success' => false, 'message' => 'Failed to process transaction']);
+            echo json_encode(['success' => false, 'message' => $_SESSION['checkout_error'] ?? 'Failed to process transaction']);
             exit;
         }
         break;
@@ -214,6 +267,13 @@ switch ($action) {
     default:
         echo json_encode(['success' => false, 'message' => 'Unknown action']);
         exit;
+}
+
+} catch (Throwable $error) {
+    error_log('Cart request failed: ' . $error->getMessage());
+    echo json_encode(['success'=>false,'message'=>($error instanceof DomainException || $error instanceof InvalidArgumentException)
+        ? $error->getMessage() : 'Cart could not be processed. Check the inventory migration.']);
+    exit;
 }
 
 // Calculate current summary
@@ -224,14 +284,15 @@ $total = max(0, $subtotal - $discount);
 // Backfill image_url for any items missing it (e.g. from existing sessions)
 foreach ($_SESSION['pos_cart'] as $id => $item) {
     if (empty($item['image_url'])) {
-        $product = Product::find_by_id($id);
-        $_SESSION['pos_cart'][$id]['image_url'] = $product ? get_product_image($product['image_url'], $id) : '';
+        $product = Product::find_by_id($item['product_id'] ?? $id);
+        $_SESSION['pos_cart'][$id]['image_url'] = $product ? get_product_image($product['image_url'], $product['id']) : '';
     }
 }
 
 echo json_encode([
     'success' => true,
     'cart' => array_values($_SESSION['pos_cart']),
+    'request_key' => $_SESSION['pos_checkout_key'],
     'subtotal' => $subtotal,
     'discount' => $discount,
     'total' => $total

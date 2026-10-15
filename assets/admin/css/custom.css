@@ -1,0 +1,418 @@
+/* Custom Overrides */
+
+/* ================================================================
+   AURORA SIDEBAR — ACTIVE STATE OVERRIDE
+   Replaces the default purple with a premium blue gradient style
+   ================================================================ */
+
+/* Remove the theme's purple active background */
+.sidebar-link.active,
+.sidebar-nav .sidebar-item.selected > .sidebar-link,
+.sidebar-nav .sidebar-item.selected > a {
+    background: linear-gradient(90deg, rgba(93, 135, 255, 0.12) 0%, rgba(93, 135, 255, 0.04) 100%) !important;
+    color: #5d87ff !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    position: relative !important;
+    box-shadow: none !important;
+}
+
+/* Left accent bar */
+.sidebar-link.active::before,
+.sidebar-nav .sidebar-item.selected > .sidebar-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 4px;
+    background: linear-gradient(180deg, #5d87ff, #13deb9);
+    border-radius: 0 4px 4px 0;
+}
+
+/* Icon color on active */
+.sidebar-link.active iconify-icon,
+.sidebar-nav .sidebar-item.selected > .sidebar-link iconify-icon {
+    color: #5d87ff !important;
+    filter: drop-shadow(0 0 4px rgba(93, 135, 255, 0.35));
+}
+
+/* Hover state — consistent with active style */
+.sidebar-link:not(.active):hover,
+.sidebar-nav .sidebar-item:not(.selected) > .sidebar-link:hover {
+    background: rgba(93, 135, 255, 0.06) !important;
+    color: #5d87ff !important;
+    border-radius: 10px !important;
+    transition: all 0.18s ease !important;
+}
+
+.sidebar-link:not(.active):hover iconify-icon {
+    color: #5d87ff !important;
+}
+
+/* Sub-menu active link */
+.first-level .sidebar-link.active,
+.first-level .sidebar-link.active.text-primary {
+    background: rgba(93, 135, 255, 0.08) !important;
+    color: #5d87ff !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+}
+
+/* Smooth transition on all links */
+.sidebar-link {
+    transition: background 0.18s ease, color 0.18s ease !important;
+    border-radius: 10px !important;
+}
+
+
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+.logo-img {
+  width: 60px;
+  height: 60px;
+}
+
+.sitename {
+  margin-left: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f1c1c;
+  /* adjust for light/dark theme */
+  white-space: nowrap;
+}
+
+/* Sticky Header Customization */
+.body-wrapper .container-fluid,
+.body-wrapper .body-wrapper-inner .container-fluid {
+  padding-top: 14px !important;
+}
+
+.app-header.sticky-top {
+  position: sticky !important;
+  top: 14px;
+  margin-top: 0 !important;
+  z-index: 1030 !important;
+  background-color: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Responsive adjustment for app-header on small screens */
+@media (max-width: 768px) {
+
+  /* Responsive Table Stacked Style (Premium Card) */
+  .table-responsive-stack thead {
+    display: none;
+  }
+
+  .table-responsive-stack tr {
+    display: block;
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 15px;
+    background: #fff;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+  }
+
+  .table-responsive-stack tr:active {
+    transform: scale(0.98);
+  }
+
+  .table-responsive-stack td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    border-bottom: 1px solid #f8f9fa !important;
+    position: relative;
+    padding: 12px 0 !important;
+    min-height: 50px;
+  }
+
+  .table-responsive-stack td:last-child {
+    border-bottom: 0 !important;
+    padding-top: 15px !important;
+  }
+
+  .table-responsive-stack td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #5a6a85;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  /* Special handling for actions column on mobile */
+  .table-responsive-stack td:last-child::before {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  /* Hide typical DataTable elements that might clutter mobile view if needed */
+  .dataTables_wrapper .dataTables_filter {
+    margin-bottom: 15px;
+  }
+
+  /* Only apply aggressive overrides when sidebar is OPEN */
+  .show-sidebar .left-sidebar {
+    z-index: 99999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    width: 270px !important;
+    background-color: #fff !important;
+    margin: 0 !important;
+    padding-bottom: 60px;
+    overflow-y: auto;
+    transform: none !important;
+    transition: left 0.2s ease;
+  }
+
+  /* Reset potential parent transforms ONLY when sidebar is open to avoid issues */
+  .show-sidebar .page-wrapper,
+  .show-sidebar #main-wrapper {
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+  }
+
+  /* Stack Top Part Header Columns */
+  .top-part .row>.col-9 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  .top-part .row>.col-3 {
+    display: none !important;
+  }
+
+  /* Messenger Sidebar on Mobile */
+  .messenger-sidebar {
+    width: 85px !important;
+    min-width: 85px !important;
+  }
+
+  .messenger-sidebar .chat-user-item {
+    justify-content: center !important;
+    padding: 15px 10px !important;
+  }
+
+  .messenger-sidebar .chat-user-item .flex-grow-1,
+  .messenger-sidebar h5,
+  .messenger-sidebar .input-group {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .w-md-auto {
+    width: auto !important;
+  }
+
+  .messenger-sidebar {
+    width: 360px;
+    min-width: 360px;
+  }
+}
+
+/* --- Enhanced Messaging Styles --- */
+.messenger-container {
+  height: 700px;
+  background: #fff;
+}
+
+.messenger-sidebar {
+  background: rgba(246, 249, 252, 0.8) !important;
+  backdrop-filter: blur(10px);
+}
+
+.chat-user-item {
+  transition: all 0.2s ease;
+  border-left: 4px solid transparent;
+  margin: 5px 10px;
+  border-radius: 12px;
+}
+
+.chat-user-item:hover {
+  background-color: rgba(93, 135, 255, 0.08);
+  transform: translateX(3px);
+}
+
+.chat-user-item.active {
+  background-color: rgba(93, 135, 255, 0.12);
+  border-left-color: #5d87ff;
+}
+
+.chat-area-header {
+  background: linear-gradient(90deg, #fff 0%, #f8f9fa 100%);
+}
+
+.msg-bubble {
+  max-width: 70%;
+  position: relative;
+  font-size: 0.9rem;
+}
+
+.msg-bubble.received {
+  background: #ffffff;
+  color: #2a3547;
+  border: 1px solid #e5eaef;
+  border-bottom-left-radius: 4px !important;
+}
+
+.msg-bubble.sent {
+  background: linear-gradient(135deg, #5d87ff 0%, #4469e1 100%);
+  color: #fff;
+  border-bottom-right-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(93, 135, 255, 0.25);
+}
+
+.chat-history {
+  background: #f4f6f9;
+  background-image: radial-gradient(#e5eaef 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+}
+
+.status-online {
+  background-color: #13deb9;
+}
+
+.status-offline {
+  background-color: #adb5bd;
+}
+
+.status-busy {
+  background-color: #fa896b;
+}
+
+.chat-input-wrapper {
+  background: #fff;
+  padding: 15px 20px;
+  border-top: 1px solid #e5eaef;
+}
+
+.chat-input {
+  border-radius: 25px;
+  padding: 10px 20px !important;
+  background: #f6f9fc !important;
+  border: 1px solid #e5eaef !important;
+}
+
+.chat-history::-webkit-scrollbar,
+.conversation-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-history::-webkit-scrollbar-thumb,
+.conversation-list::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+}
+
+/* --- Aurora Modern Loaders --- */
+.aurora-loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: inherit;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.aurora-loader-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.aurora-spinner {
+  width: 45px;
+  height: 45px;
+  border: 3px solid rgba(93, 135, 255, 0.1);
+  border-left-color: #5d87ff;
+  border-radius: 50%;
+  animation: aurora-spin 0.8s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes aurora-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f2f5 25%, #f8fafc 50%, #f0f2f5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
+  display: block;
+}
+
+.skeleton-text {
+  height: 1.2rem;
+  margin-bottom: 0.8rem;
+  width: 100%;
+}
+
+.skeleton-title {
+  height: 2.2rem;
+  margin-bottom: 1.2rem;
+  width: 60%;
+}
+
+.skeleton-img {
+  width: 100%;
+  height: 300px;
+  border-radius: 20px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.loading-blur {
+  filter: blur(2px);
+  pointer-events: none;
+  user-select: none;
+}

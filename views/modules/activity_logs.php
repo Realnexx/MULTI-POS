@@ -7,11 +7,13 @@ $users = $users ?? [];
 
 ob_start();
 ?>
+<section id="activity-logs-page">
 
 <!-- Tailwind CSS CDN (matching POS history) -->
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
     tailwind.config = {
+        important: '#activity-logs-page',
         corePlugins: {
             preflight: false,
         },
@@ -361,6 +363,7 @@ ob_start();
 </script>
 
 
+</section>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

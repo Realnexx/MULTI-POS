@@ -1,0 +1,11 @@
+﻿
+--- criteria ---
+  id (bigint(20) unsigned)
+  category_id (bigint(20) unsigned)
+  name (varchar(255))
+  weight_percent (decimal(5,2))
+  display_order (int(11))
+  is_required (tinyint(1))
+  is_deleted (tinyint(1))
+  deleted_at (timestamp)
+  deleted_by (bigint(20) unsigned)

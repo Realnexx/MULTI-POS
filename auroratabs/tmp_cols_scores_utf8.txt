@@ -1,0 +1,9 @@
+﻿
+--- scores ---
+  id (bigint(20) unsigned)
+  assignment_id (bigint(20) unsigned)
+  candidate_id (bigint(20) unsigned)
+  criteria_id (bigint(20) unsigned)
+  score_value (decimal(5,2))
+  created_at (timestamp)
+  updated_at (timestamp)

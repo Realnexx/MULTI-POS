@@ -1,0 +1,5 @@
+Options -Indexes
+# Block executable and handler variants throughout writable media directories.
+<FilesMatch "(?i)\.(php[0-9]*|phtml|phar|cgi|pl|py|shtml)(\.|$)">
+    Require all denied
+</FilesMatch>

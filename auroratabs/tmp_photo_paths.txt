@@ -1,0 +1,6 @@
+Candidate: Candidate 2 Test - Photo: uploads/candidates/cand_69b9f4582674a.jpg
+Candidate: Candidate 1 Test - Photo: uploads/candidates/cand_69b9f4189b277.png
+Candidate: Candidate 3 Test - Photo: uploads/candidates/cand_69b9f45fbe9f1.jpg
+Candidate: Candidate 4 Test - Photo: uploads/candidates/cand_69b9f46be3d41.png
+Candidate: Candidate 5 Test - Photo: uploads/candidates/cand_69ba2f25e7f0d.png
+Candidate: Candidate 6 Test - Photo: uploads/candidates/cand_69ba2f36dd0da.png

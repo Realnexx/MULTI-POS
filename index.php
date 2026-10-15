@@ -1,19 +1,10 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/config/db.php';
 
-// Check for database initialization route
-if (($_GET['init'] ?? '') === '1') {
-    require_once __DIR__ . '/config/init_db.php';
-    exit;
+// Initialization is a manual CLI operation, never a public route.
+if (isset($_GET['init'])) {
+    http_response_code(403);
+    exit('Database initialization is disabled over HTTP.');
 }
 
 // Require Controllers
@@ -34,6 +25,14 @@ $websiteController = new WebsiteController();
 
 // Route Dispatcher
 $route = $_GET['route'] ?? 'home';
+require_once __DIR__ . '/middleware/session.php';
+enforce_session_timeout();
+if (!empty($_SESSION['user']) || in_array($route, ['login','customer_login','register','forgot_password','reset_password'], true)) {
+    header('Cache-Control: no-store, private');
+    header('Referrer-Policy: no-referrer');
+}
+require_once __DIR__ . '/middleware/access_policy.php';
+authorize_page($route);
 
 switch ($route) {
     // Public Website Routes
@@ -58,6 +57,12 @@ switch ($route) {
     case 'cart':
         $websiteController->cart();
         break;
+    case 'cart/checkout': $websiteController->checkout(); break;
+    case 'orders': $websiteController->orders(); break;
+    case 'order_tracking': $websiteController->order_tracking(); break;
+    case 'admin/online_orders':
+        require __DIR__.'/controllers/OnlineOrderController.php';
+        (new OnlineOrderController())->index(); break;
     case 'cart/add':
         $websiteController->cart_add();
         break;
@@ -75,6 +80,12 @@ switch ($route) {
     case 'customer_login':
         $authController->customer_login();
         break;
+    case 'forgot_password':
+        $authController->forgot_password();
+        break;
+    case 'reset_password':
+        $authController->reset_password();
+        break;
     case 'register':
         $authController->register();
         break;
@@ -89,6 +100,10 @@ switch ($route) {
         break;
 
     // Admin Dashboard & Management Routes
+    case 'admin/start':
+        $context = User::access_context($_SESSION['user']['id']);
+        require __DIR__ . '/views/modules/staff_start.php';
+        break;
     case 'dashboard':
         $adminController->dashboard();
         break;
@@ -160,6 +175,9 @@ switch ($route) {
     case 'pos/history/data':
         $posController->historyData();
         break;
+    case 'pos/history/stats':
+        $posController->historyStats();
+        break;
     case 'pos/history/update_status':
         $posController->updateStatus();
         break;
@@ -173,6 +191,9 @@ switch ($route) {
         break;
     case 'inventory/categories':
         $inventoryController->categories();
+        break;
+    case 'inventory/logs/print':
+        $inventoryController->printLogs();
         break;
     case 'inventory/logs':
         $inventoryController->logs();

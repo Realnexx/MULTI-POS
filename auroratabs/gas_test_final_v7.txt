@@ -1,0 +1,8 @@
+﻿Testing OTP Send via Google Apps Script (Custom doPost)...
+Response Body:
+OTP sent successfully via Google Apps Script.
+Array
+(
+    [status] => success
+    [message] => OTP sent successfully via Google Apps Script.
+)

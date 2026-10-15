@@ -1,22 +1,11 @@
 <?php
-$title = "Team & User Management";
+$title = "Users";
 ob_start();
 ?>
+<section class="access-workspace users-workspace">
 
 <div class="px-0">
-    <!-- Header Section -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <h1 class="h3 fw-bold text-dark mb-1" style="font-family: 'Montserrat', sans-serif;">Team & User Management</h1>
-            <p class="text-muted small mb-0">Manage system access, roles, and account settings for your staff.</p>
-        </div>
-        <button type="button" class="btn btn-primary rounded-pill px-4 fw-600 shadow-sm d-flex align-items-center gap-2"
-            style="background: #b60e3d; border: none; padding: 12px 24px;"
-            data-bs-toggle="modal" data-bs-target="#createUserModal">
-            <span class="material-symbols-outlined" style="font-size: 20px;">person_add</span>
-            Add New Member
-        </button>
-    </div>
+    <header class="access-heading"><div class="access-title"><span class="material-symbols-outlined">group</span><div><h1>Users</h1><p>Manage staff accounts, roles and access.</p></div></div><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">+ Add User</button></header>
 
     <!-- Quick Stats Summary -->
     <div class="row g-3 mb-4" id="stats-cards-container">
@@ -25,11 +14,11 @@ ob_start();
             <div class="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white border-start border-4 border-primary">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                        style="width: 48px; height: 48px; background: #ffe6ec; color: #b60e3d;">
+                        style="width: 48px; height: 48px; background: #edf2ff; color: #5d87ff;">
                         <span class="material-symbols-outlined">group</span>
                     </div>
                     <div>
-                        <div class="text-muted small fw-medium">Total Members</div>
+                        <div class="text-muted small fw-medium">Total Users</div>
                         <div id="total-users-count" class="h4 fw-bold mb-0 text-dark">...</div>
                     </div>
                 </div>
@@ -41,19 +30,18 @@ ob_start();
     <div class="card border-0 rounded-4 shadow-sm bg-white">
         <div class="card-header bg-white border-0 py-3 px-4">
             <div class="d-flex align-items-center justify-content-between">
-                <h5 class="mb-0 fw-bold text-dark">Member Directory</h5>
-                <h5 class="mb-0 fw-bold text-dark">Member Directory</h5>
+                <h5 class="mb-0 fw-bold text-dark">Staff Accounts</h5>
                 <div id="table-search-container"></div>
             </div>
         </div>
-        <div class="px-4 py-3">
+        <div class="users-table-container">
             <table id="user-table" class="table table-hover align-middle mb-0 w-100">
                 <thead class="bg-light">
                     <tr class="text-muted small text-uppercase fw-bold" style="letter-spacing: 0.5px;">
-                        <th class="py-3 px-4 border-0">Member Info</th>
+                        <th class="py-3 px-4 border-0">User</th>
                         <th class="py-3 border-0">Email</th>
                         <th class="py-3 border-0">Roles</th>
-                        <th class="py-3 border-0">Joined Date</th>
+                        <th class="py-3 border-0">Date Added</th>
                         <th class="py-3 px-4 border-0 text-end">Actions</th>
                     </tr>
                 </thead>
@@ -212,7 +200,7 @@ ob_start();
     .profile-section-title {
         font-size: 13px;
         font-weight: 800;
-        color: #b60e3d;
+        color: #5d87ff;
         margin-bottom: 16px;
         display: flex;
         align-items: center;
@@ -262,10 +250,10 @@ ob_start();
     }
 
     .custom-check-pill input:checked + label {
-        background: #b60e3d;
+        background: #5d87ff;
         color: #ffffff;
-        border-color: #b60e3d;
-        box-shadow: 0 4px 10px rgba(182, 14, 61, 0.25);
+        border-color: #5d87ff;
+        box-shadow: 0 4px 10px rgba(93, 135, 255, 0.25);
         transform: translateY(-2px);
     }
 
@@ -312,9 +300,9 @@ ob_start();
     }
 
     .pagination .page-item.active .page-link {
-        background-color: #b60e3d !important;
+        background-color: #5d87ff !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 10px rgba(182, 14, 61, 0.2) !important;
+        box-shadow: 0 4px 10px rgba(93, 135, 255, 0.2) !important;
     }
 
     .pagination .page-item.disabled .page-link {
@@ -329,7 +317,7 @@ ob_start();
         <div class="modal-content overflow-hidden">
             <div class="modal-body p-0">
                 <!-- Profile Header -->
-                <div class="position-relative" style="height: 160px; background: linear-gradient(135deg, #ff4d6d, #b60e3d);">
+                <div class="position-relative" style="height: 160px; background: linear-gradient(135deg, #5d87ff, #5d87ff);">
                     <div class="position-absolute top-0 end-0 p-4">
                         <span id="view-status-badge" class="badge rounded-pill bg-white text-success px-3 py-2 fw-bold shadow-sm" style="font-size: 10px;">
                             <span class="d-inline-block rounded-circle bg-success me-1" style="width: 6px; height: 6px;"></span>
@@ -342,7 +330,7 @@ ob_start();
                     <div class="d-flex align-items-end gap-4 mb-5">
                         <div id="view_avatar_container" class="position-relative">
                             <div id="view_avatar_initials" class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-lg"
-                                style="width: 110px; height: 110px; background: #ffffff; border: 5px solid #ffffff; font-size: 42px; color: #b60e3d !important;">
+                                style="width: 110px; height: 110px; background: #ffffff; border: 5px solid #ffffff; font-size: 42px; color: #5d87ff !important;">
                             </div>
                         </div>
                         <div class="mb-2 mt-5">
@@ -408,7 +396,7 @@ ob_start();
                                 </div>
                                 <div class="col-6">
                                     <div class="profile-card h-auto">
-                                        <div class="profile-info-label">Joined Date</div>
+                                        <div class="profile-info-label">Date Added</div>
                                         <div id="view_date" class="profile-info-value">-</div>
                                     </div>
                                 </div>
@@ -439,7 +427,7 @@ ob_start();
             <div class="modal-footer border-0 pb-5 px-5">
                 <div class="d-flex gap-3 w-100">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold flex-grow-1" data-bs-dismiss="modal">Close Profile</button>
-                    <button type="button" id="btn-edit-from-view" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1" style="background: #b60e3d; border: none;">Edit Account</button>
+                    <button type="button" id="btn-edit-from-view" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1" style="background: #5d87ff; border: none;">Edit Account</button>
                 </div>
             </div>
         </div>
@@ -451,7 +439,7 @@ ob_start();
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold text-dark">Add New Team Member</h5>
+                <h5 class="modal-title fw-bold text-dark">Add User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="<?= url('?route=admin/users') ?>" method="POST" enctype="multipart/form-data">
@@ -466,7 +454,7 @@ ob_start();
                                 <span class="material-symbols-outlined text-muted" style="font-size: 40px;">add_a_photo</span>
                             </div>
                             <label for="create_image" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-1 shadow-sm" 
-                                   style="background: #b60e3d; border: none; cursor: pointer;">
+                                   style="background: #5d87ff; border: none; cursor: pointer;">
                                 <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
                             </label>
                             <input type="file" name="image" id="create_image" class="d-none" accept="image/*" onchange="previewImage(this, 'create-image-preview')">
@@ -499,16 +487,22 @@ ob_start();
                         <label class="form-label">Temporary Password</label>
                         <input type="password" name="password" class="form-control" required placeholder="••••••••">
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">POS Terminal PIN (optional)</label>
+                        <input type="text" name="pos_pin" class="form-control" maxlength="4" pattern="\d{4}"
+                               placeholder="1234" style="letter-spacing: 4px; font-weight: 700;">
+                        <small class="text-muted">4-digit PIN for POS access. Defaults to <strong>1234</strong> if left empty.</small>
+                    </div>
                     <div>
-                        <label class="form-label d-block mb-3">Assign Access Roles</label>
+                        <label class="form-label d-block mb-3">Role</label>
                         <div id="create-user-roles-container" class="d-flex flex-wrap gap-2">
                             <!-- Roles will be loaded dynamically -->
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-600" data-bs-dismiss="modal">Discard</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold" style="background: #b60e3d; border: none;">Create Account</button>
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-600" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold" style="background: #5d87ff; border: none;">Create Account</button>
                 </div>
             </form>
         </div>
@@ -522,11 +516,11 @@ ob_start();
             <div class="modal-header border-0 p-4 pb-0">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
-                         style="width: 48px; height: 48px; background: #fff1f2; color: #b60e3d;">
+                         style="width: 48px; height: 48px; background: #fff1f2; color: #5d87ff;">
                         <span class="material-symbols-outlined" style="font-size: 24px;">manage_accounts</span>
                     </div>
                     <div>
-                        <h5 class="modal-title fw-bold text-dark mb-0">Edit Member Profile</h5>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Edit User</h5>
                         <p class="text-muted small mb-0">Update account credentials and roles.</p>
                     </div>
                 </div>
@@ -545,7 +539,7 @@ ob_start();
                                 <span class="material-symbols-outlined text-muted" style="font-size: 40px;">account_circle</span>
                             </div>
                             <label for="edit_image" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-1 shadow-sm" 
-                                   style="background: #b60e3d; border: none; cursor: pointer;">
+                                   style="background: #5d87ff; border: none; cursor: pointer;">
                                 <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
                             </label>
                             <input type="file" name="image" id="edit_image" class="d-none" accept="image/*" onchange="previewImage(this, 'edit-image-preview')">
@@ -554,7 +548,7 @@ ob_start();
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: #b60e3d;">person_edit</span>
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">person_edit</span>
                             Member Name Details
                         </label>
                         <div class="row g-2">
@@ -579,7 +573,7 @@ ob_start();
 
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: #b60e3d;">alternate_email</span>
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">alternate_email</span>
                             Email Address
                         </label>
                         <input type="email" name="email" id="edit_email" class="form-control form-control-lg border-0 bg-light shadow-none" 
@@ -588,17 +582,29 @@ ob_start();
 
                     <div class="mb-4">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: #b60e3d;">lock_reset</span>
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">lock_reset</span>
                             Security Password
                         </label>
                         <input type="password" name="password" class="form-control form-control-lg border-0 bg-light shadow-none" 
                                placeholder="********" style="font-size: 15px; padding: 14px 20px; border-radius: 12px;">
                         <p class="text-muted mt-2 mb-0" style="font-size: 11px;">Leave this field empty if you don't wish to update the current password.</p>
                     </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">dialpad</span>
+                            POS Terminal PIN
+                        </label>
+                        <input type="text" name="pos_pin" id="edit_pos_pin"
+                               class="form-control form-control-lg border-0 bg-light shadow-none"
+                               maxlength="4" pattern="\d{4}"
+                               placeholder="****" style="font-size: 15px; padding: 14px 20px; border-radius: 12px; letter-spacing: 8px; font-weight: 700;">
+                        <p class="text-muted mt-2 mb-0" style="font-size: 11px;">4-digit PIN used to access the POS terminal. Leave empty to keep current.</p>
+                    </div>
                         
                     <div class="mt-5 mb-2">
                         <label class="form-label fw-bold text-dark small mb-3 d-flex align-items-center gap-2">
-                            <span class="material-symbols-outlined" style="font-size: 18px; color: #b60e3d;">verified_user</span>
+                            <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">verified_user</span>
                             System Permissions & Roles
                         </label>
                         <div id="edit-user-roles-container" class="d-flex flex-wrap gap-2">
@@ -613,7 +619,7 @@ ob_start();
                         Cancel
                     </button>
                     <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold d-flex align-items-center gap-2" 
-                            style="background: #b60e3d; border: none; font-size: 13px; border-radius: 12px !important; padding: 10px 24px; box-shadow: 0 4px 12px rgba(182, 14, 61, 0.15);">
+                            style="background: #5d87ff; border: none; font-size: 13px; border-radius: 12px !important; padding: 10px 24px; box-shadow: 0 4px 12px rgba(93, 135, 255, 0.15);">
                         <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
                         Update Account
                     </button>
@@ -632,7 +638,7 @@ ob_start();
                     style="width: 64px; height: 64px; background: #fff1f2; color: #e11d48;">
                     <span class="material-symbols-outlined text-4xl">warning</span>
                 </div>
-                <h5 class="fw-bold text-dark mb-2">Remove Team Member?</h5>
+                <h5 class="fw-bold text-dark mb-2">Delete User?</h5>
                 <p class="text-muted small mb-4">Are you sure you want to remove <span id="delete_user_name" class="fw-bold"></span>? This action will revoke all system access immediately.</p>
 
                 <form action="<?= url('?route=admin/users') ?>" method="POST">
@@ -670,7 +676,7 @@ ob_start();
                         const initials = data ? data.charAt(0).toUpperCase() : '?';
                         const userImg = row.image ? `<img src="${row.image}" alt="${escapeHtml(data)}" class="rounded-circle shadow-sm" style="width: 42px; height: 42px; object-fit: cover;">` : `
                             <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm" 
-                                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #ff4d6d, #b60e3d); font-size: 14px;">
+                                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #5d87ff, #5d87ff); font-size: 14px;">
                                 ${initials}
                             </div>`;
                         return `
@@ -712,15 +718,15 @@ ob_start();
                                     </button>
                                     <span class="custom-tooltip">View Profile</span>
                                 </div>
-                                <div class="custom-tooltip-wrapper">
+                                ${row.can_manage !== false ? `<div class="custom-tooltip-wrapper">
                                     <button type="button" class="action-btn btn-edit-member edit-user-btn" 
                                             data-id="${row.id}"
                                             data-bs-toggle="modal" data-bs-target="#editUserModal">
                                         <span class="material-symbols-outlined">edit_note</span>
                                     </button>
                                     <span class="custom-tooltip">Edit Member</span>
-                                </div>
-                                ${!isSelf ? `
+                                </div>` : ''}
+                                ${!isSelf && row.can_manage !== false ? `
                                 <div class="custom-tooltip-wrapper">
                                     <button type="button" class="action-btn btn-delete-member delete-user-btn" 
                                             data-id="${row.id}"
@@ -733,7 +739,8 @@ ob_start();
                     }
                 }
             ],
-            dom: '<"d-flex align-items-center justify-content-between px-4 py-3 border-bottom"<"d-flex align-items-center gap-2"l><"dt-custom-search">>tr<"d-flex align-items-center justify-content-between p-4 border-top"<"small text-muted"i><"pagination-sm"p>>',
+            autoWidth: false,
+            dom: '<"users-table-scroll"tr><"users-table-footer"lip>',
             language: {
                 processing: '<div class="spinner-border text-primary spinner-border-sm" role="status"></div>',
                 emptyTable: '<div class="opacity-25 my-4"><span class="material-symbols-outlined" style="font-size: 48px;">person_search</span></div><p class="text-muted">No team members found.</p>'
@@ -744,7 +751,7 @@ ob_start();
                     <div class="position-relative">
                         <span class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 18px;">search</span>
                         <input type="text" id="userSearch" class="form-control rounded-pill ps-5 border-light bg-light small"
-                            placeholder="Search members..." style="width: 250px;">
+                            placeholder="Search users..." style="width: 250px;">
                     </div>`;
                 $('#table-search-container').html(searchHtml);
                 
@@ -763,7 +770,7 @@ ob_start();
         function loadRoles() {
             $.get('<?= url("?route=admin/roles/data") ?>', function(response) {
                 if (response.success) {
-                    renderRoleCheckboxes(response.roles);
+                    renderRoleCheckboxes(response.roles.filter(r => r.can_assign !== false && (!r.is_superadmin || <?= json_encode(User::is_superadmin($_SESSION['user']['id'])) ?>)));
                 }
             });
         }
@@ -774,7 +781,7 @@ ob_start();
 
             if (json && json.role_counts) {
                 const container = $("#stats-cards-container");
-                // Clear existing dynamic cards but keep the first one (Total Members)
+                // Clear existing dynamic cards but keep the first one (Total Users)
                 const totalMembersCard = container.find('.col-md-4').first();
                 container.empty().append(totalMembersCard);
 
@@ -785,8 +792,8 @@ ob_start();
                     let border = 'info';
 
                     if (rc.name.toLowerCase().includes('admin')) {
-                        color = '#b60e3d';
-                        bg = '#ffe6ec';
+                        color = '#5d87ff';
+                        bg = '#edf2ff';
                         icon = 'admin_panel_settings';
                         border = 'primary';
                     } else if (rc.name.toLowerCase().includes('cashier')) {
@@ -822,8 +829,8 @@ ob_start();
                 let color = '#666';
                 let bg = '#f0f0f0';
                 if (r === 'Admin') {
-                    color = '#b60e3d';
-                    bg = '#ffe6ec';
+                    color = '#5d87ff';
+                    bg = '#edf2ff';
                 }
                 if (r === 'Cashier') {
                     color = '#2e7d32';
@@ -910,8 +917,8 @@ ob_start();
 
                     let rolesHtml = '';
                     roles.forEach(r => {
-                        let color = '#b60e3d';
-                        let bg = '#ffe6ec';
+                        let color = '#5d87ff';
+                        let bg = '#edf2ff';
                         if (r === 'Cashier') {
                             color = '#2e7d32';
                             bg = '#e8f5e9';
@@ -949,7 +956,8 @@ ob_start();
                     $("#edit_lastname").val(user.lastname);
                     $("#edit_extname").val(user.extname);
                     $("#edit_email").val(user.email);
- 
+                    $("#edit_pos_pin").val(user.pos_pin || '');
+  
                     if (user.image) {
                         $("#edit-image-preview").html(`<img src="${user.image}" class="rounded-circle w-100 h-100" style="object-fit: cover;">`);
                         $("#edit-image-preview").css('background-image', 'none');
@@ -980,6 +988,8 @@ ob_start();
     });
 </script>
 
+<link rel="stylesheet" href="<?= url('assets/css/access-management.css') ?>">
+</section>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

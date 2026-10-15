@@ -1,0 +1,97 @@
+name: Deploy MULTI-POS to InfinityFree
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: infinityfree-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, mbstring, fileinfo
+          coverage: none
+      - name: Validate deployment boundaries
+        run: python3 -m unittest discover -s tools/tests -v
+      - name: Validate PHP and assemble runtime files
+        run: python3 tools/prepare-deploy.py
+      - name: Save reviewed runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-runtime
+          path: .deploy/
+          include-hidden-files: true
+          retention-days: 7
+
+  deploy:
+    needs: validate
+    # Enable only after the hosting, database and private configuration are ready.
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: production-runtime
+          path: .deploy/
+      - name: Check confirmed hosting settings
+        env:
+          SERVER_DIR: ${{ vars.FTP_SERVER_DIR }}
+          PROTOCOL: ${{ vars.FTP_PROTOCOL }}
+          PORT: ${{ vars.FTP_PORT }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        shell: python
+        run: |
+          import os
+          for key in ('SERVER_DIR', 'PROTOCOL', 'PORT', 'FTP_SERVER', 'FTP_USERNAME', 'FTP_PASSWORD'):
+              if not os.environ.get(key):
+                  raise SystemExit('Missing required hosting setting: ' + key)
+          path = os.environ['SERVER_DIR']
+          if not path.endswith('/') or path in ('/', './') or '..' in path.split('/'):
+              raise SystemExit('Set a confirmed document root with a trailing slash, e.g. /htdocs/.')
+          if os.environ['PROTOCOL'] not in ('ftp', 'ftps', 'ftps-legacy'):
+              raise SystemExit('Unsupported FTP protocol.')
+          if not os.environ['PORT'].isdigit() or not 1 <= int(os.environ['PORT']) <= 65535:
+              raise SystemExit('Invalid FTP port.')
+      - name: Incremental production deployment
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL }}
+          port: ${{ vars.FTP_PORT }}
+          server-dir: ${{ vars.FTP_SERVER_DIR }}
+          local-dir: ./.deploy/
+          dangerous-clean-slate: false
+          security: strict
+          log-level: minimal
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.env*
+            config/config.local.php
+            config/config.production.php
+            config/init_db.php
+            assets/uploads/**
+            assets/img/products/**
+            assets/img/users/**
+            assets/img/branches/**
+            assets/img/logo_*
+            **/*.log
+            **/*.bak
+            **/*.sql

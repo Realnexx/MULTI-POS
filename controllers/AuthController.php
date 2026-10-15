@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../middleware/auth.php';
+require_once __DIR__ . '/../models/AuthSecurity.php';
 
 class AuthController
 {
@@ -11,175 +12,133 @@ class AuthController
         enforce_csrf();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = sanitize($_POST['username'] ?? $_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $selected_role = sanitize($_POST['role'] ?? 'Admin');
-            $selected_branch = sanitize($_POST['branch'] ?? 'Quezon City');
-
-            // Login attempt rate limiting
-            if (!isset($_SESSION['login_attempts'])) {
-                $_SESSION['login_attempts'] = 0;
-                $_SESSION['last_attempt_time'] = time();
-            }
-
-            if ($_SESSION['login_attempts'] >= 5 && (time() - $_SESSION['last_attempt_time']) < 300) {
-                set_flash('danger', 'Too many failed login attempts. Please try again in 5 minutes.');
-                redirect('?route=login');
-            }
-
+            $username = AuthSecurity::input('username') ?: AuthSecurity::input('email');
+            $password = isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+            $policy = AuthSecurity::config();
+            $wait = AuthSecurity::consume('login-ip', AuthSecurity::ip(), (int)$policy['login_ip_limit'], (int)$policy['login_window']);
+            if ($wait) return $this->auth_error('login', 'Too many sign-in attempts. Please wait ' . (int)ceil($wait / 60) . ' minutes.', 429, $wait);
+            if ($username === '' || strlen($username) > 254 || $password === '' || strlen($password) > 72 || strpos($password, "\0") !== false) return $this->auth_error('login', 'Enter a valid username or email and your password.');
             $user = User::find_by_username_or_email($username);
-            if ($user && password_verify($password, $user['password'])) {
-                $user_username = $user['username'] ?: explode('@', $user['email'])[0];
+            $identity = $user ? 'user:'.$user['id'] : strtolower($username);
+            $wait = AuthSecurity::consume('login-account', $identity, (int)$policy['login_account_limit'], (int)$policy['login_window']);
+            if ($wait) return $this->auth_error('login', 'Too many sign-in attempts. Please wait ' . (int)ceil($wait / 60) . ' minutes.', 429, $wait);
+            // Verify a real bcrypt hash even for an unknown account.
+            $valid = password_verify($password, $user['password'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi');
+            if ($user && $valid) {
+                AuthSecurity::clear_limit('login-account', $identity);
+                $guestSession = session_id();
+                session_regenerate_id(true);
+                AuthSecurity::establish($user['id']);
+                unset($_SESSION['pos_branch_id'], $_SESSION['pos_pin_verified'], $_SESSION['pos_cart'], $_SESSION['login_attempts']);
+                $context = User::access_context($user['id']);
                 $_SESSION['user'] = [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email'],
-                    'username' => $user_username,
-                    'role' => $selected_role,
-                    'branch' => $selected_branch,
-                    'avatar_url' => $user['avatar_url'] ?: $user['image'] ?: null
+                    'id'=>$user['id'], 'name'=>$user['name'], 'email'=>$user['email'],
+                    'username'=>$user['username'] ?: explode('@', $user['email'])[0],
+                    'role'=>$context['role'], 'branch'=>$context['branch'], 'branch_id'=>$context['branch_id'],
+                    'avatar_url'=>$user['avatar_url'] ?? $user['image'] ?? null
                 ];
-                unset($_SESSION['login_attempts']);
-
-                // Set status online
                 User::set_status($user['id'], 'online');
-
-                // Persist selected branch to users table
-                global $conn;
-                $b = $conn->real_escape_string($selected_branch);
-                $conn->query("UPDATE users SET branch = '$b' WHERE id = " . intval($user['id']));
-
-                // Log login activity
-                User::log_activity($user['id'], 'login', 'User logged in as ' . $selected_role . ' from branch: ' . $selected_branch);
-
-                // Check roles to determine redirect
-                if (strcasecmp($selected_role, 'Admin') === 0 && User::has_permission($user['id'], 'view_dashboard')) {
-                    redirect('?route=dashboard');
-                } elseif (strcasecmp($selected_role, 'Cashier') === 0 && User::has_permission($user['id'], 'access_pos')) {
-                    redirect('?route=pos');
+                User::log_activity($user['id'], 'login', 'Signed in as ' . $context['role'] . ' — ' . $context['branch']);
+                if (!$context['staff']) {
+                    require_once __DIR__ . '/../models/Cart.php';
+                    Cart::migrate($guestSession, $user['id']);
                 } else {
-                    redirect('?route=home');
+                    set_flash('success', 'Welcome back! You have signed in successfully.');
                 }
+                redirect('?route=' . User::landing_route($user['id']));
             } else {
-                $_SESSION['login_attempts']++;
-                $_SESSION['last_attempt_time'] = time();
-                // Log failed admin login attempt (no user_id)
-                User::log_activity(null, 'login_failed', 'Failed admin login attempt for: ' . $username);
-                set_flash('danger', 'Invalid username or password.');
-                redirect('?route=login');
+                User::log_activity(null, 'login_failed', 'Failed sign-in attempt.');
+                return $this->auth_error('login', 'Invalid username or password.');
             }
         }
 
         require_once __DIR__ . '/../models/Branch.php';
-        $db_branches = Branch::get_all_active();
+        require_once __DIR__ . '/../models/Setting.php';
+        $store_settings = Setting::get_by_category('general');
+        $store_name = $store_settings['store_name'] ?? Setting::get('store_name', 'MultiPOS');
+        $store_logo = $store_settings['store_logo'] ?? Setting::get('store_logo', 'assets/img/logo.png');
         require __DIR__ . '/../views/auth/login.php';
     }
 
+    // Keep old links working through the same authentication flow.
     public function customer_login() {
-        require_guest();
-        enforce_csrf();
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = sanitize($_POST['username'] ?? $_POST['email'] ?? '');
-            $password = $_POST['password'] ?? '';
-
-            if (!isset($_SESSION['login_attempts'])) {
-                $_SESSION['login_attempts'] = 0;
-                $_SESSION['last_attempt_time'] = time();
-            }
-
-            if ($_SESSION['login_attempts'] >= 5 && (time() - $_SESSION['last_attempt_time']) < 300) {
-                set_flash('danger', 'Too many failed login attempts. Please try again in 5 minutes.');
-                redirect('?route=customer_login');
-            }
-
-            $user = User::find_by_username_or_email($username);
-            if ($user && password_verify($password, $user['password'])) {
-                $user_username = $user['username'] ?: explode('@', $user['email'])[0];
-                $_SESSION['user'] = [
-                    'id' => $user['id'],
-                    'name' => $user['name'],
-                    'email' => $user['email'],
-                    'username' => $user_username
-                ];
-                unset($_SESSION['login_attempts']);
-
-                // Set status online
-                User::set_status($user['id'], 'online');
-
-                // Log customer login activity
-                User::log_activity($user['id'], 'customer_login', 'Customer logged in: ' . $user_username);
-
-                // Migrate cart from session-based to database user-based
-                require_once __DIR__ . '/../models/Cart.php';
-                Cart::migrate(session_id(), $user['id']);
-
-                set_flash('success', 'Welcome back, ' . htmlspecialchars($user_username) . '! Delightful layers await you.');
-                redirect('?route=home');
-            } else {
-                $_SESSION['login_attempts']++;
-                $_SESSION['last_attempt_time'] = time();
-                // Log failed customer login attempt
-                User::log_activity(null, 'login_failed', 'Failed customer login attempt for: ' . $username);
-                set_flash('danger', 'Invalid username or password.');
-                redirect('?route=customer_login');
-            }
-        }
-
-        require __DIR__ . '/../views/auth/customer_login.php';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') return $this->login();
+        redirect('?route=login');
     }
 
-    public function register()
-    {
-        require_guest();
-        enforce_csrf();
+    private function auth_error($route, $message, $status = 422, $retry = null) {
+        http_response_code($status);
+        if ($retry) header('Retry-After: '.(int)$retry);
+        set_flash('danger', $message);
+        require __DIR__.'/../views/auth/'.$route.'.php';
+    }
 
+    public function register() {
+        require_guest(); enforce_csrf();
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = sanitize($_POST['username'] ?? '');
-            $password = $_POST['password'] ?? '';
-            $confirm = $_POST['confirm_password'] ?? '';
-
-            if (empty($username) || empty($password)) {
-                set_flash('danger', 'All fields are required.');
-                redirect('?route=register');
-            }
-
-            if ($password !== $confirm) {
-                set_flash('danger', 'Passwords do not match.');
-                redirect('?route=register');
-            }
-
-            if (User::find_by_username_or_email($username)) {
-                set_flash('danger', 'Username is already taken.');
-                redirect('?route=register');
-            }
-
-            // Create user using username for all name parts to satisfy model, and username@haluhalu.club as email
-            $email = $username . '@haluhalu.club';
-            
-            // The User::create method now expects:
-            // 1. $firstname, 2. $middlename, 3. $lastname, 4. $extname, 5. $username, 6. $email, 7. $password
-            $user_id = User::create($username, '', '', '', $username, $email, $password, [3]);
-            if ($user_id) {
-                $_SESSION['user'] = [
-                    'id' => $user_id,
-                    'name' => $username,
-                    'email' => $email,
-                    'username' => $username
-                ];
-                // Set status online on register
-                User::set_status($user_id, 'online');
-                // Log registration
-                User::log_activity($user_id, 'register', 'New customer account registered: ' . $username);
-                set_flash('success', 'Account created! Now, let\'s customize your profile.');
-                redirect('?route=setup_profile');
-            } else {
-                set_flash('danger', 'Registration failed. Please try again.');
-                redirect('?route=register');
-            }
+            $wait=AuthSecurity::consume('register-ip',AuthSecurity::ip(),5,3600);
+            if($wait)return $this->auth_error('register','Too many registration attempts. Please try again later.',429,$wait);
+            $username=AuthSecurity::input('username');$email=strtolower(AuthSecurity::input('email'));
+            $password=isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+            $confirm=isset($_POST['confirm_password']) && is_string($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
+            if(!preg_match('/^[A-Za-z0-9_.-]{3,40}$/D',$username))return $this->auth_error('register','Use 3–40 letters, numbers, dots, dashes, or underscores for your username.');
+            if(strlen($email)>254 || !filter_var($email,FILTER_VALIDATE_EMAIL))return $this->auth_error('register','Enter a valid email address.');
+            if($error=AuthSecurity::password_error($password))return $this->auth_error('register',$error);
+            if($password!==$confirm)return $this->auth_error('register','Your passwords do not match.');
+            if(User::find_by_username_or_email($username)||User::find_by_email($email))return $this->auth_error('register','An account already uses that username or email. Sign in or recover your password.');
+            global $conn;
+            $role=$conn->query("SELECT id FROM roles WHERE LOWER(name)='customer' LIMIT 1")->fetch_assoc();
+            if(!$role)return $this->auth_error('register','Registration is temporarily unavailable.',503);
+            $user_id=User::create($username,'','','',$username,$email,$password,[(int)$role['id']]);
+            if(!$user_id)return $this->auth_error('register','We could not create your account. Please try again.',500);
+            $guestSession=session_id();session_regenerate_id(true);AuthSecurity::establish($user_id);
+            $_SESSION['user']=['id'=>$user_id,'name'=>$username,'email'=>$email,'username'=>$username,'role'=>'Customer','branch_id'=>null];
+            require_once __DIR__.'/../models/Cart.php';Cart::migrate($guestSession,$user_id);
+            User::set_status($user_id,'online');User::log_activity($user_id,'register','Customer registered.');
+            set_flash('success','Your account is ready. Welcome!');redirect('?route=setup_profile');
         }
+        require __DIR__.'/../views/auth/register.php';
+    }
 
-        require __DIR__ . '/../views/auth/register.php';
+    public function forgot_password() {
+        require_guest();enforce_csrf();
+        if($_SERVER['REQUEST_METHOD']==='POST') {
+            $wait=AuthSecurity::consume('forgot-ip',AuthSecurity::ip(),10,3600);
+            if($wait)return $this->auth_error('forgot_password','Too many requests. Please try again later.',429,$wait);
+            $email=strtolower(AuthSecurity::input('email'));
+            if(strlen($email)>254||!filter_var($email,FILTER_VALIDATE_EMAIL))return $this->auth_error('forgot_password','Enter a valid email address.');
+            $wait=AuthSecurity::consume('forgot-email',$email,3,900);
+            if($wait)return $this->auth_error('forgot_password','Too many requests. Please try again later.',429,$wait);
+            $user=User::find_by_email($email);
+            if($user) {
+                $token=AuthSecurity::issue_reset($user['id']);
+                try {
+                    require_once __DIR__.'/../services/PasswordMailer.php';require_once __DIR__.'/../models/Setting.php';
+                    PasswordMailer::send_reset($email,$token,Setting::get('store_name','Burger shop'));
+                } catch(Throwable $e) { AuthSecurity::revoke_reset($token);error_log('Password recovery email could not be delivered. Check SMTP configuration.'); }
+            }
+            set_flash('success','If an account uses that email, you’ll receive a password reset link. Check your inbox and spam folder.');
+            redirect('?route=forgot_password');
+        }
+        require __DIR__.'/../views/auth/forgot_password.php';
+    }
+
+    public function reset_password() {
+        require_guest();enforce_csrf();
+        header('Referrer-Policy: no-referrer');
+        $token=isset($_GET['token']) && is_string($_GET['token']) ? $_GET['token'] : '';
+        if($_SERVER['REQUEST_METHOD']==='POST') {
+            $wait=AuthSecurity::consume('reset-ip',AuthSecurity::ip(),10,900);
+            if($wait)return $this->auth_error('reset_password','Too many attempts. Please try again later.',429,$wait);
+            $password=isset($_POST['password']) && is_string($_POST['password']) ? $_POST['password'] : '';
+            $confirm=isset($_POST['confirm_password']) && is_string($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
+            if($error=AuthSecurity::password_error($password))return $this->auth_error('reset_password',$error);
+            if($password!==$confirm)return $this->auth_error('reset_password','Your passwords do not match.');
+            if(!AuthSecurity::reset_password($token,$password))return $this->auth_error('reset_password','This reset link has expired or has already been used. Request a new one.');
+            session_regenerate_id(true);unset($_SESSION['csrf_token']);
+            set_flash('success','Your password has been updated. Sign in with your new password.');redirect('?route=login');
+        }
+        require __DIR__.'/../views/auth/reset_password.php';
     }
 
     public function setup_profile()

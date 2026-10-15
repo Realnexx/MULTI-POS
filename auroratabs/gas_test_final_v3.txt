@@ -1,0 +1,8 @@
+﻿Testing OTP Send via Google Apps Script...
+Response Body:
+HTTP Error Code: 405. Raw result: <!DOCTYPE html><html lang="fil"><head><meta name="description" content="Word processing, mga pagtata
+Array
+(
+    [status] => error
+    [message] => HTTP Error Code: 405. Raw result: <!DOCTYPE html><html lang="fil"><head><meta name="description" content="Word processing, mga pagtata
+)

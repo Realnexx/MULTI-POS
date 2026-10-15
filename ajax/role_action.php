@@ -2,8 +2,12 @@
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Role.php';
+require_once __DIR__ . '/../models/ActivityLog.php';
 
 header('Content-Type: application/json');
+$action = $_POST['action'] ?? '';
+require_once __DIR__ . '/../middleware/access_policy.php';
+authorize_action('role_action', $action);
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -14,17 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-    echo json_encode(['success' => false, 'message' => 'CSRF token mismatch']);
-    exit;
-}
 
-if (empty($_SESSION['user']) || !User::has_permission($_SESSION['user']['id'], 'manage_roles')) {
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
-    exit;
-}
 
-$action = $_POST['action'] ?? '';
+
+
+
 
 switch ($action) {
     case 'get_permissions':
@@ -44,9 +42,14 @@ switch ($action) {
         
         if (!empty($name) && !empty($module)) {
             try {
-                $success = Role::add_permission($name, $desc, $module);
+                $perm_id = Role::add_permission($name, $desc, $module);
+                $success = (bool)$perm_id;
                 $msg = $success ? 'Permission added successfully' : 'Failed to add permission';
                 
+                if ($success) {
+                    ActivityLog::log('Permission Created', "Created permission '{$name}' ({$module}) — ID: {$perm_id}");
+                }
+
                 if (!$success && $conn->errno === 1062) {
                     $msg = "Error: A permission token named '$name' already exists.";
                 }
@@ -80,6 +83,10 @@ switch ($action) {
                 $success = Role::update_permission($id, $name, $desc, $module);
                 $msg = $success ? 'Permission updated' : 'Update failed';
 
+                if ($success) {
+                    ActivityLog::log('Permission Updated', "Updated permission ID {$id} — '{$name}' ({$module})");
+                }
+
                 if (!$success && $conn->errno === 1062) {
                     $msg = "Error: The token '$name' is already in use.";
                 }
@@ -101,6 +108,9 @@ switch ($action) {
         $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             $success = Role::delete_permission($id);
+            if ($success) {
+                ActivityLog::log('Permission Deleted', "Deleted permission ID {$id}");
+            }
             echo json_encode(['success' => $success, 'message' => $success ? 'Permission deleted' : 'Deletion failed']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid ID']);
