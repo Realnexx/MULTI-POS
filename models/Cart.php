@@ -48,7 +48,7 @@ class Cart {
             $owners=[[null,self::owner_key($session,null)],[$user,self::owner_key($session,$user)]];usort($owners,function($a,$b){return strcmp($a[1],$b[1]);});foreach($owners as $owner)self::lock_owner($session,$owner[0]);
             foreach(self::get_items($session,null) as $item) {
                 [$where,$type,$params]=self::owner($session,$user);$current=RecipeInventory::rows('SELECT COALESCE(SUM(qty),0) quantity FROM cart WHERE '.$where.' AND product_id=?',$type.'i',array_merge($params,[$item['id']]))[0];
-                $qty=min((int)$item['stock'],(int)$item['qty']+(int)$current['quantity']);self::write_quantity($item['id'],$qty,$session,$user);
+                $qty=min(100000,(int)$item['qty']+(int)$current['quantity']);self::remove($item['id'],$session,$user);if($qty)RecipeInventory::query('INSERT INTO cart(session_id,user_id,product_id,qty) VALUES (?,?,?,?)','siii',[$session,$user,$item['id'],$qty]);
             }
             self::clear($session,null);
         });

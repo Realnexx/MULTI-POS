@@ -26,6 +26,14 @@
   if (toast) toast.querySelector('button').addEventListener('click', () => { clearTimeout(toastTimer); toast.hidden = true; });
   const flash = document.getElementById('shop-flash');
   if (flash) notify(flash.dataset.message);
+  document.querySelectorAll('[data-online-checkout]').forEach(form => {
+    const button = form.querySelector('button[type="submit"]');
+    if (!button) return;
+    const label = button.textContent;
+    const initiallyDisabled = button.disabled;
+    form.addEventListener('submit', () => { button.disabled = true; button.textContent = 'Placing order…'; button.setAttribute('aria-busy', 'true'); });
+    window.addEventListener('pageshow', () => { button.disabled = initiallyDisabled; button.textContent = label; button.removeAttribute('aria-busy'); });
+  });
   document.querySelectorAll('.detail-order').forEach(form => {
     const input = form.querySelector('[name="qty"]');
     const total = form.querySelector('[data-item-total]');

@@ -1,0 +1,8 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');const base='http://127.0.0.1:8877/pos/';const state=JSON.parse(fs.readFileSync('scratch/online-browser-tracking.json'));let checks=0;
+(async()=>{const tracking=state.tracking;
+for(const route of ['cart/add','cart/update','cart/remove']){let r=await fetch(base+'?route='+route,{headers:{Cookie:'PHPSESSID=rbactestcustomer'},redirect:'manual'});assert.equal(r.status,405);checks++;r=await fetch(base+'?route='+route,{method:'POST',headers:{Cookie:'PHPSESSID=rbactestcustomer'},body:new URLSearchParams({product_id:905,qty:1}),redirect:'manual'});assert.equal(r.status,419);checks++;}
+let r=await fetch(base+'?route=cart/checkout',{method:'POST',body:new URLSearchParams({}),redirect:'manual'});assert.equal(r.status,302);assert(r.headers.get('location').endsWith('?route=login'));checks+=2;
+r=await fetch(base+'?route=admin/online_orders',{method:'POST',headers:{Cookie:'PHPSESSID=rbactestcustomer'},body:new URLSearchParams({status:'completed',order_id:1,csrf_token:'rbac-fixture-token'}),redirect:'manual'});assert.equal(r.status,403);checks++;
+r=await fetch(base+'?route=order_tracking&tracking='+tracking,{headers:{Cookie:'PHPSESSID=rbactestviewer'},redirect:'manual'});assert.equal(r.status,404);checks++;
+r=await fetch(base+'?route=admin/online_orders',{headers:{Cookie:'PHPSESSID=rbactestcashier'},redirect:'manual'});assert.equal(r.status,200);const text=await r.text();assert(!/Fatal error|Warning:|Parse error/.test(text));assert(text.includes('Online Orders'));checks+=3;
+console.log('PASS '+checks+' cart write-method/CSRF, signed-in checkout, order permissions and tracking ownership guards');})();

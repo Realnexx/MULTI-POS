@@ -9,11 +9,11 @@ class OnlineOrder {
         $db->query("CREATE TABLE IF NOT EXISTS online_order_events(id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,order_id INT NOT NULL,status VARCHAR(24) NOT NULL,user_id INT NOT NULL,note VARCHAR(255) NOT NULL,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,INDEX(order_id,id)) ENGINE=InnoDB");
     }
     private static function event($order,$status,$user,$note) { RecipeInventory::query('INSERT INTO online_order_events(order_id,status,user_id,note) VALUES (?,?,?,?)','isis',[$order,$status,$user,$note]); }
-    public static function place($user,$session,$branch,$name,$email,$phone,$key) {
-        if(!$user||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('Please sign in and reload your cart.');
+    public static function place($user,$session,$branch,$name,$email,$phone,$key,$expectedTotal=null) {
+        if(!$user||!User::find_by_id($user)||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('Please sign in and reload your cart.');
         if(!is_string($name)||trim($name)===''||mb_strlen($name)>150||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254||!preg_match('/^[+0-9 ()-]{7,40}$/D',$phone))throw new DomainException('Enter your name, a valid email, and a contact number.');
         $fingerprint=hash('sha256',json_encode([(int)$user,(int)$branch,trim($name),strtolower($email),$phone]));
-        return RecipeInventory::atomic(function()use($user,$session,$branch,$name,$email,$phone,$key,$fingerprint){
+        return RecipeInventory::atomic(function()use($user,$session,$branch,$name,$email,$phone,$key,$fingerprint,$expectedTotal){
             global $conn;Cart::lock_owner($session,$user);
             $old=RecipeInventory::rows('SELECT * FROM online_orders WHERE checkout_key=? FOR UPDATE','s',[$key]);
             if($old){if((int)$old[0]['user_id']!==$user||!hash_equals($old[0]['request_hash'],$fingerprint))throw new DomainException('This checkout was already submitted with different details. Reload your cart.');return $old[0];}
@@ -22,6 +22,7 @@ class OnlineOrder {
             $ids=[];foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);$ids[]=$item['id'];$ids=array_merge($ids,array_keys($quote['needs']));}RecipeInventory::lockProducts($ids);
             $quotes=[];$needs=[];$cents=0;
             foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);if(!empty($quote['product']['is_ingredient']))throw new DomainException('Ingredients are not available to order.');foreach($quote['needs'] as $id=>$qty){if(!in_array((int)$id,array_map('intval',$ids),true))throw new DomainException('The recipe changed. Reload your cart.');$needs[$id]=($needs[$id] ?? 0)+$qty;}$cents+=$quote['price_cents']*$quote['quantity'];$quotes[]=$quote;}
+            if($expectedTotal!==null && (!preg_match('/^[0-9]{1,8}\.[0-9]{2}$/D',$expectedTotal) || intdiv(InventoryQuantity::parse($expectedTotal,true),100)!==$cents))throw new DomainException('Prices changed. Review your cart total and try again.');
             foreach($needs as $id=>$qty)if(RecipeInventory::balance($id,$branch)<$qty)throw new DomainException(RecipeInventory::product($id)['name'].': insufficient stock for this order.');
             $tracking='WEB-'.date('ymd').'-'.strtoupper(bin2hex(random_bytes(5)));$total=number_format($cents/100,2,'.','');
             RecipeInventory::query('INSERT INTO online_orders(tracking_number,checkout_key,request_hash,user_id,branch_id,customer_name,email,phone,total) VALUES (?,?,?,?,?,?,?,?,?)','sssiissss',[$tracking,$key,$fingerprint,$user,$branch,trim($name),strtolower($email),$phone,$total]);$order=$conn->insert_id;
@@ -38,7 +39,8 @@ class OnlineOrder {
     }
     public static function list_for($user,$staff=false) {
         $where=$staff?'1=1':'o.user_id='.(int)$user;if($staff&&!User::has_all_branch_access($user))$where='o.branch_id='.(int)(User::access_context($user)['branch_id'] ?? 0);
-        return RecipeInventory::rows('SELECT o.*,b.name branch_name FROM online_orders o LEFT JOIN branches b ON b.id=o.branch_id WHERE '.$where." ORDER BY o.id DESC LIMIT 200");
+        $order=$staff?"CASE WHEN o.status IN ('pending','preparing','ready') THEN 0 ELSE 1 END,o.id DESC":'o.id DESC';
+        return RecipeInventory::rows('SELECT o.*,b.name branch_name FROM online_orders o LEFT JOIN branches b ON b.id=o.branch_id WHERE '.$where.' ORDER BY '.$order.' LIMIT 200');
     }
     public static function update_status($id,$status,$actor,$payment='Cash') {
         if(!User::has_permission($actor,'access_pos'))throw new DomainException('You cannot manage online orders.');
@@ -50,7 +52,7 @@ class OnlineOrder {
                 if(!User::has_permission($actor,'refund_sales')&&!User::has_permission($actor,'manage_inventory'))throw new DomainException('Ask a manager to cancel this order.');
                 $moves=RecipeInventory::rows('SELECT * FROM inventory_movements WHERE operation_id=? AND quantity<0 ORDER BY product_id,batch_id,id','i',[$order['operation_id']]);RecipeInventory::lockProducts(array_column($moves,'product_id'));
                 $op=RecipeInventory::operation('online_cancel',hash('sha256','cancel:'.$order['checkout_key']),[$id],$actor,$order['branch_id']);
-                foreach($moves as $move){$qty=InventoryQuantity::parse(ltrim($move['quantity'],'-'));$batch=RecipeInventory::rows('SELECT * FROM product_batches WHERE id=? FOR UPDATE','i',[$move['batch_id']]);if(!$batch)throw new DomainException('An original stock batch is missing. Contact your administrator.');$batchStatus=$batch[0]['expiry_date']&&$batch[0]['expiry_date']<date('Y-m-d')?'expired':'active';RecipeInventory::query('UPDATE product_batches SET quantity=quantity+?,status=? WHERE id=?','ssi',[InventoryQuantity::format($qty),$batchStatus,$move['batch_id']]);RecipeInventory::query('INSERT INTO inventory_movements(operation_id,product_id,batch_id,branch_id,quantity,unit,product_name,unit_cost,component) VALUES (?,?,?,?,?,?,?,?,?)','iiiisssss',[$op['id'],$move['product_id'],$move['batch_id'],$order['branch_id'],InventoryQuantity::format($qty),$move['unit'],$move['product_name'],$move['unit_cost'],'cancel:'.$order['tracking_number']]);RecipeInventory::query('INSERT INTO inventory_logs(product_id,user_id,branch_id,batch_id,action,quantity,remarks) VALUES (?,?,?,?,?,?,?)','iiiisss',[$move['product_id'],$actor,$order['branch_id'],$move['batch_id'],'stock_in',InventoryQuantity::format($qty),'Cancelled '.$order['tracking_number']]);RecipeInventory::syncTotal($move['product_id']);}RecipeInventory::complete($op['id'],$id,['tracking'=>$order['tracking_number']]);
+                foreach($moves as $move){$qty=InventoryQuantity::parse(ltrim($move['quantity'],'-'));$batch=RecipeInventory::rows('SELECT * FROM product_batches WHERE id=? FOR UPDATE','i',[$move['batch_id']]);if(!$batch)throw new DomainException('An original stock batch is missing. Contact your administrator.');$batchStatus=($batch[0]['expiry_date']&&$batch[0]['expiry_date']<date('Y-m-d'))||$batch[0]['status']==='expired'?'expired':($batch[0]['status']==='depleted'?'active':$batch[0]['status']);RecipeInventory::query('UPDATE product_batches SET quantity=quantity+?,status=? WHERE id=?','ssi',[InventoryQuantity::format($qty),$batchStatus,$move['batch_id']]);RecipeInventory::query('INSERT INTO inventory_movements(operation_id,product_id,batch_id,branch_id,quantity,unit,product_name,unit_cost,component) VALUES (?,?,?,?,?,?,?,?,?)','iiiisssss',[$op['id'],$move['product_id'],$move['batch_id'],$order['branch_id'],InventoryQuantity::format($qty),$move['unit'],$move['product_name'],$move['unit_cost'],'cancel:'.$order['tracking_number']]);RecipeInventory::query('INSERT INTO inventory_logs(product_id,user_id,branch_id,batch_id,action,quantity,remarks) VALUES (?,?,?,?,?,?,?)','iiiisss',[$move['product_id'],$actor,$order['branch_id'],$move['batch_id'],'stock_in',InventoryQuantity::format($qty),'Cancelled '.$order['tracking_number']]);RecipeInventory::syncTotal($move['product_id']);}RecipeInventory::complete($op['id'],$id,['tracking'=>$order['tracking_number']]);
             }
             if($status==='completed') {
                 if(!in_array($payment,['Cash','GCash','Maya','Card','Bank Transfer'],true))throw new DomainException('Select a supported payment method.');
