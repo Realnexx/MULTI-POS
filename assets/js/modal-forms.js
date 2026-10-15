@@ -19,7 +19,7 @@
     window.addEventListener('submit', async function (event) {
         const form = event.target;
         const modal = form.closest('.modal');
-        if (!modal || event.defaultPrevented || form.method.toLowerCase() !== 'post') return;
+        if (!modal || event.defaultPrevented || (form.getAttribute('method') || 'get').toLowerCase() !== 'post') return;
         event.preventDefault();
         if (form.dataset.saving === '1') return;
         form.dataset.saving = '1';
@@ -31,7 +31,9 @@
         if (token) data.set('csrf_token', token.content);
         buttons.forEach(button => { button.disabled = true; });
         try {
-            const response = await fetch(form.action, {
+            // A hidden input named "action" shadows the form.action property.
+            const action = new URL(form.getAttribute('action') || window.location.href, document.baseURI);
+            const response = await fetch(action.href, {
                 method: 'POST', body: data, credentials: 'same-origin',
                 headers: { 'X-Modal-Form': '1', 'Accept': 'application/json' }
             });

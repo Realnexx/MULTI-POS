@@ -5,13 +5,13 @@ const { chromium } = require('C:/Users/MIS-03/.cache/codex-runtimes/codex-primar
     const browser = await chromium.launch({ executablePath: 'C:/Users/MIS-03/AppData/Local/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-win64/chrome-headless-shell.exe', headless: true });
     try {
         const page = await browser.newPage();
-        await page.setContent('<meta name="csrf-token" content="test-token"><div class="modal show"><form method="post" action="http://localhost/save"><label>Name<input name="name" required></label><input name="image" type="file"><button type="submit">Save</button></form></div>');
+        await page.setContent('<meta name="csrf-token" content="test-token"><div class="modal show"><form method="post" action="http://localhost/save"><input type="hidden" name="action" value="create"><label>Name<input name="name" required></label><input name="image" type="file"><button type="submit">Save</button></form></div>');
         await page.evaluate(() => {
             window.messages = [];
             window.showToast = (message, type) => messages.push({ message, type });
             window.requests = [];
             window.fetch = async (url, options) => {
-                requests.push({ name: options.body.get('name'), token: options.body.get('csrf_token'), header: options.headers['X-Modal-Form'] });
+                requests.push({ url, action: options.body.get('action'), name: options.body.get('name'), token: options.body.get('csrf_token'), header: options.headers['X-Modal-Form'] });
                 return { ok: true, text: async () => JSON.stringify({ success: false, message: 'Add ingredients before saving a burger.' }) };
             };
             window.Swal = { fire: () => { throw new Error('Unexpected error dialog'); } };
@@ -28,7 +28,7 @@ const { chromium } = require('C:/Users/MIS-03/.cache/codex-runtimes/codex-primar
         assert.equal(await page.locator('.modal.show').count(), 1);
         assert.equal(await page.locator('button').isEnabled(), true);
         assert.equal(await page.locator('[name=image]').evaluate(e => e.files[0].name), 'burger.png');
-        assert.deepEqual(await page.evaluate(() => requests[0]), { name: 'Burger', token: 'test-token', header: '1' });
+        assert.deepEqual(await page.evaluate(() => requests[0]), { url: 'http://localhost/save', action: 'create', name: 'Burger', token: 'test-token', header: '1' });
         await page.evaluate(() => {
             Swal.fire({ icon: 'error', text: 'Invalid quantity' });
             fetch = async () => ({ ok: false, text: async () => 'Upload a JPG or PNG image.' });
