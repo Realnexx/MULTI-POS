@@ -191,8 +191,8 @@
         <i class="${iconClass}"></i>
       </div>
       <div style="flex:1;min-width:0;padding-right:20px;">
-        <div class="aurora-toast-title">${displayTitle}</div>
-        <p class="aurora-toast-msg">${message}</p>
+        <div class="aurora-toast-title"></div>
+        <p class="aurora-toast-msg"></p>
       </div>
       <button class="aurora-toast-close" onclick="dismissAuroraToast(this.closest('.aurora-toast'))">
         <i class="fa-solid fa-xmark"></i>
@@ -200,6 +200,8 @@
       <div class="aurora-toast-progress" style="animation-duration:${AURORA_TOAST_DURATION}ms;"></div>
     `;
 
+    toast.querySelector('.aurora-toast-title').textContent = displayTitle;
+    toast.querySelector('.aurora-toast-msg').textContent = message;
     stack.appendChild(toast);
 
     // Slide in
@@ -248,4 +250,6 @@
     }
   }
 </script>
+
+<script src="<?= url('assets/js/modal-forms.js') ?>"></script>
 

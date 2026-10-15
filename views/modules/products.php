@@ -1213,21 +1213,13 @@ ob_start();
 
             // Hide suggestions on outside click
             $(document).ready(function () {
-                // Console debugging for product creation
+                // Commit a pending custom attribute before saving.
                 $('#createProductForm').on('submit', function (e) {
                     const pendingAttr = $('#new_attr_name_create').val().trim();
                     if (pendingAttr) {
                         addAttributeField(pendingAttr, '', 'create');
                         $('#new_attr_name_create').val('');
                     }
-                    console.log('--- PRODUCT CREATION DEBUG ---');
-                    const formData = new FormData(this);
-                    const data = {};
-                    formData.forEach((value, key) => {
-                        data[key] = value;
-                    });
-                    console.log('Form Data to be sent:', data);
-                    console.log('------------------------------');
                 });
 
                 $(document).on('click', function (e) {

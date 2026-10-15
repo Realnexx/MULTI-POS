@@ -54,6 +54,19 @@ if (!function_exists('url')) {
 if (!function_exists('redirect')) {
     function redirect($path)
     {
+        // Modal forms need a result before deciding whether to leave the page.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_SERVER['HTTP_X_MODAL_FORM'] ?? '') === '1') {
+            $flash = $_SESSION['flash'] ?? null;
+            $success = $flash && $flash['type'] === 'success';
+            if (!$success) unset($_SESSION['flash']);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => (bool) $success,
+                'message' => $flash['message'] ?? 'Unable to save. Please refresh and try again.',
+                'redirect' => $success ? url($path) : null
+            ]);
+            exit;
+        }
         header("Location: " . url($path));
         exit;
     }
