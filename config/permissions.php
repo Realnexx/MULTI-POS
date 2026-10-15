@@ -5,6 +5,7 @@ return [
  'view_product'=>['View Products','Inventory'], 'add_product'=>['Add Products','Inventory'],
  'edit_product'=>['Edit Products and Categories','Inventory'], 'delete_product'=>['Delete Products','Inventory'],
  'print_products'=>['Print Products','Inventory'], 'manage_inventory'=>['Manage Stock and Inventory Reports','Inventory'],
+ 'manage_online_orders'=>['Manage Online Orders','POS'],
  'access_pos'=>['Use POS and Order History','POS'], 'refund_sales'=>['Refund or Cancel Sales','POS'],
  'view_reports'=>['View Business Reports','Reports'], 'manage_expenses'=>['Manage Expenses','Expenses'],
  'manage_branches'=>['Manage Branches','Branches'], 'manage_users'=>['Manage Users','Users'],

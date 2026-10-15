@@ -17,6 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Explain FTP deployment status
+        env:
+          DEPLOY_ENABLED: ${{ vars.DEPLOY_ENABLED }}
+        run: |
+          if [ "$DEPLOY_ENABLED" = "true" ]; then
+            echo "### FTP deployment enabled" >> "$GITHUB_STEP_SUMMARY"
+            echo "Validation must pass before the deploy job uploads files. Check that job's upload log to confirm delivery." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::FTP upload is disabled. This run validates and packages files only; no files will be sent to InfinityFree. Set DEPLOY_ENABLED=true after confirming hosting configuration."
+            echo "### No files uploaded: FTP deployment disabled" >> "$GITHUB_STEP_SUMMARY"
+            echo 'This run validates and packages files only. The deploy job is skipped unless the repository variable DEPLOY_ENABLED is exactly true. Confirm FTP settings and private production configuration before enabling it.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:

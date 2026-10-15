@@ -72,7 +72,7 @@ if (!empty($require_pin)):
     
 </head>
 <body class="bg-background min-h-screen flex items-center justify-center p-4" style="font-family: 'Inter', sans-serif;">
-<a href="<?= url('?route=admin/online_orders') ?>" class="btn btn-outline-primary btn-sm m-2">Online Orders</a>
+<?php if(User::has_permission($_SESSION['user']['id'],'manage_online_orders')): ?><a href="<?= url('?route=admin/online_orders') ?>" class="btn btn-outline-primary btn-sm m-2">Online Orders</a><?php endif; ?>
     <div class="w-full max-w-[400px] fade-in">
         <!-- Brand header -->
         <div class="text-center mb-8">

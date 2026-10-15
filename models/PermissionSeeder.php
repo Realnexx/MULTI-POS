@@ -20,10 +20,11 @@ class PermissionSeeder {
    foreach($roles as $role) {
     $rid=(int)$role['id'];$name=strtolower(trim($role['name']));$wanted=[];
     if($name==='admin') $wanted=array_keys($catalog);
-    elseif($name==='cashier') $wanted=['access_pos'];
+    elseif($name==='cashier') $wanted=['access_pos','manage_online_orders'];
     elseif($name==='manager') {
      $has=$conn->query('SELECT COUNT(*) n FROM role_permissions WHERE role_id='.$rid)->fetch_assoc()['n'];
-     if(!$has) $wanted=['view_dashboard','view_product','add_product','edit_product','manage_inventory','access_pos','view_reports','manage_expenses','refund_sales'];
+     $wanted=['manage_online_orders'];
+     if(!$has) $wanted=['view_dashboard','view_product','add_product','edit_product','manage_inventory','access_pos','manage_online_orders','view_reports','manage_expenses','refund_sales'];
     }
     foreach($wanted as $permission) { $pid=(int)$ids[$permission];$grant->bind_param('ii',$rid,$pid);$grant->execute(); }
    }

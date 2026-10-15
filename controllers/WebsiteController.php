@@ -129,7 +129,7 @@ class WebsiteController {
         require_login();$this->cart_write();
         $key=AuthSecurity::input('request_key');if(empty($_SESSION['online_checkout_key'])||!hash_equals($_SESSION['online_checkout_key'],$key))access_denied('Your cart changed. Reload it before ordering.',409);
         $wait=AuthSecurity::consume('online-checkout', (string)$_SESSION['user']['id'],10,3600);if($wait){set_flash('danger','Too many order attempts. Please try again later.');redirect('?route=cart');}
-        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'));$_SESSION['cart']=[];set_flash('success','Your order is placed. Keep your tracking number for pickup.');redirect('?route=order_tracking&tracking='.rawurlencode($order['tracking_number']));}
+        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'),AuthSecurity::input('cart_quote'));$_SESSION['cart']=[];set_flash('success','Your order is placed. Keep your tracking number for pickup.');redirect('?route=order_tracking&tracking='.rawurlencode($order['tracking_number']));}
         catch(DomainException $e){set_flash('danger',$e->getMessage());redirect('?route=cart');}
         catch(Throwable $e){error_log('Online checkout failed: '.$e->getMessage());set_flash('danger','Your order could not be placed. Your cart has been kept. Please try again.');redirect('?route=cart');}
     }

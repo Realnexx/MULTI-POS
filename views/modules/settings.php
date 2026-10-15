@@ -91,6 +91,7 @@ ob_start();
                 <div class="tab-pane fade <?= $active_tab === 'general' ? 'show active' : '' ?>" id="tab-general">
                     <form action="<?= url('?route=admin/settings') ?>" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="setting_category" value="general">
+<div class="card p-3 mb-3"><h5>Online ordering</h5><p class="text-muted">Allow customers to place pickup orders. Existing orders can still be tracked and processed when closed.</p><label for="online-ordering">Accept online orders</label><select class="form-select" id="online-ordering" name="settings[general][online_ordering_enabled]"><option value="1" <?= ($all_settings['general']['online_ordering_enabled'] ?? '1')==='1'?'selected':'' ?>>Enabled</option><option value="0" <?= ($all_settings['general']['online_ordering_enabled'] ?? '1')==='0'?'selected':'' ?>>Disabled</option></select></div>
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
                         <div class="settings-section-card p-4">

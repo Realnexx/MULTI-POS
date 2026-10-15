@@ -445,6 +445,7 @@ class AdminController {
             }
             $data = $_POST['settings'][$category] ?? [];
             
+            if(isset($data['online_ordering_enabled']))$data['online_ordering_enabled']=$data['online_ordering_enabled']==='1'?'1':'0';
             // Handle logo upload if present
             if (isset($_FILES['store_logo']) && $_FILES['store_logo']['error'] === UPLOAD_ERR_OK) {
                 $targetDir = __DIR__ . '/../assets/img/';

@@ -301,7 +301,7 @@ if (!isset($branches)) {
 <!-- Top Navigation / Header -->
 <header class="h-20 flex items-center justify-between px-margin-desktop bg-surface border-b border-outline-variant border-opacity-35 shrink-0 z-20">
     <div class="flex items-center gap-md">
-        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a>
+<?php if(User::has_permission($_SESSION['user']['id'],'manage_online_orders')): ?>        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a><?php endif; ?>
         <?php if(User::has_permission($_SESSION['user']['id'],'view_dashboard')): ?><a class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container hover:bg-primary-fixed text-primary font-bold text-xs text-decoration-none transition-all duration-300 border border-outline-variant border-opacity-25 shadow-xs cursor-pointer" href="<?= url('?route=dashboard') ?>">
             <span class="material-symbols-outlined text-[16px] font-bold">arrow_back</span>
             <span>Dashboard</span>

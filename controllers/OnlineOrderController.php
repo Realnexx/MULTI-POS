@@ -2,7 +2,7 @@
 require_once __DIR__.'/../models/OnlineOrder.php';
 class OnlineOrderController {
     public function index() {
-        require_permission('access_pos');
+        require_permission('manage_online_orders');
         if($_SERVER['REQUEST_METHOD']==='POST') {
             enforce_csrf();
             try{$order=OnlineOrder::update_status((int)AuthSecurity::input('order_id'),AuthSecurity::input('status'),(int)$_SESSION['user']['id'],AuthSecurity::input('payment_method') ?: 'Cash');set_flash('success','Order '.$order['tracking_number'].' updated.');}

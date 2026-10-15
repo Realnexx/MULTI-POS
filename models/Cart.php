@@ -9,6 +9,10 @@ class Cart {
         RecipeInventory::rows('SELECT owner_key FROM online_cart_owners WHERE owner_key=? FOR UPDATE','s',[$key]);
     }
     private static function owner($session,$user) { return $user?['user_id=?','i',[(int)$user]]:['session_id=? AND user_id IS NULL','s',[$session]]; }
+    public static function fingerprint(array $items,$branch) {
+        $lines=[];foreach($items as $item)$lines[(int)$item['id']]=[(int)$item['id'],(int)$item['qty'],number_format((float)$item['price'],2,'.','')];ksort($lines,SORT_NUMERIC);
+        return hash('sha256',json_encode([(int)$branch,array_values($lines)]));
+    }
     public static function available($product,$branch=null) {
         if(!empty($product['is_ingredient'])||$product['product_type']==='ingredient')return 0;
         return RecipeInventory::catalogAvailability($product,$branch);

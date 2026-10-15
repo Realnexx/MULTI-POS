@@ -18,6 +18,7 @@ oc(balance_order(903)===80000,'Prepared burgers consume finished stock only');oc
 $again=OnlineOrder::place($customer,$session,501,'Test Customer','customer@rbac.invalid','09123456789',$key);oc($again['id']===$order['id']&&balance_order(905)===160000,'Checkout retries are idempotent');
 oc(OnlineOrder::detail($order['tracking_number'],$s['users']['viewer'])===null,'Other customers cannot read tracking');
 $_SESSION['user']=['id'=>$s['users']['cashier'],'branch_id'=>501];
+OnlineOrder::update_status($order['id'],'paid',$s['users']['cashier'],'Cash');
 OnlineOrder::update_status($order['id'],'preparing',$s['users']['cashier']);OnlineOrder::update_status($order['id'],'ready',$s['users']['cashier']);$done=OnlineOrder::update_status($order['id'],'completed',$s['users']['cashier'],'Cash');oc($done['sale_id']&&$done['payment_status']==='paid','Pickup records a sale');oc(balance_order(901)===87000&&balance_order(903)===80000&&balance_order(905)===160000,'Pickup never consumes inventory again');$repeat=OnlineOrder::update_status($order['id'],'completed',$s['users']['cashier']);oc($repeat['sale_id']===$done['sale_id'],'Payment retry creates one sale');
 RecipeInventory::checkout($s['users']['cashier'],501,[['product_id'=>905,'quantity'=>1]],0,100,'Cash','Take-out',bin2hex(random_bytes(32)));oc(balance_order(905)===150000,'Separate POS sale deducts its own quantity once');
 // Reject combined ingredient shortages without consuming any stock or clearing the cart.

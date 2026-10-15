@@ -99,9 +99,12 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
             <span class="hide-menu">Order History</span>
           </a>
         </li>
-        <li class="sidebar-item"><a class="sidebar-link <?= $route === 'admin/online_orders' ? 'active' : '' ?>" href="<?= url('?route=admin/online_orders') ?>"><iconify-icon icon="solar:bag-4-line-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Online Orders</span></a></li>
+
         <?php endif; ?>
 
+        <?php if(User::has_permission($user_id,'manage_online_orders')): ?>
+        <li class="sidebar-item"><a class="sidebar-link <?= $route === 'admin/online_orders' ? 'active' : '' ?>" href="<?= url('?route=admin/online_orders') ?>"><iconify-icon icon="solar:bag-4-line-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Online Orders</span></a></li>
+        <?php endif; ?>
         <!-- INVENTORY & FINANCE -->
         <li class="nav-small-cap">
           <iconify-icon icon="solar:menu-dots-linear" class="nav-small-cap-icon fs-4"></iconify-icon>
