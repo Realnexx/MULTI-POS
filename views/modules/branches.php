@@ -245,8 +245,10 @@ ob_start();
                         showToast(response.message, 'error');
                     }
                 },
-                error: function() {
-                    showToast('Failed to communicate with headquarters via secure link.', 'error');
+                error: function(xhr) {
+                    const message = xhr.responseJSON && xhr.responseJSON.message;
+                    const text = (xhr.responseText || '').trim();
+                    showToast(message || (text && !text.includes('<') && text.length < 500 ? text : 'Unable to save the branch (HTTP ' + xhr.status + '). Please refresh and try again.'), 'error');
                 },
                 complete: function() {
                     btn.prop('disabled', false).html(originalHtml);

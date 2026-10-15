@@ -68,7 +68,7 @@ class Branch
         $address = $data['address'];
         $phone = $data['phone'];
         $status = $data['status'];
-        $manager_id = ($data['manager_id'] === "" || $data['manager_id'] === "0") ? null : intval($data['manager_id']);
+        $manager_id = !empty($data['manager_id']) ? intval($data['manager_id']) : null;
         $image_url = $data['image_url'] ?? null;
 
         if ($manager_id) {
@@ -117,7 +117,7 @@ class Branch
         $address = $data['address'];
         $phone = $data['phone'];
         $status = $data['status'];
-        $manager_id = ($data['manager_id'] === "" || $data['manager_id'] === "0") ? null : intval($data['manager_id']);
+        $manager_id = !empty($data['manager_id']) ? intval($data['manager_id']) : null;
         $image_url = $data['image_url'] ?? 'assets/img/branches/default.jpg';
 
         if ($manager_id) {
