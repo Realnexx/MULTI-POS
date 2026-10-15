@@ -16,6 +16,7 @@ const { chromium } = require('C:/Users/MIS-03/.cache/codex-runtimes/codex-primar
             };
             window.Swal = { fire: () => { throw new Error('Unexpected error dialog'); } };
         });
+        await page.addScriptTag({ path: 'assets/js/admin-loading.js' });
         await page.addScriptTag({ path: 'assets/js/modal-forms.js' });
         await page.click('button');
         assert.equal(await page.evaluate(() => requests.length), 0);

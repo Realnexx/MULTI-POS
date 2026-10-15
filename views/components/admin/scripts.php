@@ -251,5 +251,5 @@
   }
 </script>
 
-<script src="<?= url('assets/js/modal-forms.js') ?>"></script>
+<script src="<?= url('assets/js/modal-forms.js') ?>?v=<?= filemtime(__DIR__ . '/../../../assets/js/modal-forms.js') ?>"></script>
 
