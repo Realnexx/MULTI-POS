@@ -2,6 +2,7 @@
 require_once __DIR__ . '/rbac.php';
 function access_page_rules() {
  return [
+ 'admin/monitoring'=>'view_monitoring',
  'admin/online_orders'=>'manage_online_orders',
  'dashboard'=>'view_dashboard', 'admin/users'=>'manage_users','admin/users/data'=>'manage_users','admin/users/single'=>'manage_users',
  'admin/roles'=>'manage_roles','admin/roles/data'=>['manage_roles','manage_users'],'admin/permissions/data'=>'manage_roles',

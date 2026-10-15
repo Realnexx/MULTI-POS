@@ -428,3 +428,6 @@ AuthSecurity::migrate($conn);
 
 require_once __DIR__.'/../models/OnlineOrder.php';
 OnlineOrder::migrate($conn);
+
+require_once __DIR__.'/../models/Monitoring.php';
+Monitoring::migrate($conn);

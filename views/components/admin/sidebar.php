@@ -207,6 +207,9 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
         </li>
         <?php endif; ?>
 
+        <?php if(User::has_permission($user_id,'view_monitoring')): ?>
+        <li class="sidebar-item"><a href="<?= url('?route=admin/monitoring') ?>" class="sidebar-link <?= $route==='admin/monitoring'?'active':'' ?>"><iconify-icon icon="solar:chart-2-line-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Page &amp; Security Monitoring</span></a></li>
+        <?php endif; ?>
         <!-- LOGOUT -->
         <li class="sidebar-item mt-3 mb-4">
           <a class="sidebar-link primary-hover-bg text-danger" href="javascript:void(0)" onclick="openLogoutModal(event)" aria-expanded="false">

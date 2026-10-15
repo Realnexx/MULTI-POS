@@ -1,0 +1,10 @@
+<?php
+if(PHP_SAPI!=='cli')exit;session_save_path(__DIR__.'/../../scratch');require __DIR__.'/../../config/db.php';require_once __DIR__.'/../../models/User.php';$s=json_decode(file_get_contents(__DIR__.'/../../scratch/rbac-test-state.json'),true);if(!preg_match('/^pos_rbac_test_[a-f0-9]+$/',$s['database']))exit(1);$conn->select_db($s['database']);Monitoring::migrate($conn);Monitoring::migrate($conn);$n=0;
+function monok($v){global $n;if(!$v)throw new Exception('Monitoring check failed '.($n+1));$n++;}
+monok(User::has_permission($s['users']['super'],'view_monitoring'));monok(User::has_permission($s['users']['admin'],'view_monitoring'));monok(!User::has_permission($s['users']['cashier'],'view_monitoring'));
+$_GET=['route'=>'reset_password','token'=>'secret-token'];$_POST=['password'=>'private-password'];$_SESSION['user']=['id'=>$s['users']['super']];Monitoring::security('login_failed');$report=Monitoring::report($s['users']['super'],date('Y-m-d'),date('Y-m-d'));monok(count($report['events'])===1);monok(strpos(json_encode($report),'secret-token')===false&&strpos(json_encode($report),'private-password')===false);
+$conn->query("INSERT INTO page_telemetry(route,user_id,branch_id,visitor_key,status_code,duration_ms) VALUES ('home',NULL,NULL,REPEAT('a',64),200,20),('dashboard',100,501,REPEAT('b',64),200,80),('dashboard',100,502,REPEAT('c',64),500,120)");
+$r=Monitoring::report($s['users']['super'],date('Y-m-d'),date('Y-m-d'));monok((int)$r['summary']['views']===3&&(int)$r['summary']['errors']===1);
+$rid=(int)$s['roles']['viewer'];$conn->query("INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT $rid,id FROM permissions WHERE name='view_monitoring'");$r=Monitoring::report($s['users']['viewer'],date('Y-m-d'),date('Y-m-d'));monok((int)$r['summary']['views']===1);monok(count($r['events'])===1);
+try{Monitoring::report($s['users']['cashier'],date('Y-m-d'),date('Y-m-d'));throw new Exception('Missing permission enforcement');}catch(DomainException $e){monok(true);}
+$_GET['route']=['bad'];monok(Monitoring::route()==='invalid-route');echo "PASS $n monitoring schema, grants, privacy, summaries and branch isolation checks\n";

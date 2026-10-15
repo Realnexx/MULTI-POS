@@ -35,6 +35,9 @@ require_once __DIR__ . '/middleware/access_policy.php';
 authorize_page($route);
 
 switch ($route) {
+    case 'admin/monitoring':
+        require __DIR__.'/controllers/MonitoringController.php';
+        (new MonitoringController())->index(); break;
     // Public Website Routes
     case 'home':
         $websiteController->home();

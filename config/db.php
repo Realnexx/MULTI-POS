@@ -167,3 +167,6 @@ if (!function_exists('get_user_avatar')) {
         return url($avatar_url);
     }
 }
+
+require_once __DIR__.'/../models/Monitoring.php';
+Monitoring::start();

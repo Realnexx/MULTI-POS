@@ -29,6 +29,7 @@ class AuthController
                 $guestSession = session_id();
                 session_regenerate_id(true);
                 AuthSecurity::establish($user['id']);
+                Monitoring::security('login_success');
                 unset($_SESSION['pos_branch_id'], $_SESSION['pos_pin_verified'], $_SESSION['pos_cart'], $_SESSION['login_attempts']);
                 $context = User::access_context($user['id']);
                 $_SESSION['user'] = [
@@ -48,6 +49,7 @@ class AuthController
                 redirect('?route=' . User::landing_route($user['id']));
             } else {
                 User::log_activity(null, 'login_failed', 'Failed sign-in attempt.');
+                Monitoring::security('login_failed');
                 return $this->auth_error('login', 'Invalid username or password.');
             }
         }
@@ -136,6 +138,7 @@ class AuthController
             if($password!==$confirm)return $this->auth_error('reset_password','Your passwords do not match.');
             if(!AuthSecurity::reset_password($token,$password))return $this->auth_error('reset_password','This reset link has expired or has already been used. Request a new one.');
             session_regenerate_id(true);unset($_SESSION['csrf_token']);
+            Monitoring::security('password_reset_success');
             set_flash('success','Your password has been updated. Sign in with your new password.');redirect('?route=login');
         }
         require __DIR__.'/../views/auth/reset_password.php';
@@ -285,6 +288,7 @@ class AuthController
             $user_id = $_SESSION['user']['id'];
             $username = $_SESSION['user']['username'] ?? $_SESSION['user']['name'] ?? 'unknown';
             User::log_activity($user_id, 'logout', 'User logged out: ' . $username);
+            Monitoring::security('logout');
             User::set_status($user_id, 'offline');
         }
         session_unset();

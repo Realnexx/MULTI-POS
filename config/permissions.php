@@ -1,6 +1,7 @@
 <?php
 // Canonical permission names used by page routes, action endpoints and the seeder.
 return [
+ 'view_monitoring'=>['View Page and Security Monitoring','Reports'],
  'view_dashboard'=>['View Dashboard','Dashboard'],
  'view_product'=>['View Products','Inventory'], 'add_product'=>['Add Products','Inventory'],
  'edit_product'=>['Edit Products and Categories','Inventory'], 'delete_product'=>['Delete Products','Inventory'],
