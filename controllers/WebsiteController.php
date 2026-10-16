@@ -129,9 +129,39 @@ class WebsiteController {
         require_login();$this->cart_write();
         $key=AuthSecurity::input('request_key');if(empty($_SESSION['online_checkout_key'])||!hash_equals($_SESSION['online_checkout_key'],$key))access_denied('Your cart changed. Reload it before ordering.',409);
         $wait=AuthSecurity::consume('online-checkout', (string)$_SESSION['user']['id'],10,3600);if($wait){set_flash('danger','Too many order attempts. Please try again later.');redirect('?route=cart');}
-        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'),AuthSecurity::input('cart_quote'));$_SESSION['cart']=[];set_flash('success','Your order is placed. Keep your tracking number for pickup.');redirect('?route=order_tracking&tracking='.rawurlencode($order['tracking_number']));}
+        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'),AuthSecurity::input('cart_quote'));$_SESSION['cart']=[];
+            if(AuthSecurity::input('payment_method')==='paymongo') {
+                require_once __DIR__.'/../models/PayMongo.php';
+                try {$checkout=PayMongo::checkout($order['tracking_number'],(int)$_SESSION['user']['id']);header('Location: '.$checkout,true,303);exit;}
+                catch(Throwable $paymentError){set_flash('warning','Your order was placed, but online checkout could not be opened. Open the order to retry payment.');redirect('?route=order_tracking&tracking='.rawurlencode($order['tracking_number']));}
+            }
+            set_flash('success','Your order is placed. Keep your tracking number for pickup.');redirect('?route=order_tracking&tracking='.rawurlencode($order['tracking_number']));}
         catch(DomainException $e){set_flash('danger',$e->getMessage());redirect('?route=cart');}
         catch(Throwable $e){error_log('Online checkout failed: '.$e->getMessage());set_flash('danger','Your order could not be placed. Your cart has been kept. Please try again.');redirect('?route=cart');}
+    }
+    public function pay_order() {
+        require_login();$this->cart_write();require_once __DIR__.'/../models/PayMongo.php';
+        $tracking=AuthSecurity::input('tracking');
+        try {if(AuthSecurity::consume('paymongo-start',(string)$_SESSION['user']['id'],10,60))throw new DomainException('Please wait before retrying payment.');$checkout=PayMongo::checkout($tracking,(int)$_SESSION['user']['id']);header('Location: '.$checkout, true,303);exit;}
+        catch(DomainException $error){set_flash('danger',$error->getMessage());}
+        catch(Throwable $error){error_log('PayMongo checkout failed.');set_flash('danger','Payment could not be started. Refresh your order before retrying.');}
+        redirect('?route=order_tracking&tracking='.rawurlencode($tracking));
+    }
+    public function cancel_order_payment() {
+        require_login();$this->cart_write();require_once __DIR__.'/../models/PayMongo.php';
+        $tracking=AuthSecurity::input('tracking');$order=OnlineOrder::detail($tracking,(int)$_SESSION['user']['id']);if(!$order)access_denied('Order not found.',404);
+        try {if(AuthSecurity::consume('paymongo-cancel',(string)$_SESSION['user']['id'],6,60))throw new DomainException('Please wait before retrying.');$p=PayMongo::latest($order['id']);if(!$p)throw new DomainException('No payment session found.');PayMongo::expire($p['id'],(int)$_SESSION['user']['id']);set_flash('success','Online payment cancelled. Your order remains placed and can be paid at the counter.');}
+        catch(DomainException $error){set_flash('danger',$error->getMessage());}
+        catch(Throwable $error){set_flash('danger','The checkout could not be cancelled. Check its payment status before paying again.');}
+        redirect('?route=order_tracking&tracking='.rawurlencode($tracking));
+    }
+    public function verify_order_payment() {
+        require_login();$this->cart_write();require_once __DIR__.'/../models/PayMongo.php';
+        $tracking=AuthSecurity::input('tracking');$order=OnlineOrder::detail($tracking,(int)$_SESSION['user']['id']);if(!$order)access_denied('Order not found.',404);
+        try {if(AuthSecurity::consume('paymongo-check',(string)$_SESSION['user']['id'],12,60))throw new DomainException('Please wait before checking again.');$payment=PayMongo::latest($order['id']);if($payment && $payment['session_id'])PayMongo::verify($payment['session_id']);set_flash('success','Payment status checked.');}
+        catch(DomainException $error){set_flash('danger',$error->getMessage());}
+        catch(Throwable $error){set_flash('danger','Payment status could not be checked. Please retry.');}
+        redirect('?route=order_tracking&tracking='.rawurlencode($tracking));
     }
     public function orders() {require_login();$orders=OnlineOrder::list_for((int)$_SESSION['user']['id']);require __DIR__.'/../views/website/orders.php';}
     public function order_tracking() {

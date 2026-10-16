@@ -152,8 +152,9 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
             <!-- Top Gradient Accent Bar -->
             <div class="create-modal-accent-bar"></div>
 
-            <form id="createProductForm" action="?route=inventory/products" method="POST" enctype="multipart/form-data">
+            <form id="createProductForm" data-inline-validation novalidate action="?route=inventory/products" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="recipe_create_key" value="<?= bin2hex(random_bytes(16)) ?>">
                 <input type="hidden" name="action" value="create">
 
                 <!-- Header -->
@@ -340,15 +341,15 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
                                             </div>
                                             <div class="col-3">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.62rem; text-transform: uppercase;">Initial Stock</label>
-                                                <input type="number" name="stock" class="form-control text-center fw-800" style="font-size: 0.95rem;" value="0" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="stock" id="create_initial_stock" class="form-control text-center fw-800" style="font-size: 0.95rem;" value="0.00" step="0.01" min="0" aria-describedby="create_recipe_stock_help">
                                             </div>
                                             <div class="col-3">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.62rem; text-transform: uppercase;">Low Alert</label>
-                                                <input type="number" name="low_stock_threshold" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #d97706;" value="10" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="low_stock_threshold" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #d97706;" value="10.00" step="0.01" min="0">
                                             </div>
                                             <div class="col-3">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.62rem; text-transform: uppercase;">Max Cap</label>
-                                                <input type="number" name="max_stock_threshold" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #5d87ff;" value="100" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="max_stock_threshold" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #5d87ff;" value="100.00" step="0.01" min="0">
                                             </div>
                                         </div>
                                         <div class="d-flex flex-wrap gap-2">
@@ -509,21 +510,36 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
 
                         <!-- Recipe Tab -->
                         <div class="tab-pane fade" id="recipe-tab" role="tabpanel">
+                            <?php require_once __DIR__ . '/../../models/RecipeLibrary.php'; $saved_recipes = RecipeInventory::ready() ? RecipeLibrary::available() : []; ?>
+                            <div class="border rounded p-3 mb-3">
+                                <label class="form-label fw-bold" for="create_recipe_source">Load a saved recipe</label>
+                                <select id="create_recipe_source" class="form-select">
+                                    <option value="">Custom recipe — configure ingredients below</option>
+                                    <?php foreach ($saved_recipes as $saved_recipe): ?>
+                                    <option value="<?= (int)$saved_recipe['id'] ?>"><?= htmlspecialchars($saved_recipe['name'] . ' · ' . ($saved_recipe['branch_name'] ?: 'Shared'), ENT_QUOTES, 'UTF-8') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="small text-muted mt-2 mb-1">Loads a copy of the ingredients for this product. Later changes to the saved recipe do not change products already created.</p>
+                                <a href="<?= url('?route=inventory/recipes') ?>" target="_blank" rel="noopener">Open Recipe Management</a>
+                                <p id="create_recipe_source_feedback" class="small mt-2 mb-0" role="status" aria-live="polite"></p>
+                            </div>
                             <div class="border rounded p-3 mb-3">
                                 <label class="form-label fw-bold" for="create_recipe_mode">When should ingredients be consumed?</label>
                                 <select class="form-select" name="recipe_mode" id="create_recipe_mode">
+                                    <option value="prepared_batch">Finished stock — consume ingredients when stock is created</option>
                                     <option value="made_to_order">Made to order — consume ingredients at checkout</option>
-                                    <option value="prepared_batch">Prepared batch — consume ingredients when a batch is prepared</option>
                                 </select>
-                                <p class="small text-muted mt-2 mb-1">Recipe quantities are for one burger. Saving a recipe does not change stock. Add ingredients as Raw Ingredient products first.</p>
-                                <div class="recipe-cost-preview small fw-bold" aria-live="polite">Select ingredients to estimate cost per burger.</div>
+                                <p class="small text-muted mt-2 mb-1">Configure ingredients for one unit sold, including all items in an offer or bundle. Adding or editing ingredient rows does not change inventory.</p>
+                                <p id="create_recipe_stock_help" class="small text-muted mb-1">Enter Initial Stock in Pricing &amp; Stock. Saving deducts this recipe multiplied by that stock and creates finished units. Leave stock at 0 to save only the recipe. Selling finished stock does not deduct these ingredients again.</p>
+                                <div class="recipe-cost-preview small fw-bold" aria-live="polite">Select ingredients to estimate cost per stock unit.</div>
+                                <?php include __DIR__ . '/../partials/recipe_quantity_preview.php'; ?>
                                 
                             </div>
 
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div>
                                     <h6 class="fw-800 text-dark mb-1" style="font-size: 0.88rem;">Bill of Materials & Formula</h6>
-                                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Ingredients will be auto-deducted from stock when this product is sold.</p>
+                                    <p class="text-muted mb-0" style="font-size: 0.72rem;">Ingredient requirements update automatically from the recipe and initial stock.</p>
                                 </div>
                                 <button type="button" class="btn btn-sm rounded-pill d-flex align-items-center gap-1 px-3 border" id="add_ingredient_row_create"
                                     style="font-size: 0.72rem; font-weight: 700; background: #eef2ff; color: #5d87ff; border-color: #dbeafe !important;">

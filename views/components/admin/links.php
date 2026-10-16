@@ -209,3 +209,5 @@
 </style>
 
 <link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
+
+<link rel="stylesheet" href="<?= url('assets/css/admin-sidebar.css') ?>?v=<?= filemtime(__DIR__.'/../../../assets/css/admin-sidebar.css') ?>">

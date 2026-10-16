@@ -25,7 +25,32 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 
 try {
+// Product helper endpoints obey the same branch boundary as the main editor.
+if (in_array($action,['get_next_batch','get_product_modifiers','save_product_modifiers','check_recipe_availability','get_active_batches','get_batch_breakdown','get_product_recipe','save_product_recipe','prepare_recipe_batch','get_product_variants','save_product_variants','get_product_attribute_values','save_product_attributes'],true) && !empty($_POST['product_id'])) {
+    RecipeInventory::branch(RecipeInventory::product((int)$_POST['product_id'])['branch_id']);
+}
 switch ($action) {
+    case 'stock_transfer_create':
+        require_once __DIR__.'/../models/StockTransfer.php';
+        $id=StockTransfer::create($_POST['source_branch_id'] ?? '',$_POST['destination_branch_id'] ?? '',is_array($_POST['items'] ?? null) ? $_POST['items'] : [],$_POST['notes'] ?? '',$_POST['request_key'] ?? '');
+        echo json_encode(['success'=>true,'message'=>'Stock transfer requested. Stock is unchanged.','redirect'=>url('?route=inventory/transfers&id='.$id)]);
+        break;
+    case 'stock_transfer_approve':
+    case 'stock_transfer_reject':
+    case 'stock_transfer_cancel':
+    case 'stock_transfer_dispatch':
+    case 'stock_transfer_receive':
+        require_once __DIR__.'/../models/StockTransfer.php';
+        $id=StockTransfer::transition((int)($_POST['transfer_id'] ?? 0),substr($action,15),$_POST['request_key'] ?? '',$_POST['notes'] ?? '',is_array($_POST['received'] ?? null) ? $_POST['received'] : []);
+        echo json_encode(['success'=>true,'message'=>'Transfer updated.','redirect'=>url('?route=inventory/transfers&id='.$id)]);
+        break;
+    case 'transfer_product_branch':
+        require_once __DIR__ . '/../models/ProductTransfer.php';
+        $transfer=ProductTransfer::run((int)($_POST['product_id'] ?? 0),$_POST['destination_branch_id'] ?? '',$_SESSION['user']['id'],$_POST['request_key'] ?? '',(string)($_POST['source_branch_id'] ?? ''));
+        ActivityLog::log('Product Branch Transfer','Transferred product #'.$transfer['product_id'].' to '.$transfer['destination_name'].'; operation recorded.');
+        set_flash('success','Product and its stock transferred to '.$transfer['destination_name'].'.');
+        echo json_encode(['success'=>true,'message'=>'Product and its stock transferred to '.$transfer['destination_name'].'.','transfer'=>$transfer]);
+        break;
     case 'get_category_products':
         $cat_id = (int) ($_POST['category_id'] ?? 0);
         $products = Product::get_all_products($cat_id);
@@ -67,7 +92,8 @@ switch ($action) {
             if ($success) {
                 ActivityLog::log('Stock Adjustment', "{$adj_type} product #{$product_id} by {$quantity} — {$remarks}");
             }
-            echo json_encode(['success' => $success, 'message' => $success ? 'Stock adjusted successfully' : 'Failed to adjust stock']);
+            $recipeAddition=$adj_type==='stock_in' && RecipeInventory::product($product_id)['product_type']==='recipe';
+            echo json_encode(['success' => $success, 'message' => $success ? ($recipeAddition ? 'Finished stock added. Recipe ingredients consumed once; sales will use finished stock.' : 'Stock adjusted successfully') : 'Failed to adjust stock']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid parameters']);
         }
@@ -138,6 +164,10 @@ switch ($action) {
         }
 
         foreach ($products as &$prod) {
+            require_once __DIR__.'/../models/ProductTransfer.php';
+            $prod['can_transfer'] = ProductTransfer::canTransfer($_SESSION['user']['id'],$prod['branch_id']);
+            $prod['can_request_transfer'] = User::has_permission($_SESSION['user']['id'],'transfer_products') && $prod['track_stock'] && !in_array($prod['product_type'],['variant','service'],true) && !in_array($prod['inventory_type'],['non-stock','unlimited'],true) && ($prod['product_type']!=='recipe' || $prod['recipe_mode']==='prepared_batch');
+            $prod['can_view_history'] = User::has_permission($_SESSION['user']['id'],'view_stock_history');
             $prod['branch_stocks'] = Product::get_branch_stocks($prod['id']);
             if ($prod['product_type'] === 'recipe' && ($prod['recipe_mode'] ?? '') === 'made_to_order') {
                 $prod['stock'] = RecipeInventory::catalogAvailability($prod,$branch_id);
@@ -231,9 +261,11 @@ switch ($action) {
     case 'get_product_recipe':
         $product_id = (int) ($_POST['product_id'] ?? 0);
         if ($product_id > 0) {
-            RecipeInventory::branch(RecipeInventory::product($product_id)['branch_id']);
+            $recipeProduct=RecipeInventory::product($product_id);
+            RecipeInventory::branch($recipeProduct['branch_id']);
             $recipe = Product::get_recipes($product_id);
-            echo json_encode(['success' => true, 'recipe' => $recipe]);
+            $physicalBranch=RecipeInventory::branch($recipeProduct['branch_id'] ?? ($_POST['branch_id'] ?? null));
+            echo json_encode(['success' => true, 'recipe' => $recipe, 'product'=>['type'=>$recipeProduct['product_type'],'mode'=>$recipeProduct['recipe_mode'] ?? 'legacy','branch_id'=>$recipeProduct['branch_id'],'physical_stock'=>InventoryQuantity::format(RecipeInventory::balance($product_id,$physicalBranch)),'global_access'=>User::has_all_branch_access($_SESSION['user']['id'])]]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
         }
@@ -252,7 +284,6 @@ switch ($action) {
         break;
 
     case 'prepare_recipe_batch':
-        if (!User::has_permission($_SESSION['user']['id'], 'manage_inventory')) throw new DomainException('Inventory permission is required.');
         $batch = RecipeInventory::prepare((int)($_POST['product_id'] ?? 0), $_POST['quantity'] ?? '', $_SESSION['user']['id'], $_POST['branch_id'] ?? null, $_POST['request_key'] ?? '');
         echo json_encode(['success'=>true,'batch_id'=>$batch,'message'=>'Batch prepared; ingredients consumed once.']);
         break;

@@ -1,0 +1,48 @@
+<?php
+$_SESSION['user']=['id'=>1,'branch_id'=>1];
+$ooNames=['prepare_online_orders','complete_online_orders','record_online_order_payments','cancel_online_orders'];
+foreach($ooNames as $permission){RecipeInventory::query('DELETE FROM role_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE name=?)','s',[$permission]);RecipeInventory::query('DELETE FROM permissions WHERE name=?','s',[$permission]);}
+RecipeInventory::query("INSERT INTO roles(name) VALUES('Online view migration fixture')");$ooViewRole=(int)$conn->insert_id;
+RecipeInventory::query("INSERT INTO roles(name) VALUES('Online finance migration fixture')");$ooFinanceRole=(int)$conn->insert_id;
+RecipeInventory::query("INSERT INTO role_permissions(role_id,permission_id) SELECT ?,id FROM permissions WHERE name='manage_online_orders'",'i',[$ooViewRole]);
+RecipeInventory::query("INSERT INTO role_permissions(role_id,permission_id) SELECT ?,id FROM permissions WHERE name IN ('access_pos','manage_inventory')",'i',[$ooFinanceRole]);
+$ooSeed=PermissionSeeder::syncOnlineOrderActions($conn);check(count($ooSeed['online_order_permissions_created'])===4,'online action migration creates missing permissions');
+foreach($ooNames as $permission)check(User::has_permission(1,$permission),'existing order manager keeps compatible '.$permission.' access on first migration');
+$ooOriginalRoles=RecipeInventory::rows('SELECT role_id FROM user_roles WHERE user_id=1');RecipeInventory::query('DELETE FROM user_roles WHERE user_id=1');
+RecipeInventory::query('INSERT INTO user_roles(user_id,role_id) VALUES(1,?),(1,?)','ii',[$ooViewRole,$ooFinanceRole]);
+check(OnlineOrder::can_action(1,'paid'),'first-time seeding preserves payment access split across multiple roles');check(OnlineOrder::can_action(1,'cancelled'),'first-time seeding preserves cancellation access split across multiple roles');
+RecipeInventory::query('DELETE FROM user_roles WHERE user_id=1');foreach($ooOriginalRoles as $r)RecipeInventory::query('INSERT INTO user_roles(user_id,role_id) VALUES(1,?)','i',[$r['role_id']]);
+
+$ooIds=array_column(RecipeInventory::rows("SELECT id,name FROM permissions WHERE module='Online Orders'"),'id','name');
+check(count($ooIds)===5,'all online order controls are grouped in Roles and Permissions');
+$ooRole=(int)RecipeInventory::rows('SELECT role_id FROM user_roles WHERE user_id=1 LIMIT 1')[0]['role_id'];
+$ooRevoke=static function($p)use($ooRole){RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=? AND permission_id=(SELECT id FROM permissions WHERE name=?)','is',[$ooRole,$p]);};
+$ooGrant=static function($p)use($ooRole){RecipeInventory::query('INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT ?,id FROM permissions WHERE name=?','is',[$ooRole,$p]);};
+$ooKey=bin2hex(random_bytes(32));$ooTracking='PERM-'.substr($ooKey,0,16);
+RecipeInventory::query("INSERT INTO online_orders(tracking_number,checkout_key,request_hash,user_id,branch_id,customer_name,email,phone,total,status,payment_status) VALUES(?,?,?,1,1,'Permission customer','permissions@invalid.local','123456789','25','pending','unpaid')",'sss',[$ooTracking,$ooKey,hash('sha256',$ooKey)]);$ooId=(int)$conn->insert_id;
+$ooHtml=endpoint('online_orders_render',['_tracking'=>$ooTracking],false);check(strpos($ooHtml,'Start preparing')!==false && strpos($ooHtml,'Mark paid')!==false && strpos($ooHtml,'Cancel and release stock')!==false,'authorized online page shows allowed order actions');
+$ooRevoke('prepare_online_orders');reject(fn()=>OnlineOrder::update_status($ooId,'preparing',1),'revoking preparation blocks direct model updates');
+$ooDenied=endpoint('online_orders_post',['order_id'=>$ooId,'status'=>'preparing']);check(!$ooDenied['success'],'revoking preparation blocks direct page POST');
+$ooHtml=endpoint('online_orders_render',['_tracking'=>$ooTracking],false);check(strpos($ooHtml,'Start preparing')===false && strpos($ooHtml,'Mark paid')!==false,'preparation button hides independently from payment');
+$ooRevoke('record_online_order_payments');reject(fn()=>OnlineOrder::update_status($ooId,'paid',1),'revoking payment permission blocks direct recording');
+$ooHtml=endpoint('online_orders_render',['_tracking'=>$ooTracking],false);check(strpos($ooHtml,'Mark paid')===false,'payment button hides after revocation');
+$ooRevoke('cancel_online_orders');reject(fn()=>OnlineOrder::update_status($ooId,'cancelled',1),'revoking cancellation blocks inventory release');
+$ooHtml=endpoint('online_orders_render',['_tracking'=>$ooTracking],false);check(strpos($ooHtml,'Cancel and release stock')===false,'cancellation button hides after revocation');
+check(RecipeInventory::rows('SELECT status,payment_status,sale_id FROM online_orders WHERE id=?','i',[$ooId])[0]===['status'=>'pending','payment_status'=>'unpaid','sale_id'=>null],'denied actions leave order and sales link unchanged');
+PermissionSeeder::syncOnlineOrderActions($conn);check(!User::has_permission(1,'prepare_online_orders')&&!User::has_permission(1,'record_online_order_payments')&&!User::has_permission(1,'cancel_online_orders'),'re-seeding does not restore revoked online actions');
+$ooGrant('prepare_online_orders');OnlineOrder::update_status($ooId,'preparing',1);OnlineOrder::update_status($ooId,'ready',1);
+RecipeInventory::query("UPDATE online_orders SET payment_status='paid' WHERE id=?",'i',[$ooId]);$ooRevoke('complete_online_orders');
+reject(fn()=>OnlineOrder::update_status($ooId,'completed',1),'pickup completion requires its own action permission');$ooHtml=endpoint('online_orders_render',['_tracking'=>$ooTracking],false);check(strpos($ooHtml,'Complete pickup')===false,'completion button hides independently');
+$ooGrant('complete_online_orders');OnlineOrder::update_status($ooId,'completed',1);check(RecipeInventory::rows('SELECT status FROM online_orders WHERE id=?','i',[$ooId])[0]['status']==='completed','authorized preparation and pickup completion retain workflow');
+$ooGrant('record_online_order_payments');$ooRevoke('access_pos');check(!OnlineOrder::can_action(1,'paid'),'payment action also retains POS-access requirement');$ooGrant('access_pos');
+$ooGrant('cancel_online_orders');$ooOldSafety=RecipeInventory::rows("SELECT p.name FROM role_permissions rp JOIN permissions p ON p.id=rp.permission_id WHERE rp.role_id=? AND p.name IN ('refund_sales','manage_inventory')",'i',[$ooRole]);$ooRevoke('refund_sales');$ooRevoke('manage_inventory');check(!OnlineOrder::can_action(1,'cancelled'),'cancellation retains refund or inventory authorization requirement');foreach($ooOldSafety as $p)$ooGrant($p['name']);
+$ooRevoke('manage_online_orders');reject(fn()=>OnlineOrder::list_for(1,true),'revoked page permission blocks staff order listing');reject(fn()=>OnlineOrder::detail($ooTracking,1,true),'revoked page permission blocks staff order details');
+$ooDenied=endpoint('online_orders_render',['_tracking'=>$ooTracking]);check(!$ooDenied['success'],'direct Online Orders route denies revoked page permission');
+$ooHtml=endpoint('shift_render',[],false);check(strpos($ooHtml,'?route=admin/online_orders')===false,'sidebar hides Online Orders when page permission is revoked');check(!OnlineOrder::can_action(1,'preparing'),'action permission alone cannot bypass page access');
+PermissionSeeder::syncOnlineOrderActions($conn);check(!User::has_permission(1,'manage_online_orders'),'online seed preserves revoked page access');$ooGrant('manage_online_orders');
+$ooHtml=endpoint('shift_render',[],false);check(strpos($ooHtml,'?route=admin/online_orders')!==false,'sidebar displays Online Orders for authorized branch staff');
+$ooOther=bin2hex(random_bytes(32));$ooOtherTracking='OTHER-'.substr($ooOther,0,12);RecipeInventory::query("INSERT INTO online_orders(tracking_number,checkout_key,request_hash,user_id,branch_id,customer_name,email,phone,total,status,payment_status) VALUES(?,?,?,1,2,'Other branch','other@invalid.local','123456789','25','pending','unpaid')",'sss',[$ooOtherTracking,$ooOther,hash('sha256',$ooOther)]);$ooOtherId=(int)$conn->insert_id;
+check(OnlineOrder::detail($ooOtherTracking,1,true)===null,'staff cannot inspect another branch online order');reject(fn()=>OnlineOrder::update_status($ooOtherId,'preparing',1),'staff cannot update another branch online order');reject(fn()=>OnlineOrder::update_status($ooOtherId,'preparing',2),'model rejects an actor different from the signed-in user');
+$ooCsrf=endpoint('online_orders_post',['order_id'=>$ooOtherId,'status'=>'preparing','csrf_token'=>'invalid']);check(!$ooCsrf['success'],'online order page rejects invalid CSRF tokens');
+$ooAdminRole=(int)RecipeInventory::rows('SELECT role_id FROM user_roles WHERE user_id=2 LIMIT 1')[0]['role_id'];RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=? AND permission_id=?','ii',[$ooAdminRole,$ooIds['prepare_online_orders']]);$ooRevoke('prepare_online_orders');
+PermissionSeeder::run($conn);check(!User::has_permission(1,'prepare_online_orders')&&!User::has_permission(2,'prepare_online_orders'),'full permission seeder also preserves revoked Manager and Admin online actions');

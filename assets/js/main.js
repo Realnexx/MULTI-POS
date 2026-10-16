@@ -58,7 +58,7 @@ function loadCart() {
         success: function(response) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
-                renderCart(response.cart, response.subtotal, response.discount, response.total);
+                renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
             }
         },
         error: function() {
@@ -88,7 +88,7 @@ function addToCart(productId, productName, price, stock, modifiersJson = '') {
         success: function(response) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
-                renderCart(response.cart, response.subtotal, response.discount, response.total);
+                renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
             } else {
                 showWarningModal(response.message || 'Failed to add item.', 'Stock Limitation', 'Review Inventory', 'inventory_2');
             }
@@ -167,7 +167,7 @@ function updateCartQty(productId, quantity) {
         success: function(response) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
-                renderCart(response.cart, response.subtotal, response.discount, response.total);
+                renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
             } else {
                 showWarningModal(response.message || 'Failed to update quantity.', 'Stock Limitation', 'Review Inventory', 'inventory_2');
                 loadCart(); // reload to revert invalid value
@@ -189,7 +189,7 @@ function removeFromCart(productId) {
         success: function(response) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
-                renderCart(response.cart, response.subtotal, response.discount, response.total);
+                renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
             }
         }
     });
@@ -232,7 +232,7 @@ function updateCartDiscount() {
         success: function(response) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
-                renderCart(response.cart, response.subtotal, response.discount, response.total);
+                renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
             }
         }
     });
@@ -477,6 +477,8 @@ function updateProductStocks(updatedStocks) {
 }
 // Set Payment Method Selector (Cash, GCash, Card)
 function setPaymentMethod(method) {
+    if(window.manualPaymentMethods && !window.manualPaymentMethods.includes(method))method=window.manualPaymentMethods[0];
+    $('#manualPaymentChoice').val(method);
     $('#paymentMethod').val(method);
     
     const btnCash = $('#btnPayCash');
@@ -593,7 +595,13 @@ function showReceiptModal(saleId) {
                 });
                 
                 // Pad receipt number with leading zeros
-                const receiptNo = String(sale.id).padStart(6, '0');
+                const escapeReceipt=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+                const receiptNo = escapeReceipt(res.receipt?.number || String(sale.id).padStart(6, '0'));
+                const receiptHeader=escapeReceipt(res.receipt?.header || '');
+                const receiptFooter=escapeReceipt(res.receipt?.footer || 'Thank you for your visit!');
+                Object.keys(res.store||{}).forEach(k=>{res.store[k]=escapeReceipt(res.store[k]);});
+                sale.items.forEach(item=>{item.product_name=escapeReceipt(item.product_name);item.name=escapeReceipt(item.name);(item.modifiers||[]).forEach(m=>{m.modifier_name=escapeReceipt(m.modifier_name);});});
+
                 
                 // Construct items list HTML
                 let itemsHtml = '';
@@ -722,7 +730,7 @@ function showReceiptModal(saleId) {
                         </div>
                         <!-- Header -->
                         <div class="text-center mb-6 pb-5 border-b border-dashed border-outline-variant border-opacity-40 relative">
-                            <h3 class="font-extrabold text-2xl text-primary m-0 font-headline-md tracking-wider uppercase font-headline-lg">${res.store.name}</h3>
+                            <p>${receiptHeader}</p><h3 class="font-extrabold text-2xl text-primary m-0 font-headline-md tracking-wider uppercase font-headline-lg">${res.store.name}</h3>
                             <div class="space-y-1 mt-3 text-[11px] text-on-surface-variant opacity-85">
                                 <p class="m-0 flex items-center justify-center gap-1.5 font-medium"><span class="material-symbols-outlined text-[13px] text-primary">location_on</span> ${res.store.address}</p>
                                 <p class="m-0 flex items-center justify-center gap-1.5 font-medium"><span class="material-symbols-outlined text-[13px] text-primary">call</span> ${res.store.phone}</p>
@@ -780,6 +788,7 @@ function showReceiptModal(saleId) {
                                 <span class="opacity-80 font-bold uppercase tracking-wider text-[10px]">Discount:</span>
                                 <span class="font-bold text-error bg-error-container bg-opacity-20 px-2 py-0.5 rounded text-[10px]">- ₱${parseFloat(sale.discount_amount).toFixed(2)}</span>
                             </div>
+                            <p>Tax ${res.receipt?.tax_inclusive?'(included)':''}: PHP ${((res.receipt?.tax_cents||0)/100).toFixed(2)} · Service charge: PHP ${((res.receipt?.service_cents||0)/100).toFixed(2)}</p>
                             <div class="flex justify-between items-center pt-3.5 mt-3 border-t border-dashed border-[#e8e7df] text-on-surface font-headline-md font-bold">
                                 <span class="text-xs uppercase tracking-wider font-extrabold">Total Due</span>
                                 <span class="text-primary text-xl font-black tracking-wide">₱${parseFloat(sale.final_amount).toFixed(2)}</span>
@@ -845,13 +854,13 @@ function showReceiptModal(saleId) {
                                 <div class="w-[1px] h-full bg-transparent"></div>
                                 <div class="w-[2px] h-full bg-[#191c1d]"></div>
                             </div>
-                            <span class="font-mono text-[9px] tracking-[6px] text-on-surface-variant font-bold mt-1.5 opacity-80 text-center uppercase pr-[-6px]">*SHH-${receiptNo}*</span>
+                            <span class="font-mono text-[9px] tracking-[6px] text-on-surface-variant font-bold mt-1.5 opacity-80 text-center uppercase pr-[-6px]">*${receiptNo}*</span>
                         </div>
                         <!-- Footer -->
                         <div class="text-center text-on-surface-variant opacity-85 mt-4">
                             <div class="flex items-center justify-center gap-1.5 mb-1.5">
                                 <span class="text-xs text-primary">★</span>
-                                <p class="font-extrabold text-xs text-on-surface m-0 font-headline-md tracking-wider uppercase">Thank you for your sweet visit!</p>
+                                <p class="font-extrabold text-xs text-on-surface m-0 font-headline-md tracking-wider uppercase">${receiptFooter}</p>
                                 <span class="text-xs text-primary">★</span>
                             </div>
                             <p class="text-[10px] font-semibold text-on-surface-variant m-0 opacity-75">Please come again to ${res.store.name}</p>
@@ -1899,3 +1908,10 @@ $(document).ready(function() {
         }
     });
 });
+
+function renderFinance(f) {
+    let box=document.getElementById('checkoutFinance');
+    if(!box){const anchor=document.getElementById('cartSubtotal');if(!anchor)return;box=document.createElement('div');box.id='checkoutFinance';box.className='text-xs py-2';anchor.parentElement.insertAdjacentElement('afterend',box);}
+    if(!f){box.textContent='';return;}
+    box.textContent=(f.tax_cents?'Tax '+(f.tax_inclusive?'(included) ':'')+': PHP '+(f.tax_cents/100).toFixed(2)+'  ':'')+(f.service_cents?'Service charge: PHP '+(f.service_cents/100).toFixed(2):'');
+}

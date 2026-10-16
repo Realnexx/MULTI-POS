@@ -1,0 +1,23 @@
+<?php
+require_once $workspace.'/models/Branch.php';
+RecipeInventory::query("INSERT INTO branches(name) VALUES('Deletion validation fixture')");$deleteBranchId=$conn->insert_id;
+check(Branch::deletion_validation($deleteBranchId)['allowed'],'empty branch passes deletion validation');
+RecipeInventory::query("INSERT INTO expenses(branch_id,category,amount,expense_date,description) VALUES(?,'Test',1,CURRENT_DATE,'Deletion guard')",'i',[$deleteBranchId]);$deleteExpenseId=$conn->insert_id;
+check(!Branch::deletion_validation($deleteBranchId)['allowed'] && Branch::delete($deleteBranchId)===false,'expense record blocks branch deletion at model level');
+RecipeInventory::query('DELETE FROM expenses WHERE id=?','i',[$deleteExpenseId]);
+$deleteOldProductBranch=RecipeInventory::rows('SELECT branch_id FROM products WHERE id=?','i',[$csProduct])[0]['branch_id'];
+RecipeInventory::query('UPDATE products SET branch_id=? WHERE id=?','ii',[$deleteBranchId,$csProduct]);
+check(Branch::delete($deleteBranchId)===false && Branch::find_by_id($deleteBranchId)!==null,'assigned product blocks branch deletion even without sales');
+RecipeInventory::query('UPDATE products SET branch_id=? WHERE id=?','ii',[$deleteOldProductBranch,$csProduct]);
+$deleteOldUserBranch=RecipeInventory::rows('SELECT branch_id FROM users WHERE id=1')[0]['branch_id'];
+RecipeInventory::query('UPDATE users SET branch_id=? WHERE id=1','i',[$deleteBranchId]);
+check(Branch::delete($deleteBranchId)===false && (int)RecipeInventory::rows('SELECT branch_id FROM users WHERE id=1')[0]['branch_id']===$deleteBranchId,'assigned staff block deletion and are never silently unassigned');
+RecipeInventory::query('UPDATE users SET branch_id=? WHERE id=1','i',[$deleteOldUserBranch]);
+RecipeInventory::query("INSERT INTO sales(cashier_id,branch_id,total_amount,discount_amount,final_amount,amount_tendered,change_amount,payment_method,order_type,status) VALUES(1,?,10,0,10,10,0,'Cash','Dine-in','Refunded')",'i',[$deleteBranchId]);$deleteSaleId=$conn->insert_id;
+check(Branch::delete($deleteBranchId)===false,'historical sales including refunded sales block branch deletion');
+RecipeInventory::query('DELETE FROM sales WHERE id=?','i',[$deleteSaleId]);
+RecipeInventory::query('UPDATE branches SET manager_id=1 WHERE id=?','i',[$deleteBranchId]);
+check(Branch::delete($deleteBranchId)===false,'assigned branch manager blocks deletion');
+RecipeInventory::query('UPDATE branches SET manager_id=NULL WHERE id=?','i',[$deleteBranchId]);
+check(Branch::delete($deleteBranchId)===true && Branch::find_by_id($deleteBranchId)===null,'only a genuinely empty branch can be deleted');
+check(Branch::delete($deleteBranchId)===false,'deleting a missing branch fails safely');

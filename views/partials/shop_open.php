@@ -21,3 +21,5 @@
 </head><body class="burger-home">
 <a class="skip-link" href="#main">Skip to content</a>
 <?php require __DIR__ . '/shop_header.php'; ?>
+
+<?php require __DIR__.'/demo_notice.php'; ?>

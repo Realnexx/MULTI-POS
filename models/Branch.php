@@ -38,12 +38,14 @@ class Branch
     public static function get_potential_managers()
     {
         global $conn;
-        $query = "SELECT u.id, u.name 
+        $query = "SELECT u.id, u.name,
+                  (SELECT GROUP_CONCAT(DISTINCT b.name ORDER BY b.name SEPARATOR ', ')
+                   FROM branches b WHERE b.manager_id=u.id OR b.id=u.branch_id) assigned_branch_names
                   FROM users u
                   JOIN user_roles ur ON u.id = ur.user_id
                   JOIN roles r ON ur.role_id = r.id
-                  WHERE r.name IN ('Manager', 'Admin')
-                  GROUP BY u.id";
+                  WHERE r.name IN ('Manager', 'Admin') AND u.deleted_at IS NULL
+                  GROUP BY u.id ORDER BY u.name";
         $result = $conn->query($query);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
@@ -133,18 +135,37 @@ class Branch
         return false;
     }
 
+    public static function deletion_validation($id, $lock=false)
+    {
+        require_once __DIR__.'/RecipeInventory.php';
+        $id=(int)$id;
+        $branch=RecipeInventory::rows('SELECT id,manager_id FROM branches WHERE id=?'.($lock?' FOR UPDATE':''),'i',[$id]);
+        if(!$branch)return ['allowed'=>false,'reasons'=>['Branch no longer exists.']];
+        $reasons=[];
+        if(!empty($branch[0]['manager_id']))$reasons[]='An assigned branch manager';
+        // Discover installed modules too, so older and newly installed branch records are protected.
+        $columns=RecipeInventory::rows("SELECT c.TABLE_NAME table_name,c.COLUMN_NAME column_name FROM information_schema.COLUMNS c JOIN information_schema.TABLES t ON t.TABLE_SCHEMA=c.TABLE_SCHEMA AND t.TABLE_NAME=c.TABLE_NAME WHERE c.TABLE_SCHEMA=DATABASE() AND t.TABLE_TYPE='BASE TABLE' AND c.TABLE_NAME<>'branches' AND (c.COLUMN_NAME='branch_id' OR RIGHT(c.COLUMN_NAME,10)='_branch_id') ORDER BY c.TABLE_NAME,c.COLUMN_NAME");
+        $tables=[];foreach($columns as $column){
+            if(!preg_match('/^[a-zA-Z0-9_]+$/D',$column['table_name']) || !preg_match('/^[a-zA-Z0-9_]+$/D',$column['column_name']))throw new RuntimeException('Unsupported branch reference.');
+            $tables[$column['table_name']][]=$column['column_name'];
+        }
+        $labels=['sales'=>'Sales history','products'=>'Assigned products','users'=>'Assigned staff or user records','expenses'=>'Expense records','product_batches'=>'Stock batches','online_orders'=>'Online orders','cash_registers'=>'Cash registers','cash_shifts'=>'Cashier shifts','stock_transfers'=>'Stock transfers','purchase_orders'=>'Purchase orders','purchase_suppliers'=>'Suppliers'];
+        foreach($tables as $table=>$fields){
+            $where=implode(' OR ',array_map(static fn($field)=>'`'.$field.'`=?',$fields));
+            if(RecipeInventory::rows('SELECT 1 FROM `'.$table.'` WHERE '.$where.' LIMIT 1'.($lock?' FOR UPDATE':''),str_repeat('i',count($fields)),array_fill(0,count($fields),$id)))$reasons[]=$labels[$table] ?? ucwords(str_replace('_',' ',$table));
+        }
+        return ['allowed'=>!$reasons,'reasons'=>$reasons];
+    }
+
     public static function delete($id)
     {
-        global $conn;
-        $id = intval($id);
-        
-        // Before deleting, check if it's in use by sales or other entities if necessary
-        // For now, we'll just allow deletion if no users are assigned (or we nullify them)
-        $conn->query("UPDATE users SET branch_id = NULL WHERE branch_id = $id");
-        
-        $stmt = $conn->prepare("DELETE FROM branches WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        return $stmt->execute();
+        require_once __DIR__.'/RecipeInventory.php';
+        return RecipeInventory::atomic(function()use($id){
+            global $conn;
+            if(!self::deletion_validation($id,true)['allowed'])return false;
+            $stmt=$conn->prepare('DELETE FROM branches WHERE id=?');$id=(int)$id;$stmt->bind_param('i',$id);$stmt->execute();
+            return $stmt->affected_rows===1;
+        });
     }
 
     public static function assign_users($branch_id, $user_ids)

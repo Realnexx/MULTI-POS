@@ -9,6 +9,67 @@ require_once __DIR__ . '/../models/ActivityLog.php';
 
 class InventoryController
 {
+    public function transfers()
+    {
+        require_once __DIR__.'/../models/StockTransfer.php';
+        require_permissions(StockTransfer::permissions());
+        $transferReady=StockTransfer::ready();
+        $transfers=$transferReady ? StockTransfer::listing() : [];
+        $selectedTransfer=null;
+        if($transferReady && !empty($_GET['id'])) {
+            try {$selectedTransfer=StockTransfer::detail((int)$_GET['id']);} catch(DomainException $error) {access_denied($error->getMessage());}
+        }
+        $transferBranches=Branch::get_all_active();
+        $sourceBranches=Branch::for_current_user();
+        $transferProducts=User::has_permission($_SESSION['user']['id'],'transfer_products') ? RecipeInventory::rows("SELECT id,name,branch_id,product_type,unit_type,is_ingredient FROM products WHERE status='active' AND track_stock=1 AND inventory_type NOT IN ('non-stock','unlimited') AND product_type NOT IN ('variant','service') AND (product_type<>'recipe' OR recipe_mode='prepared_batch') ORDER BY name,id") : [];
+        if($transferProducts) {
+            $stockByProduct=[];
+            foreach(RecipeInventory::rows("SELECT product_id,branch_id,SUM(quantity) quantity FROM product_batches WHERE status='active' AND quantity>0 AND (expiry_date IS NULL OR expiry_date>=CURRENT_DATE) GROUP BY product_id,branch_id") as $balance) {
+                $stockByProduct[$balance['product_id']][(string)$balance['branch_id']]=$balance['quantity'];
+            }
+            foreach($transferProducts as &$transferProduct) $transferProduct['branch_quantities']=$stockByProduct[$transferProduct['id']] ?? (object)[];
+            unset($transferProduct);
+        }
+        $approvalRequired=Setting::get('stock_transfer_require_approval','1')==='1';
+        require __DIR__.'/../views/modules/stock_transfers.php';
+    }
+    public function recipes()
+    {
+        require_permission('view_product');
+        require_once __DIR__ . '/../models/RecipeLibrary.php';
+        enforce_csrf();
+        $selected_id = (int)($_GET['id'] ?? 0);
+        $form_data = null;
+        $form_rows = [];
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            require_permission('edit_product');
+            $selected_id = (int)($_POST['recipe_id'] ?? 0);
+            $form_data = $_POST;
+            $form_rows = $_POST['ingredients'] ?? [];
+            try {
+                $saved = RecipeLibrary::save($selected_id, (string)($_POST['name'] ?? ''), (string)($_POST['description'] ?? ''), (int)($_POST['category_id'] ?? 0), $_POST['branch_id'] ?? null, $form_rows, (string)($_POST['request_key'] ?? ''));
+                ActivityLog::log('Recipe Saved', 'Configured recipe #' . $saved . '; stock unchanged.');
+                set_flash('success','Recipe saved. No ingredients or finished stock were added or deducted.');
+                redirect('?route=inventory/recipes&id=' . $saved);
+            } catch (DomainException $error) { set_flash('danger',$error->getMessage()); }
+            catch (InvalidArgumentException $error) { set_flash('danger',$error->getMessage()); }
+            catch (Throwable $error) { error_log('Recipe save failed: ' . $error->getMessage()); set_flash('danger','Recipe could not be saved. Please check the ingredients and try again.'); }
+        }
+        $recipes = RecipeLibrary::available();
+        $selected = null;
+        foreach ($recipes as $recipe) if ((int)$recipe['id'] === $selected_id) $selected = $recipe;
+        if ($selected_id && !$selected) access_denied('This recipe is not available in your branch.',404);
+        if (!$form_data) {
+            $form_data = $selected ?: ['name'=>'','description'=>'','category_id'=>'','branch_id'=>''];
+            if ($selected && $selected['branch_id'] === null) $form_data['branch_id'] = 'global';
+            $form_rows = $selected ? array_map(static function ($row) { return ['ingredient_id'=>$row['ingredient_product_id'],'quantity'=>$row['quantity'],'unit'=>$row['unit']]; },Product::get_recipes($selected_id)) : [];
+        }
+        $ingredients = Product::get_all_ingredients();
+        $categories = Product::get_all_categories();
+        $branches = Branch::for_current_user();
+        require __DIR__ . '/../views/modules/recipes.php';
+    }
+
     public function products()
     {
         require_permission('view_product');
@@ -70,6 +131,16 @@ class InventoryController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
             $action = $_POST['action'] ?? '';
+            if (in_array($action,['inventory_count','inventory_loss','inventory_resolve','inventory_reorder'],true)) {
+                require_permission('manage_inventory');
+                require_once __DIR__.'/../models/InventoryControl.php';
+                if ($action==='inventory_resolve') InventoryControl::resolve((int)($_POST['review_id'] ?? 0),$_POST['resolution'] ?? '',$_POST['notes'] ?? '');
+                elseif ($action==='inventory_reorder') InventoryControl::reorder((int)($_POST['item_id'] ?? 0),$_POST['control_branch'] ?? null,$_POST['quantity'] ?? '');
+                else InventoryControl::record((int)($_POST['item_id'] ?? 0),$_POST['control_branch'] ?? null,$action==='inventory_count'?'count':($_POST['loss_kind'] ?? ''),$_POST['quantity'] ?? '',$_POST['notes'] ?? '',$_POST['request_key'] ?? '');
+                set_flash('success','Inventory record saved.');
+                redirect('?route=inventory/products&controls=1&control_tab='.($action==='inventory_reorder'?'inventory_reorder':'inventory_history').'&control_branch='.(int)($_POST['control_branch'] ?? 0));
+                return;
+            }
             if ($action === 'create') {
                 require_permission('add_product');
                 $category_id = intval($_POST['category_id'] ?? 0);
@@ -99,11 +170,24 @@ class InventoryController
                 InventoryQuantity::parse($low_stock_threshold,true);
                 InventoryQuantity::parse($max_stock_threshold,true);
                 if ($product_type === 'ingredient') { $is_ingredient = 1; $is_sellable = 0; $track_stock = 1; }
+                $opening_recipe_stock = 0;
+                $recipe_create_key = (string)($_POST['recipe_create_key'] ?? '');
+                $recipe_mode = $_POST['recipe_mode'] ?? 'prepared_batch';
                 if ($product_type === 'recipe') {
+                    if (!preg_match('/^(0|[1-9][0-9]{0,5})(?:\.0{1,2})?$/D', (string)$stock) || (int)$stock > 100000) {
+                        throw new DomainException('Initial recipe stock must be a whole number from 0 to 100000.');
+                    }
+                    $opening_recipe_stock = (int)$stock;
+                    if ($opening_recipe_stock > 0) {
+                        require_permission('manage_inventory');
+                        if (!preg_match('/^[a-f0-9]{32,64}$/D', $recipe_create_key)) throw new DomainException('Reload the product form before creating recipe stock.');
+                        $recipe_mode = 'prepared_batch';
+                    }
                     $stock = '0';
+                    $track_stock = 1;
                     $is_sellable = 1;
                     $inventory_type = 'ingredient-based';
-                    if (empty($_POST['recipe'])) throw new DomainException('Add ingredients before saving a burger.');
+                    if (empty($_POST['recipe'])) throw new DomainException('Add ingredients or choose a saved recipe before saving this product.');
                 }
                 $clean_attrs = [];
                 if (!empty($_POST['attributes']) && is_array($_POST['attributes'])) {
@@ -141,7 +225,18 @@ class InventoryController
                         $stock = 0;
                     }
                     $branch_id = RecipeInventory::branch($_POST['branch_id'] ?? null);
-                    RecipeInventory::atomic(function () use ($category_id,$name,$sku,$barcode,$description,$price,$cost_price,$stock,$low_stock_threshold,$image_url,$status,$is_featured,$is_best_seller,$max_stock_threshold,$branch_id,$product_type,$track_stock,$is_sellable,$is_ingredient,$inventory_type,$json_attributes,$unit_type,$is_discountable) {
+                    RecipeInventory::atomic(function () use ($category_id,$name,$sku,$barcode,$description,$price,$cost_price,$stock,$low_stock_threshold,$image_url,$status,$is_featured,$is_best_seller,$max_stock_threshold,$branch_id,$product_type,$track_stock,$is_sellable,$is_ingredient,$inventory_type,$json_attributes,$unit_type,$is_discountable,$opening_recipe_stock,$recipe_create_key,$recipe_mode) {
+                    $creation = null;
+                    if ($product_type === 'recipe' && $recipe_create_key !== '') {
+                        $payload = $_POST;
+                        unset($payload['csrf_token']);
+                        ksort($payload);
+                        $creation = RecipeInventory::operation('recipe_create', $recipe_create_key, $payload, $_SESSION['user']['id'], $branch_id);
+                        if ($creation['result_id'] !== null) {
+                            set_flash('success', 'Product already created. Opening stock was recorded once.');
+                            return (int)$creation['result_id'];
+                        }
+                    }
                     $prod_id = Product::create(
                         $category_id,
                         $name,
@@ -170,7 +265,7 @@ class InventoryController
                     if ($prod_id) {
                         ActivityLog::log('Product Created', "Created product '{$name}' (ID: {$prod_id})");
 
-                        RecipeInventory::setMode($prod_id, $_POST['recipe_mode'] ?? 'made_to_order', true);
+                        RecipeInventory::setMode($prod_id, $recipe_mode, true);
                         // Handle Variants
                         if (!empty($_POST['variants'])) {
                             Product::save_variants($prod_id, $_POST['variants']);
@@ -192,13 +287,19 @@ class InventoryController
                             if (!empty($_POST['modifiers'])) {
                                 Product::save_modifiers($prod_id, $_POST['modifiers']);
                             }
+                            if ($opening_recipe_stock > 0) {
+                                RecipeInventory::prepare($prod_id, $opening_recipe_stock, $_SESSION['user']['id'], $branch_id, hash('sha256', 'opening:' . $recipe_create_key));
+                            }
+                            if ($creation) RecipeInventory::complete($creation['id'], $prod_id, ['opening_stock'=>$opening_recipe_stock]);
                         }
 
                         if ($product_type !== 'variant' && $product_type !== 'recipe') {
                             $batch_number = sanitize($_POST['batch_number'] ?? '');
                             Product::adjust_stock($prod_id, $_SESSION['user']['id'], 'initial', $stock, 'Initial product creation', $batch_number, $cost_price, $branch_id);
                         }
-                        set_flash('success', 'Product created successfully.');
+                        set_flash('success', $opening_recipe_stock > 0
+                            ? 'Product created with ' . $opening_recipe_stock . ' stock. Recipe ingredients deducted once.'
+                            : 'Product created successfully.');
                     } else {
                         $error_msg = 'Failed to create product.';
                         if (isset($_SESSION['sql_error'])) {
@@ -244,7 +345,7 @@ class InventoryController
                     $stock = '0';
                     $is_sellable = 1;
                     $inventory_type = 'ingredient-based';
-                    if (empty($_POST['recipe'])) throw new DomainException('Add ingredients before saving a burger.');
+                    if (empty($_POST['recipe'])) throw new DomainException('Add ingredients before saving a recipe product.');
                 }
                 $clean_attrs = [];
                 if (!empty($_POST['attributes']) && is_array($_POST['attributes'])) {
@@ -272,7 +373,10 @@ class InventoryController
                     }
                 }
 
-                $branch_id = RecipeInventory::branch($_POST['branch_id'] ?? null);
+                // Access middleware injects the staff branch into POST for scoping.
+                // It is not an instruction to transfer this product's ownership.
+                // Ownership changes belong to the audited Transfer Branch action.
+                $branch_id = $existing['branch_id'] === null ? null : (int)$existing['branch_id'];
                 if ($product_type === 'variant') {
                     $price = 0;
                     $stock = 0;

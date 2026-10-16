@@ -10,6 +10,9 @@ class AuthController
     {
         require_guest();
         enforce_csrf();
+        require_once __DIR__.'/../models/TwoFactor.php';
+        if(isset($_GET['restart']))unset($_SESSION['pending_mfa']);
+        if(!empty($_SESSION['pending_mfa']))return $this->factorLogin();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $username = AuthSecurity::input('username') ?: AuthSecurity::input('email');
@@ -26,27 +29,12 @@ class AuthController
             $valid = password_verify($password, $user['password'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi');
             if ($user && $valid) {
                 AuthSecurity::clear_limit('login-account', $identity);
-                $guestSession = session_id();
-                session_regenerate_id(true);
-                AuthSecurity::establish($user['id']);
-                Monitoring::security('login_success');
-                unset($_SESSION['pos_branch_id'], $_SESSION['pos_pin_verified'], $_SESSION['pos_cart'], $_SESSION['login_attempts']);
-                $context = User::access_context($user['id']);
-                $_SESSION['user'] = [
-                    'id'=>$user['id'], 'name'=>$user['name'], 'email'=>$user['email'],
-                    'username'=>$user['username'] ?: explode('@', $user['email'])[0],
-                    'role'=>$context['role'], 'branch'=>$context['branch'], 'branch_id'=>$context['branch_id'],
-                    'avatar_url'=>$user['avatar_url'] ?? $user['image'] ?? null
-                ];
-                User::set_status($user['id'], 'online');
-                User::log_activity($user['id'], 'login', 'Signed in as ' . $context['role'] . ' — ' . $context['branch']);
-                if (!$context['staff']) {
-                    require_once __DIR__ . '/../models/Cart.php';
-                    Cart::migrate($guestSession, $user['id']);
-                } else {
-                    set_flash('success', 'Welcome back! You have signed in successfully.');
+                if(TwoFactor::required($user['id'])) {
+                    session_regenerate_id(true);
+                    $_SESSION['pending_mfa']=['id'=>(int)$user['id'],'expires'=>time()+600,'version'=>AuthSecurity::version($user['id']),'secret'=>TwoFactor::factor($user['id'])?null:TwoFactor::secret()];
+                    redirect('?route=login&mfa=1');
                 }
-                redirect('?route=' . User::landing_route($user['id']));
+                return $this->completeLogin($user);
             } else {
                 User::log_activity(null, 'login_failed', 'Failed sign-in attempt.');
                 Monitoring::security('login_failed');
@@ -60,6 +48,34 @@ class AuthController
         $store_name = $store_settings['store_name'] ?? Setting::get('store_name', 'MultiPOS');
         $store_logo = $store_settings['store_logo'] ?? Setting::get('store_logo', 'assets/img/logo.png');
         require __DIR__ . '/../views/auth/login.php';
+    }
+
+    private function completeLogin($user,$factorVerified=false) {
+        require_once __DIR__.'/../models/DemoAccount.php';
+        $demo=DemoAccount::start((int)$user['id']);
+        if($demo['expired']){unset($_SESSION['pending_mfa'],$_SESSION['demo_notice_pending']);return $this->auth_error('login',DemoAccount::EXPIRED_MESSAGE,403);}
+        $guestSession=session_id();session_regenerate_id(true);AuthSecurity::establish($user['id']);$_SESSION['auth']['mfa_verified']=$factorVerified;
+        unset($_SESSION['pending_mfa'],$_SESSION['pos_branch_id'],$_SESSION['pos_pin_verified'],$_SESSION['pos_cart'],$_SESSION['login_attempts']);
+        $context=User::access_context($user['id']);
+        $_SESSION['user']=['id'=>$user['id'],'name'=>$user['name'],'email'=>$user['email'],'username'=>$user['username']?:explode('@',$user['email'])[0],'role'=>$context['role'],'branch'=>$context['branch'],'branch_id'=>$context['branch_id'],'avatar_url'=>$user['avatar_url']??$user['image']??null];
+        if($demo['is_demo'])$_SESSION['demo_notice_pending']=(int)$user['id'];else unset($_SESSION['demo_notice_pending']);
+        Monitoring::security('login_success');User::set_status($user['id'],'online');User::log_activity($user['id'],'login','Signed in as '.$context['role']);
+        if(!$context['staff']){require_once __DIR__.'/../models/Cart.php';Cart::migrate($guestSession,$user['id']);}
+        set_flash('success','You have signed in successfully.');redirect('?route='.User::landing_route($user['id']));
+    }
+    private function factorLogin() {
+        $pending=&$_SESSION['pending_mfa'];$user=User::find_by_id($pending['id']);$factorError='';
+        if(!$user||$pending['expires']<time()||$pending['version']!==AuthSecurity::version($pending['id'])){unset($_SESSION['pending_mfa']);redirect('?route=login');}
+        if($_SERVER['REQUEST_METHOD']==='POST') {
+            if(!empty($pending['verified']))return $this->completeLogin($user,true);
+            try {
+                $result=TwoFactor::verify($pending['id'],AuthSecurity::input('code'),$pending['secret']);
+                if(!$result){Monitoring::security('mfa_failed',401);$factorError='Invalid or already used code. Check the time on your device and try again.';}
+                elseif($result['recovery']){$pending['verified']=true;$pending['recovery']=$result['recovery'];unset($pending['secret']);}
+                else return $this->completeLogin($user,true);
+            }catch(DomainException $e){$factorError=$e->getMessage();}
+        }
+        require __DIR__.'/../views/auth/two_factor.php';
     }
 
     // Keep old links working through the same authentication flow.

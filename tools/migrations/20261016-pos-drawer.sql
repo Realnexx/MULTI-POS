@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS cash_shift_locks (
+ shift_id BIGINT UNSIGNED NOT NULL PRIMARY KEY, locked TINYINT NOT NULL DEFAULT 0,
+ locked_by INT NULL, locked_at DATETIME NULL, failed_attempts INT NOT NULL DEFAULT 0,
+ blocked_until DATETIME NULL,
+ FOREIGN KEY(shift_id) REFERENCES cash_shifts(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

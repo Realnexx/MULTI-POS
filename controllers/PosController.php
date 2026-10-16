@@ -9,20 +9,17 @@ require_once __DIR__ . '/../models/ActivityLog.php';
 class PosController {
     public function index() {
         require_permission('access_pos');
+        header('Cache-Control: no-store, private');
 
-        // Require PIN verification before accessing POS (when enabled)
-        $require_pos_pin = Setting::get('require_pos_pin', '1');
-        if ($require_pos_pin === '1' && empty($_SESSION['pos_pin_verified'])) {
-            $require_pin = true;
-            $store_name = Setting::get('store_name', 'Stacey Halu');
-            require __DIR__ . '/../views/modules/pos.php';
-            return;
-        }
-        
         $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
 
         // Handle Branch Reset for Admin
         if ($is_admin && isset($_GET['reset_branch'])) {
+            require_once __DIR__.'/../models/CashShift.php';
+            if(CashShift::posIntegrated()) {
+                $drawer=RecipeInventory::rows('SELECT branch_id FROM cash_shifts WHERE active_cashier=?','i',[(int)$_SESSION['user']['id']]);
+                if($drawer){$_SESSION['pos_branch_id']=(int)$drawer[0]['branch_id'];set_flash('danger','Close your POS drawer before switching branches.');redirect('?route=pos');return;}
+            }
             unset($_SESSION['pos_branch_id']);
             redirect('?route=pos');
         }
@@ -34,6 +31,11 @@ class PosController {
         if ($is_admin) {
             if (isset($_GET['select_branch'])) {
                 $bid = intval($_GET['select_branch']);
+                require_once __DIR__.'/../models/CashShift.php';
+                if(CashShift::posIntegrated()) {
+                    $drawer=RecipeInventory::rows('SELECT branch_id FROM cash_shifts WHERE active_cashier=?','i',[(int)$_SESSION['user']['id']]);
+                    if($drawer && (int)$drawer[0]['branch_id']!==$bid){$_SESSION['pos_branch_id']=(int)$drawer[0]['branch_id'];set_flash('danger','Close your POS drawer before switching branches.');redirect('?route=pos');return;}
+                }
                 $_SESSION['pos_branch_id'] = $bid;
                 
                 require_once __DIR__ . '/../models/Branch.php';
@@ -58,6 +60,24 @@ class PosController {
             $user_data = User::find_by_id($_SESSION['user']['id']);
             $_SESSION['pos_branch_id'] = $user_data['branch_id'] ?? null;
         }
+
+        require_once __DIR__.'/../models/CashierSchedule.php';
+        try { CashierSchedule::assertAccess((int)$_SESSION['user']['id'],(int)($_SESSION['pos_branch_id'] ?? 0)); }
+        catch (DomainException $e) { unset($_SESSION['pos_pin_verified'],$_SESSION['pos_entry_grant']); access_denied($e->getMessage()); return; }
+        // A PIN grant is consumed once. Internal filters use a short-lived one-use navigation cookie.
+        $continuation=$_COOKIE['pos_navigation'] ?? '';
+        $internal=is_string($continuation) && !empty($_SESSION['pos_navigation']) && hash_equals($_SESSION['pos_navigation'],$continuation);
+        unset($_SESSION['pos_navigation']);
+        setcookie('pos_navigation','',['expires'=>time()-3600,'path'=>APP_BASE_PATH,'samesite'=>'Strict','secure'=>!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS']!=='off']);
+        $grant=!empty($_SESSION['pos_entry_grant']) && time()-$_SESSION['pos_entry_grant']<60;
+        unset($_SESSION['pos_entry_grant']);
+        if (!$grant && !$internal) unset($_SESSION['pos_pin_verified']);
+        if(Setting::get('require_pos_pin','1')==='0')$_SESSION['pos_pin_verified']=true;
+        if (empty($_SESSION['pos_pin_verified'])) {
+            $require_pin=true; require __DIR__.'/../views/modules/pos.php'; return;
+        }
+        $_SESSION['pos_navigation']=bin2hex(random_bytes(24));
+        $_SESSION['pos_navigation_at']=time();
 
         if (!isset($_SESSION['cart'])) {
             $_SESSION['cart'] = [];
@@ -186,6 +206,7 @@ class PosController {
 
         $sale_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
         $sale = Sale::find_sale_by_id($sale_id);
+        require_once __DIR__.'/../models/CheckoutPolicy.php';$receiptPolicy=CheckoutPolicy::forSale($sale_id);
 
         if (!$sale) {
             set_flash('danger', 'Transaction not found.');
@@ -393,9 +414,10 @@ class PosController {
                         <div class="space thin"></div>
                         <div class="line medium"></div>
                     </div>
-                    <span class="barcode-text">*SHH-<?= str_pad($sale['id'], 6, '0', STR_PAD_LEFT) ?>*</span>
+                    <span class="barcode-text">*<?= htmlspecialchars($receiptPolicy['number'],ENT_QUOTES) ?>*</span>
                 </div>
 
+                <p><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?></p><p>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <!-- Footer -->
                 <div class="receipt-footer mt-4">
                     <div class="footer-seal mb-3">
@@ -403,7 +425,7 @@ class PosController {
                         <span class="material-symbols-outlined text-primary scale-110">verified</span>
                         <div class="seal-line"></div>
                     </div>
-                    <p class="footer-thanks font-black tracking-widest" style="font-size: 11px;">THANK YOU FOR YOUR VISIT!</p>
+                    <p class="footer-thanks font-black tracking-widest" style="font-size: 11px;"><?= htmlspecialchars($receiptPolicy['footer'],ENT_QUOTES) ?></p>
                     <p class="footer-tagline mt-1 opacity-70 italic text-[9px]">Please keep this for your records.</p>
                     <div class="receipt-policy mt-4 pt-3 border-t border-dashed border-outline-variant border-opacity-20">
                         <p class="text-[8px] opacity-50 uppercase tracking-widest">No returns or exchanges without a receipt.</p>
@@ -588,7 +610,8 @@ class PosController {
         $allowed_statuses = ['Completed', 'Pending', 'Refunded', 'Cancelled'];
         
         if ($id > 0 && in_array($status, $allowed_statuses)) {
-            $success = Sale::update_status($id, $status);
+            try { $success = Sale::update_status($id, $status); }
+            catch (DomainException $e) { header('Content-Type: application/json'); echo json_encode(['success'=>false,'error'=>$e->getMessage(),'message'=>$e->getMessage()]); exit; }
             if ($success) {
                 ActivityLog::log('Order Status Updated', "Order #{$id} status changed to '{$status}'");
             }

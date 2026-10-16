@@ -3,25 +3,7 @@ $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
 $title = "Inventory & Catalog Management";
 ob_start();
 ?>
-<?php if (!RecipeInventory::ready()): ?>
-<div class="alert alert-warning">Burger inventory setup is pending. Have the reviewed manual migration applied before saving products or taking sales with the new workflow. Existing stock has not been changed.</div>
-<?php endif; ?>
-<?php if (User::has_permission($_SESSION['user']['id'], 'manage_inventory')): ?>
-<details class="border rounded p-3 mb-3">
-    <summary class="fw-bold">Return stock from a recorded sale</summary>
-    <p class="small mt-2">Ordinary refunds do not restore food stock. Use this only after checking that the items are still usable. Each sale can be returned once.</p>
-    <div class="d-flex gap-2 align-items-end flex-wrap">
-        <label class="small">Sale number<input type="number" id="return_stock_sale" class="form-control" min="1" step="1"></label>
-        <label class="small">Stock return policy<select id="return_stock_policy" class="form-select">
-            <option value="void_before_preparation">Voided before preparation — ingredients were not used</option>
-            <option value="return_finished">Usable finished goods returned — extras remain consumed</option>
-        </select></label>
-        <button type="button" id="return_sale_stock" class="btn btn-outline-secondary">Review and return stock</button>
-    </div>
-    <p class="small text-muted mt-2">Prepared or spoiled food must remain consumed. Record discarded on-hand stock under Waste / Spoilage in stock adjustments.</p>
-</details>
-<?php endif; ?>
-
+<link rel="stylesheet" href="<?= url('assets/css/inventory-controls.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/inventory-controls.css') ?>">
 <style>
     /* ================================================================
        AURORA POS — INVENTORY MANAGEMENT PAGE STYLES (NEW DESIGN)
@@ -761,6 +743,7 @@ ob_start();
             <p class="inv-page-subtitle">Monitor stock levels, manage product catalog, and orchestrate inventory across branches.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
+            <?php if(User::has_permission($_SESSION['user']['id'],'transfer_products') || User::has_permission($_SESSION['user']['id'],'view_stock_transfers') || User::has_permission($_SESSION['user']['id'],'approve_stock_transfers') || User::has_permission($_SESSION['user']['id'],'receive_stock_transfers')): ?><a class="btn btn-outline-primary" href="<?= url('?route=inventory/transfers') ?>">Stock Transfers</a><?php endif; ?>
             <?php if(User::has_permission($_SESSION['user']['id'],'print_products')): ?><button type="button" class="btn-inv-secondary export-csv-btn">
                 <iconify-icon icon="solar:export-bold-duotone" width="18"></iconify-icon>
                 Export CSV
@@ -775,6 +758,9 @@ ob_start();
         </div>
     </div>
 
+<?php if (User::has_permission($_SESSION['user']['id'],'manage_inventory')): ?>
+<div class="ic-toolbar mb-4"><div class="d-flex align-items-center gap-3"><span class="ic-toolbar-icon material-symbols-outlined" aria-hidden="true">inventory_2</span><div><div class="fw-bold">Stock operations</div><div class="small text-muted">Count, reconcile and plan your next restock.</div></div></div><div class="d-flex gap-2 flex-wrap"><button type="button" class="btn btn-light ic-launch" data-bs-toggle="modal" data-bs-target="#returnStockModal"><span class="material-symbols-outlined" aria-hidden="true">assignment_return</span>Return sale stock</button><button type="button" class="btn btn-primary ic-launch" data-bs-toggle="modal" data-bs-target="#inventoryControlModal"><span class="material-symbols-outlined" aria-hidden="true">fact_check</span>Inventory controls</button></div></div>
+<?php endif; ?>
     <!-- KPI Stat Cards (Aurora Style) -->
     <div class="row g-3 mb-4" id="inventory-stats-container">
         <div class="col-sm-6 col-lg-3">
@@ -941,6 +927,39 @@ ob_start();
     <!-- View Product Modal -->
     <?php include __DIR__ . '/../modals/viewProductModal.php'; ?>
 
+<?php require __DIR__.'/../partials/inventory_controls.php'; ?>
+<?php if (User::has_permission($_SESSION['user']['id'], 'manage_inventory')): ?>
+<div class="modal fade inventory-workspace" id="returnStockModal" tabindex="-1" aria-labelledby="returnStockTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><span class="ic-eyebrow">SALE RECOVERY</span><h2 class="modal-title fs-5" id="returnStockTitle">Return stock from a recorded sale</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">
+
+    <div id="return_stock_message" class="return-message mb-4" role="alert" tabindex="-1" hidden><span class="material-symbols-outlined" aria-hidden="true">info</span><div><strong>Stock return could not be completed</strong><p id="return_stock_message_text" class="mb-0 mt-1"></p></div></div>
+    <div class="return-steps mb-4" aria-label="Stock return progress"><span id="return_step_select" class="is-current" aria-current="step"><b>1</b>Select sale</span><span class="return-step-line" aria-hidden="true"></span><span id="return_step_confirm"><b>2</b>Review & confirm</span></div>
+    <div id="return_stock_entry">
+    <p class="return-intro">Restore usable stock from a recorded sale.</p><p class="small text-muted mb-4">Ordinary refunds do not restore inventory. Review the sale and choose how its stock should be returned.</p>
+    <div class="return-fields">
+        <label class="small">Sale number<input type="text" inputmode="numeric" pattern="[1-9][0-9]*" id="return_stock_sale" class="form-control" list="return_stock_sale_suggestions" placeholder="Type or select a sale number" autocomplete="off" required aria-describedby="return_stock_sale_hint"></label>
+        <datalist id="return_stock_sale_suggestions">
+            <?php foreach (Sale::stock_return_suggestions() as $returnSale): ?>
+            <option value="<?= (int)$returnSale['id'] ?>" label="<?= htmlspecialchars('#'.$returnSale['id'].' · '.$returnSale['created_at'].' · '.$returnSale['branch_name'].' · ₱'.number_format((float)$returnSale['final_amount'],2),ENT_QUOTES,'UTF-8') ?>"></option>
+            <?php endforeach; ?>
+        </datalist>
+        <label class="small">Stock return policy<select id="return_stock_policy" class="form-select">
+            <option value="void_before_preparation">Voided before preparation — ingredients were not used</option>
+            <option value="return_finished">Usable finished goods returned — extras remain consumed</option>
+        </select></label>
+    </div>
+    <p id="return_stock_sale_hint" class="small text-muted mt-2">Suggestions show the latest 100 accessible sales with recorded stock consumption and no previous stock return. You can also enter an older sale number.</p>
+    <div class="return-safety mt-3"><span class="material-symbols-outlined" aria-hidden="true">info</span><p class="mb-0">Prepared or spoiled food must remain consumed. Record discarded stock under <strong>Waste / Spoilage</strong> in stock adjustments.</p></div>
+    <div class="return-actions mt-4"><button type="button" id="return_sale_stock" class="btn return-review">Review stock return</button></div>
+    </div>
+    <div id="return_stock_confirmation" hidden>
+        <div class="alert alert-warning d-flex gap-3 align-items-start" role="note"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><div>Confirm the selected stock is usable and this return policy is correct. <strong>Prepared food must not be returned as raw ingredients.</strong></div></div>
+        <div class="return-summary mb-4"><div class="small text-muted">Sale number</div><div id="return_stock_confirm_sale" class="fw-bold mb-3"></div><div class="small text-muted">Stock return policy</div><div id="return_stock_confirm_policy" class="fw-bold"></div></div>
+        <div class="return-actions"><button type="button" id="cancel_return_stock" class="btn return-back">Back to details</button><button type="button" id="confirm_return_stock" class="btn return-confirm">Confirm and return stock</button></div>
+    </div>
+</div><div class="modal-footer"><span class="small text-muted me-auto d-flex align-items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">lock</span>Each sale can be returned once.</span><button type="button" class="btn return-close" data-bs-dismiss="modal">Close</button></div></div></div></div>
+<?php endif; ?>
+
+
     <!-- Manual Stock Adjustment Modal -->
     <?php include __DIR__ . '/../modals/manualAdjustmentModal.php'; ?>
 
@@ -958,6 +977,10 @@ ob_start();
 
     <!-- Edit Batch Modal -->
     <?php include __DIR__ . '/../modals/editBatchModal.php'; ?>
+    <?php if (User::has_permission($_SESSION['user']['id'],'reassign_products')) {
+        $transferBranches = Branch::get_all_active();
+        include __DIR__ . '/../modals/transferProductModal.php';
+    } ?>
 
 
 
@@ -1097,6 +1120,8 @@ ob_start();
                 const branchId = $(this).data('branch-id');
                 const modal = $('#stockAdjustmentModal');
 
+                $('#stockAdjustmentForm')[0].reset();
+
                 // Store validation data
                 modal.data('current-stock', stock);
                 modal.data('max-threshold', maxThreshold);
@@ -1107,7 +1132,6 @@ ob_start();
                 modal.find('#adj_product_search_container').hide();
 
                 // Clear and Reset form
-                $('#stockAdjustmentForm')[0].reset();
                 $('#adjTypeSelect').val('stock_in').trigger('change');
 
                 // Auto-populate branch if provided
@@ -1232,7 +1256,7 @@ ob_start();
             // Toggle Batch Info based on type
             $('#adjTypeSelect').on('change', function () {
                 const type = $(this).val();
-                if (type === 'stock_out') {
+                if (['stock_out', 'waste'].includes(type)) {
                     $('#batchSelectionField').removeClass('d-none').slideDown();
                     $('#batchInfoFields').slideUp();
                     loadActiveBatches();
@@ -1283,7 +1307,7 @@ ob_start();
                 const currentStock = modal.data('current-stock');
                 const maxThreshold = modal.data('max-threshold');
 
-                if (adjType === 'stock_in' && (currentStock + qty) > maxThreshold) {
+                if (adjType === 'stock_in' && maxThreshold > 0 && (currentStock + qty) > maxThreshold) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Overstock Alert',
@@ -1295,6 +1319,7 @@ ob_start();
                 }
 
                 const formData = $(this).serialize();
+                if ($(this).find('button[type="submit"]').prop('disabled')) return;
                 const btn = $(this).find('button[type="submit"]');
                 const originalText = btn.html();
 
@@ -1319,16 +1344,16 @@ ob_start();
                             });
                             productsTable.ajax.reload(null, false);
                         } else {
-                            Swal.fire({ icon: 'error', title: 'Oops...', text: res.message });
+                            $('#stockAdjustmentForm').trigger('adjustment:error', [res.message || 'Unable to adjust stock.', 'quantity']);
                         }
                     } catch (err) {
                         console.error('❌ Error parsing response:', err, response);
-                        Swal.fire({ icon: 'error', title: 'System Error', text: 'Invalid response from server. Check console for details.' });
+                        $('#stockAdjustmentForm').trigger('adjustment:error', ['Unable to read the server response. Please try again.']);
                     }
                 }).fail(function (xhr, status, error) {
                     console.error('❌ AJAX Failure:', status, error, xhr.responseText);
                     btn.prop('disabled', false).html(originalText);
-                    Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not connect to the server.' });
+                    $('#stockAdjustmentForm').trigger('adjustment:error', ['Could not connect to the server. Please try again.']);
                 });
             });
 
@@ -1620,7 +1645,7 @@ ob_start();
                                             : (perf === 'Popular' ? `<span class="badge-performance badge-performance-sm badge-popular ms-1"><span class="material-symbols-outlined" style="font-size:8px;">local_fire_department</span></span>` : '');
                                         branchDetails += `<div class="d-flex align-items-center justify-content-between mt-1" style="font-size:0.75rem;color:#8a97b0;">
                                             <span>${bs.name}:${perfBadge}</span>
-                                            <span class="fw-700 text-dark ms-2">${bs.branch_stock}</span>
+                                            <span class="fw-700 text-dark ms-2">${Number(bs.branch_stock).toFixed(2)}</span>
                                         </div>`;
                                     }
                                 });
@@ -1739,8 +1764,11 @@ ob_start();
                                         </button>
                                     </li>` : ''}
 
+                                    ${row.can_request_transfer ? `<li><a class="prod-menu-item" href="?route=inventory/transfers&product_id=${row.id}&source=${row.branch_id || ''}"><span class="menu-icon" style="background:#eef2ff;color:#5d87ff;"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">swap_horiz</span></span>Request stock transfer</a></li>` : ''}
+                                    ${row.can_transfer ? `<li><button type="button" class="prod-menu-item transfer-product-btn" data-id="${row.id}" data-source-branch="${row.branch_id || 'global'}" data-ingredient="${row.product_type === 'ingredient' || row.is_ingredient == 1 ? '1' : '0'}"><span class="menu-icon" style="background:#eef2ff;color:#5d87ff;"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">move_up</span></span><span>Move product ownership &amp; all stock</span></button></li>` : ''}
+
                                     <!-- Stock History -->
-                                    <li>
+                                    ${row.can_view_history ? `<li>
                                         <button class="prod-menu-item view-history-btn"
                                             data-id="${row.id}" data-name="${row.name}">
                                             <span class="menu-icon" style="background:#f0f9ff;color:#0284c7;">
@@ -1748,7 +1776,7 @@ ob_start();
                                             </span>
                                             Stock History
                                         </button>
-                                    </li>
+                                    </li>` : ''}
 
                                     ${row.can_delete ? `
                                     <div class="prod-action-divider"></div>
@@ -2060,7 +2088,7 @@ ob_start();
                                 <td class="text-end fw-bold text-dark" data-field="total_cost">₱${bCostTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 <td class="text-end fw-bold" style="color: #b60e3d;" data-field="total_selling">₱${bSellingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                 <td class="text-center pe-3">
-                                    ${<?= json_encode(User::has_permission($_SESSION['user']['id'], 'manage_inventory')) ?> ? `<button class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center edit-batch-btn" style="width: 28px; height: 28px;" title="Edit Batch">
+                                    ${<?= json_encode(User::has_permission($_SESSION['user']['id'], 'edit_stock_batches')) ?> ? `<button class="btn btn-light btn-sm rounded-circle d-flex align-items-center justify-content-center edit-batch-btn" style="width: 28px; height: 28px;" title="Edit Batch">
                                         <span class="material-symbols-outlined fs-6 text-primary">edit_square</span>
                                     </button>` : ''}
                                 </td>
@@ -2249,9 +2277,9 @@ ob_start();
                 modal.find('#edit_prod_desc').val(data.description);
                 modal.find('#edit_prod_price').val(data.price);
                 modal.find('#edit_prod_cost').val(data.cost);
-                modal.find('#edit_prod_stock').val(data.stock);
-                modal.find('#edit_prod_thresh').val(data.threshold);
-                modal.find('#edit_prod_max_thresh').val(data.maxThreshold);
+                modal.find('#edit_prod_stock').val(Number(data.stock || 0).toFixed(2));
+                modal.find('#edit_prod_thresh').val(Number(data.threshold || 0).toFixed(2));
+                modal.find('#edit_prod_max_thresh').val(Number(data.maxThreshold || 0).toFixed(2));
                 if (modal.find('#edit_prod_branch').length) modal.find('#edit_prod_branch').val(data.branch);
 
                 modal.find('#edit_track_stock').prop('checked', data.trackStock == 1);
@@ -2259,7 +2287,14 @@ ob_start();
                 modal.find('#edit_is_discountable').prop('checked', data.discountable == 1);
                 modal.find('#edit_is_ingredient').prop('checked', data.ingredient == 1);
                 modal.find('#edit_inventory_type').val(data.inventoryType || 'stocked');
-                modal.find('#edit_unit_type').val(data.unitType || 'pc');
+                const editUnit = String(row?.unit_type || data.unitType || 'pc');
+                const editUnitSelect = modal.find('#edit_unit_type');
+                if (!editUnitSelect.find('option').toArray().some(option => option.value === editUnit)) {
+                    editUnitSelect.append(new Option(editUnit, editUnit));
+                }
+                editUnitSelect.find('option').prop('disabled', false);
+                editUnitSelect.val(editUnit);
+                editUnitSelect.data('saved-unit', editUnit);
                 modal.find('#edit_product_type').val(data.type || 'simple');
                 modal.find('#edit_recipe_mode').val(row?.recipe_mode || 'legacy');
                 modal.find('#recipe_reconciled').prop('checked',false);
@@ -2420,6 +2455,11 @@ ob_start();
 
             $('#add_ingredient_row').on('click', () => addIngredientRow(null, '#ingredients_list'));
             $('#add_ingredient_row_create').on('click', () => addIngredientRow(null, '#ingredients_list_create'));
+            $(document).on('recipe:import', function (event, rows) {
+                $('#ingredients_list_create').empty();
+                rows.forEach(row => addIngredientRow(row, '#ingredients_list_create'));
+                $(document).trigger('recipe:changed');
+            });
 
             $(document).on('change', '.ing-select', function () {
                 const unit = $(this).find('option:selected').data('unit') || 'pc';
@@ -2877,7 +2917,8 @@ ob_start();
                 $unitSelect.find('option').each(function () {
                     const unitValue = $(this).val();
                     // Always show the placeholder (empty value)
-                    if (unitValue === "" || allowedUnits.length === 0 || allowedUnits.includes(unitValue)) {
+                    if (unitValue === "" || allowedUnits.length === 0 || allowedUnits.includes(unitValue)
+                        || (unitSelectId === 'edit_unit_type' && unitValue === $unitSelect.data('saved-unit'))) {
                         $(this).show().prop('disabled', false);
                     } else {
                         $(this).hide().prop('disabled', true);
@@ -2950,7 +2991,10 @@ ob_start();
     </script>
     <?php
     ?>
-    <script src="<?= url('assets/js/recipe-admin.js') ?>"></script>
+    <script src="<?= url('assets/js/inventory-controls.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-controls.js') ?>"></script>
+    <script src="<?= url('assets/js/recipe-admin.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/recipe-admin.js') ?>"></script>
+    <script src="<?= url('assets/js/product-branches.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/product-branches.js') ?>"></script>
+    <script src="<?= url('assets/js/recipe-stock-adjustment.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/recipe-stock-adjustment.js') ?>"></script>
     <?php
     $content = ob_get_clean();
     require __DIR__ . '/../layouts/admin.php';

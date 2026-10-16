@@ -19,8 +19,10 @@ $store_email = $general_settings['store_email'] ?? Setting::get('store_email', '
 $store_logo = $general_settings['store_logo'] ?? Setting::get('store_logo', '');
 
 // Pre-calculate receipt data
-$receipt_number = str_pad($sale['id'], 6, '0', STR_PAD_LEFT);
-$barcode_value = 'SHH-' . $receipt_number;
+require_once __DIR__.'/../../models/CheckoutPolicy.php';
+$receiptPolicy=CheckoutPolicy::forSale($sale['id']);
+$receipt_number=$receiptPolicy['number'];
+$barcode_value=$receipt_number;
 $formatted_date = date('M d, Y h:i A', strtotime($sale['created_at']));
 $short_date = date('m/d/y h:iA', strtotime($sale['created_at']));
 $subtotal_val = (float)($sale['total_amount'] ?? 0);
@@ -41,7 +43,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt #<?= $receipt_number ?> - <?= htmlspecialchars($store_name) ?></title>
+    <title>Receipt #<?= htmlspecialchars($receipt_number,ENT_QUOTES) ?> - <?= htmlspecialchars($store_name) ?></title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -570,7 +572,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                 
                 <div class="d-none d-md-flex align-items-center gap-2 border-start ps-3">
                     <span class="badge bg-primary-subtle text-primary border border-primary border-opacity-25 rounded-pill px-2.5 py-1 fw-bold font-mono" style="font-size:0.82rem;">
-                        #HH-<?= $receipt_number ?>
+                        #<?= htmlspecialchars($receipt_number,ENT_QUOTES) ?>
                     </span>
                     <span class="badge bg-success-subtle text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1 fw-semibold" style="font-size:0.75rem;">
                         <i class="fa-solid fa-check-circle me-1"></i> <?= htmlspecialchars($sale['status'] ?? 'Completed') ?>
@@ -716,7 +718,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                             </div>
                         <?php endif; ?>
                     </div>
-                    <h1 class="brand-title"><?= htmlspecialchars($store_name) ?></h1>
+                    <h1 class="brand-title"><?= htmlspecialchars($store_name) ?></h1><p><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?></p><p class="small text-muted">Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                     <div class="text-muted small mt-1">
                         <div><?= htmlspecialchars($store_address) ?></div>
                         <div>Tel: <?= htmlspecialchars($store_phone) ?> &bull; <?= htmlspecialchars($store_email) ?></div>
@@ -725,7 +727,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
 
                 <div class="text-end">
                     <div class="invoice-title-tag">Sales Invoice</div>
-                    <div class="fw-bold text-dark fs-6 mt-1 font-mono">INV-#<?= $receipt_number ?></div>
+                    <div class="fw-bold text-dark fs-6 mt-1 font-mono">#<?= htmlspecialchars($receipt_number,ENT_QUOTES) ?></div>
                     <div class="mt-2">
                         <span class="badge bg-success-subtle text-success border border-success border-opacity-30 rounded-pill px-3 py-1 fw-bold" style="font-size:0.75rem;">
                             <i class="fa-solid fa-circle-check me-1"></i> OFFICIAL RECEIPT
@@ -820,7 +822,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
 
                     <div class="mt-4 pt-3 text-muted small">
                         <p class="mb-0 fw-semibold text-dark" style="font-size:0.78rem;">Notice & Policy:</p>
-                        <p class="mb-0 text-muted" style="font-size:0.74rem;">Thank you for your visit! Please keep this receipt. No exchange or returns without an official receipt within 24 hours.</p>
+                        <p class="mb-0 text-muted" style="font-size:0.74rem;"><?= nl2br(htmlspecialchars($receiptPolicy['footer'],ENT_QUOTES)) ?></p>
                     </div>
                 </div>
 
@@ -843,7 +845,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                     <!-- Barcode Display -->
                     <div class="barcode-wrap mt-4 text-end">
                         <svg class="barcode-svg" id="barcode-normal"></svg>
-                        <div class="small text-muted font-mono" style="font-size:0.7rem;letter-spacing:0.1em;">*<?= $barcode_value ?>*</div>
+                        <div class="small text-muted font-mono" style="font-size:0.7rem;letter-spacing:0.1em;">*<?= htmlspecialchars($barcode_value,ENT_QUOTES) ?>*</div>
                     </div>
                 </div>
             </div>
@@ -881,6 +883,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                     <?php endif; ?>
                 </div>
 
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <div class="fw-bold text-uppercase" style="font-size: 13px; letter-spacing: 0.02em;"><?= htmlspecialchars($store_name) ?></div>
                 <div style="font-size: 10px; line-height: 1.35;" class="mt-1">
                     <?= htmlspecialchars($store_address) ?><br>
@@ -896,7 +899,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
             <table class="thermal-table-wrap" style="font-size: 10.5px; line-height: 1.4;">
                 <tr>
                     <td style="color: #333; width: 42%;">RCPT:</td>
-                    <td style="text-align: right; font-weight: 700; white-space: nowrap; width: 58%;">#<?= $receipt_number ?></td>
+                    <td style="text-align: right; font-weight: 700; white-space: nowrap; width: 58%;">#<?= htmlspecialchars($receipt_number,ENT_QUOTES) ?></td>
                 </tr>
                 <tr>
                     <td style="color: #333;">DATE:</td>
@@ -986,12 +989,13 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
             <!-- Barcode -->
             <div class="barcode-wrap">
                 <svg class="barcode-svg" id="barcode-thermal80"></svg>
-                <div style="font-size: 9px; letter-spacing: 0.07em; margin-top: 2px;">*<?= $barcode_value ?>*</div>
+                <div style="font-size: 9px; letter-spacing: 0.07em; margin-top: 2px;">*<?= htmlspecialchars($barcode_value,ENT_QUOTES) ?>*</div>
             </div>
 
             <!-- Footer Message -->
             <div class="text-center mt-2 pt-1" style="font-size: 10px; line-height: 1.4;">
-                <div class="fw-bold text-uppercase">Thank You For Your Visit!</div>
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
+                <div class="fw-bold text-uppercase"><?= nl2br(htmlspecialchars($receiptPolicy['footer'],ENT_QUOTES)) ?></div>
                 <div>Please come again soon</div>
                 <div class="mt-1" style="font-size: 9px; opacity: 0.75;">No return or refund without receipt</div>
                 <div class="mt-1 font-mono" style="font-size: 9px;">- - - - - - - - - - - &#x2702;</div>
@@ -1019,6 +1023,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                     <?php endif; ?>
                 </div>
 
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <div class="fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.02em;"><?= htmlspecialchars($store_name) ?></div>
                 <div style="font-size: 8.5px; line-height: 1.3;" class="mt-0.5">
                     <?= htmlspecialchars($store_address) ?><br>
@@ -1034,7 +1039,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
             <table class="thermal-table-wrap" style="font-size: 9px; line-height: 1.4;">
                 <tr>
                     <td style="color: #333; width: 40%;">RCPT:</td>
-                    <td style="text-align: right; font-weight: 700; white-space: nowrap; width: 60%;">#<?= $receipt_number ?></td>
+                    <td style="text-align: right; font-weight: 700; white-space: nowrap; width: 60%;">#<?= htmlspecialchars($receipt_number,ENT_QUOTES) ?></td>
                 </tr>
                 <tr>
                     <td style="color: #333;">DATE:</td>
@@ -1120,12 +1125,12 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
             <!-- Barcode -->
             <div class="barcode-wrap" style="margin: 4px 0 2px;">
                 <svg class="barcode-svg" id="barcode-thermal58"></svg>
-                <div style="font-size: 8px; letter-spacing: 0.05em; margin-top: 1px;">*<?= $barcode_value ?>*</div>
+                <div style="font-size: 8px; letter-spacing: 0.05em; margin-top: 1px;">*<?= htmlspecialchars($barcode_value,ENT_QUOTES) ?>*</div>
             </div>
 
             <!-- Footer Message -->
             <div class="text-center mt-1" style="font-size: 9px; line-height: 1.3;">
-                <div class="fw-bold">THANK YOU!</div>
+                <div class="fw-bold"><?= nl2br(htmlspecialchars($receiptPolicy['footer'],ENT_QUOTES)) ?></div>
                 <div>Come again soon</div>
                 <div class="mt-1 font-mono" style="font-size: 8px;">- - - - - - - &#x2702;</div>
             </div>
@@ -1147,6 +1152,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
     <script>
         // Global receipt information for plain text copying
         const receiptData = {
+            footer: <?= json_encode($receiptPolicy['footer'],JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>,
             storeName: <?= json_encode($store_name) ?>,
             storeAddress: <?= json_encode($store_address) ?>,
             storePhone: <?= json_encode($store_phone) ?>,
@@ -1404,7 +1410,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
             text += `Amount Tendered : ₱${receiptData.tendered}\n`;
             text += `Change Given    : ₱${receiptData.change}\n`;
             text += '========================================\n';
-            text += '       THANK YOU FOR YOUR VISIT!\n';
+            text += receiptData.footer+'\n';
             text += '     Please come again to MultiPOS\n';
             text += '========================================\n';
 

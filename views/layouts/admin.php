@@ -27,6 +27,7 @@
           <!-- Reusable AuroraTabs Header -->
           <?php include __DIR__ . '/../components/admin/header.php'; ?>
 
+          <?php require __DIR__.'/../partials/demo_notice.php'; ?>
           <!-- Main Page Content -->
           <div class="page-content-area pb-4 pt-1">
             <div class="admin-skeleton" aria-hidden="true">

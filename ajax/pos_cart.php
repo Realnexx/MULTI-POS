@@ -4,6 +4,8 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Sale.php';
 require_once __DIR__ . '/../models/ActivityLog.php';
+require_once __DIR__.'/../models/CheckoutPolicy.php';
+require_once __DIR__.'/../models/CheckoutPolicy.php';
 
 header('Content-Type: application/json');
 $action = $_POST['action'] ?? '';
@@ -38,6 +40,10 @@ if (!isset($_SESSION['pos_order_type'])) {
 $_SESSION['pos_checkout_key'] = $_SESSION['pos_checkout_key'] ?? bin2hex(random_bytes(16));
 
 try {
+require_once __DIR__.'/../models/CashShift.php';
+if(CashShift::posIntegrated() && !in_array($action,['load','get_receipt'],true)) {
+    RecipeInventory::atomic(function(){CashShift::context((int)$_SESSION['user']['id'],RecipeInventory::branch($_SESSION['pos_branch_id'] ?? null),true);});
+}
 
 switch ($action) {
     case 'load':
@@ -166,7 +172,8 @@ switch ($action) {
 
     case 'set_discount':
         $discount = (float)($_POST['discount'] ?? 0);
-        $_SESSION['pos_discount'] = max(0, $discount);
+        CheckoutPolicy::cart($_SESSION['pos_cart'],$_POST['discount']??'0');
+        $_SESSION['pos_discount'] = $discount;
         break;
 
     case 'get_receipt':
@@ -183,6 +190,8 @@ switch ($action) {
         echo json_encode([
             'success' => true,
             'sale' => $sale,
+            'receipt' => CheckoutPolicy::forSale($sale_id),
+            'receipt' => CheckoutPolicy::forSale($sale_id),
             'store' => [
                 'name' => $settings['store_name'] ?? 'Stacey Halu',
                 'address' => $settings['store_address'] ?? '123 Sweet Tooth Blvd, Sugar City',
@@ -227,7 +236,7 @@ switch ($action) {
             ];
         }
 
-        $sale_id = Sale::create_sale($cashier_id, $branch_id, $subtotal, $discount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items, $order_type);
+        $sale_id = Sale::create_sale($cashier_id, $branch_id, $subtotal, $discount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items, $order_type,CashShift::posIntegrated());
 
         if ($sale_id) {
             $actual=RecipeInventory::rows('SELECT final_amount FROM sales WHERE id = ?','i',[$sale_id])[0];
@@ -279,7 +288,7 @@ switch ($action) {
 // Calculate current summary
 $subtotal = array_sum(array_column($_SESSION['pos_cart'], 'subtotal'));
 $discount = $_SESSION['pos_discount'];
-$total = max(0, $subtotal - $discount);
+try{$financial=CheckoutPolicy::cart($_SESSION['pos_cart'],(string)$discount);$total=$financial['total_cents']/100;}catch(DomainException $e){echo json_encode(['success'=>false,'message'=>$e->getMessage()]);exit;}
 
 // Backfill image_url for any items missing it (e.g. from existing sessions)
 foreach ($_SESSION['pos_cart'] as $id => $item) {
@@ -295,5 +304,6 @@ echo json_encode([
     'request_key' => $_SESSION['pos_checkout_key'],
     'subtotal' => $subtotal,
     'discount' => $discount,
-    'total' => $total
+    'total' => $total,
+    'financial' => $financial
 ]);

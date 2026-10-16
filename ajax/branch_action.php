@@ -34,6 +34,14 @@ if ($action === 'get') {
     exit;
 }
 
+if ($action === 'overview') {
+    require_once __DIR__.'/../models/BranchOverview.php';
+    try { echo json_encode(['success'=>true,'data'=>BranchOverview::load($_GET['id'] ?? '',$_GET['from'] ?? null,$_GET['to'] ?? null)]); }
+    catch(DomainException $error){http_response_code(422);echo json_encode(['success'=>false,'message'=>$error->getMessage()]);}
+    catch(Throwable $error){error_log('Branch overview: '.$error->getMessage());http_response_code(500);echo json_encode(['success'=>false,'message'=>'Unable to load the branch overview. Please try again.']);}
+    exit;
+}
+
 if ($action === 'get_managers') {
     $managers = Branch::get_potential_managers();
     echo json_encode(['success' => true, 'data' => $managers]);
@@ -88,6 +96,11 @@ if ($action === 'create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+if ($action === 'validate_delete') {
+    echo json_encode(['success'=>true,'data'=>Branch::deletion_validation($_GET['id'] ?? 0)]);
+    exit;
+}
+
 if ($action === 'delete') {
     $id = intval($_POST['id'] ?? $_GET['id'] ?? 0);
     $branch = Branch::find_by_id($id);
@@ -96,7 +109,7 @@ if ($action === 'delete') {
         ActivityLog::log('Branch Deleted', "Deleted branch '{$branch_name}' (ID: {$id})");
         echo json_encode(['success' => true, 'message' => 'Branch decommissioned successfully']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to decommission branch']);
+        echo json_encode(['success' => false, 'message' => 'This branch has linked records and cannot be deleted. Set its status to Offline instead.', 'validation'=>Branch::deletion_validation($id)]);
     }
     exit;
 }

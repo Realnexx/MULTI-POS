@@ -159,6 +159,8 @@ class User {
         global $conn;
         $name_parts = array_filter([$firstname, $middlename, $lastname, $extname]);
         $name = implode(' ', $name_parts);
+        require_once __DIR__.'/AuthSecurity.php';
+        if($error=AuthSecurity::password_error($password))throw new DomainException($error);
         $hashed = password_hash($password, PASSWORD_BCRYPT);
         $stmt = $conn->prepare("INSERT INTO users (name, firstname, middlename, lastname, extname, username, email, password, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("sssssssss", $name, $firstname, $middlename, $lastname, $extname, $username, $email, $hashed, $image);
@@ -186,6 +188,8 @@ class User {
         $name = implode(' ', $name_parts);
 
         if ($password) {
+            require_once __DIR__.'/AuthSecurity.php';
+            if($error=AuthSecurity::password_error($password))throw new DomainException($error);
             $hashed = password_hash($password, PASSWORD_BCRYPT);
             if ($image) {
                 $stmt = $conn->prepare("UPDATE users SET name = ?, firstname = ?, middlename = ?, lastname = ?, extname = ?, email = ?, password = ?, image = ? WHERE id = ?");
@@ -207,6 +211,7 @@ class User {
         $stmt->close();
 
         if ($success) {
+            if($password)AuthSecurity::revoke_sessions($id);
             $conn->query("DELETE FROM user_roles WHERE user_id = " . intval($id));
             if (!empty($role_ids)) {
                 $stmt_role = $conn->prepare("INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)");
@@ -295,12 +300,17 @@ class User {
     }
 
     public static function delete($id) {
-        global $conn;
-        $stmt = $conn->prepare("UPDATE users SET deleted_at = NOW() WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        $success = $stmt->execute();
-        $stmt->close();
-        return $success;
+        require_once __DIR__.'/CashShift.php';
+        return RecipeInventory::atomic(function()use($id){
+            global $conn;
+            RecipeInventory::rows('SELECT id FROM users WHERE id=? FOR UPDATE','i',[$id]);
+            if (CashShift::ready() && RecipeInventory::rows('SELECT id FROM cash_shifts WHERE active_cashier=?','i',[$id])) return false;
+            $stmt = $conn->prepare("UPDATE users SET deleted_at = NOW() WHERE id = ?");
+            $stmt->bind_param("i", $id);
+            $success = $stmt->execute();
+            $stmt->close();
+            return $success;
+        });
     }
 
     public static function get_user_roles($user_id) {
@@ -339,11 +349,14 @@ class User {
 
     public static function update_password($id, $new_password) {
         global $conn;
+        require_once __DIR__.'/AuthSecurity.php';
+        if($error=AuthSecurity::password_error($new_password))throw new DomainException($error);
         $hashed = password_hash($new_password, PASSWORD_BCRYPT);
         $stmt = $conn->prepare("UPDATE users SET password = ? WHERE id = ?");
         $stmt->bind_param("si", $hashed, $id);
         $success = $stmt->execute();
         $stmt->close();
+        if($success)AuthSecurity::revoke_sessions($id);
         return $success;
     }
 
@@ -355,7 +368,8 @@ class User {
         $result = $stmt->get_result()->fetch_assoc();
         $stmt->close();
         if ($result && !empty($result['pos_pin'])) {
-            return $result['pos_pin'] === $pin;
+            require_once __DIR__.'/SystemPolicy.php';
+            return SystemPolicy::verifyPin($pin,$result['pos_pin']);
         }
         return false;
     }

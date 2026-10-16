@@ -58,7 +58,31 @@ if (!empty($require_pin)):
     </script>
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .pin-dot { transition: all 0.15s ease; }
+        body.pin-page { margin: 0; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 24px 20px; background: #f8f9fa; }
+        .pin-shell { width: 100%; max-width: 400px; margin: auto; }
+        .pin-navigation { width: 100%; display: flex; justify-content: flex-end; margin-bottom: 16px; }
+        .pin-navigation a { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border: 1px solid #e2e5e9; border-radius: 12px; background: #fff; color: #5a4042; font-size: 12px; font-weight: 600; text-decoration: none; }
+        .pin-navigation a:hover { background: #f3f4f5; }
+        #pinCard { border: 1px solid #e2e5e9; box-shadow: 0 12px 28px -16px rgba(25, 28, 29, .22); }
+        .pin-dot { border-color: #e2e5e9; transition: all 0.15s ease; }
+        .pin-dot.bg-primary { border-color: #b60e3d; }
+        .pin-btn:focus-visible, #unlockBtn:focus-visible, .pin-navigation a:focus-visible { outline: 3px solid #8429c8; outline-offset: 4px; }
+        @media (max-height: 820px) {
+            body.pin-page { padding-top: 20px; padding-bottom: 20px; }
+            .pin-brand { margin-bottom: 24px; }
+            #pinCard { padding: 24px; }
+            .pin-btn { aspect-ratio: auto; height: clamp(56px, 10vh, 84px); }
+            #pinDots { margin-bottom: 24px; }
+        }
+        @media (max-width: 420px) {
+            body.pin-page { padding-left: 16px; padding-right: 16px; }
+            #pinCard { padding: 24px; }
+            .pin-brand p { font-size: 13px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .fade-in, .shake { animation: none !important; }
+            .pin-btn, .pin-dot { transition: none !important; }
+        }
         .pin-btn { transition: all 0.12s ease; user-select: none; }
         .pin-btn:active { transform: scale(0.94); }
         .shake { animation: shake 0.4s ease-in-out; }
@@ -71,15 +95,16 @@ if (!empty($require_pin)):
     <script src="<?= url('assets/js/request-security.js') ?>"></script>
     
 </head>
-<body class="bg-background min-h-screen flex items-center justify-center p-4" style="font-family: 'Inter', sans-serif;">
-<?php if(User::has_permission($_SESSION['user']['id'],'manage_online_orders')): ?><a href="<?= url('?route=admin/online_orders') ?>" class="btn btn-outline-primary btn-sm m-2">Online Orders</a><?php endif; ?>
-    <div class="w-full max-w-[400px] fade-in">
+<body class="pin-page" style="font-family: 'Inter', sans-serif;">
+<?php require __DIR__.'/../partials/demo_notice.php'; ?>
+<?php require_once __DIR__.'/../../models/OnlineOrder.php'; if(OnlineOrder::can_view($_SESSION['user']['id'])): ?><nav class="pin-navigation" aria-label="POS navigation"><a href="<?= url('?route=admin/online_orders') ?>"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">receipt_long</span>Online Orders</a></nav><?php endif; ?>
+    <main class="pin-shell fade-in" aria-labelledby="pinTitle">
         <!-- Brand header -->
-        <div class="text-center mb-8">
+        <div class="pin-brand text-center mb-8">
             <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white shadow-lg mx-auto mb-4">
                 <span class="material-symbols-outlined text-3xl font-bold">lock</span>
             </div>
-            <h1 class="font-extrabold text-xl text-on-surface m-0" style="font-weight: 800;"><?= htmlspecialchars($store_name ?? 'POS System') ?></h1>
+            <h1 id="pinTitle" class="font-extrabold text-xl text-on-surface m-0" style="font-weight: 800;"><?= htmlspecialchars($store_name ?? 'POS System') ?></h1>
             <p class="text-sm text-on-surface-variant opacity-70 mt-1.5 mb-0">Enter your PIN to unlock the POS terminal</p>
         </div>
 
@@ -93,7 +118,7 @@ if (!empty($require_pin)):
             </div>
 
             <!-- Error message -->
-            <div id="pinError" class="text-center text-error text-sm font-bold mb-4 hidden shake px-4 py-3 rounded-2xl" style="background: #fff0f1; border: 1px solid #ffcdd2;">Invalid PIN. Try again.</div>
+            <div id="pinError" role="alert" class="text-center text-error text-sm font-bold mb-4 hidden shake px-4 py-3 rounded-2xl" style="background: #fff0f1; border: 1px solid #ffcdd2;">Invalid PIN. Try again.</div>
 
             <!-- Numpad -->
             <div class="grid grid-cols-3 gap-3 mb-4">
@@ -102,7 +127,7 @@ if (!empty($require_pin)):
                 <?php endfor; ?>
                 <button type="button" onclick="pressPin('clear')" class="pin-btn w-full aspect-square rounded-2xl bg-transparent hover:bg-surface-container-low text-on-surface-variant font-bold text-xs border-0 cursor-pointer transition-all uppercase tracking-wider" style="font-weight: 600;">Clear</button>
                 <button type="button" onclick="pressPin('0')" class="pin-btn w-full aspect-square rounded-2xl bg-surface-container-low hover:bg-surface-container-high active:bg-primary-fixed-dim text-on-surface font-bold text-xl border-0 cursor-pointer transition-all" style="font-weight: 700;">0</button>
-                <button type="button" onclick="pressPin('backspace')" class="pin-btn w-full aspect-square rounded-2xl bg-transparent hover:bg-surface-container-low text-on-surface-variant border-0 cursor-pointer transition-all flex items-center justify-center">
+                <button type="button" onclick="pressPin('backspace')" aria-label="Delete last digit" class="pin-btn w-full aspect-square rounded-2xl bg-transparent hover:bg-surface-container-low text-on-surface-variant border-0 cursor-pointer transition-all flex items-center justify-center">
                     <span class="material-symbols-outlined text-xl">backspace</span>
                 </button>
             </div>
@@ -115,7 +140,7 @@ if (!empty($require_pin)):
         </div>
 
         <p class="text-center text-[10px] text-on-surface-variant opacity-40 mt-6">Authorized personnel only · POS Terminal Access</p>
-    </div>
+    </main>
 
     <script>
     let pinValue = '';
@@ -255,9 +280,10 @@ endif;
 // ── End Branch Selection Mode ───────────────────────────────────
 ?>
 
-<main class="flex-grow flex flex-col md:flex-row h-full overflow-hidden">
+<main id="posWorkspace" class="pos-workspace flex-grow flex flex-col md:flex-row h-full overflow-hidden">
     <!-- Left Section: Product Grid -->
-    <section class="flex-grow flex flex-col h-full bg-background overflow-hidden relative">
+    <section id="posCatalog" class="pos-catalog flex-grow flex flex-col h-full bg-background overflow-hidden relative" aria-label="Product catalog">
+        <?php require __DIR__.'/../partials/pos_shift_banner.php'; ?>
         <!-- Premium Header Strip -->
         <div class="page-header-gradient px-margin-desktop py-3 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
@@ -285,7 +311,7 @@ endif;
         <div class="pos-header-accent"></div>
 
         <!-- Category Tabs -->
-        <div class="px-margin-desktop py-md flex gap-sm overflow-x-auto cat-tab-scroll bg-background shrink-0 border-b border-outline-variant border-opacity-20">
+        <div class="pos-categories px-margin-desktop py-md flex gap-sm overflow-x-auto cat-tab-scroll bg-background shrink-0 border-b border-outline-variant border-opacity-20">
             <?php
             $total_cat_count = array_sum(array_column($categories, 'product_count'));
             $is_all_flavors = empty($category_id);
@@ -311,7 +337,7 @@ endif;
         </div>
 
         <!-- Product Type Filter -->
-        <div class="px-margin-desktop py-2 flex items-center gap-2 bg-surface-container-lowest shrink-0 border-b border-outline-variant border-opacity-10">
+        <div class="pos-type-filters px-margin-desktop py-2 flex items-center gap-2 bg-surface-container-lowest shrink-0 border-b border-outline-variant border-opacity-10">
             <span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider opacity-60">Filter:</span>
             <?php
             $type_counts = $type_counts ?? [];
@@ -356,8 +382,8 @@ endif;
                          data-product-stock="<?= $prod['stock'] ?>"
                          data-product-threshold="<?= $prod['low_stock_threshold'] ?>">
                         <div class="rounded-t-2xl overflow-hidden">
-                            <div class="aspect-[3/4] bg-surface-container relative">
-                                <img src="<?= get_product_image($prod['image_url'], $prod['id']) ?>" 
+                            <div class="pos-product-image aspect-[3/4] bg-surface-container relative">
+                                <img loading="lazy" decoding="async" src="<?= get_product_image($prod['image_url'], $prod['id']) ?>"
                                      alt="<?= htmlspecialchars($prod['name']) ?>" 
                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 
@@ -385,7 +411,7 @@ endif;
                             <h3 class="font-bold text-sm text-on-surface mb-2 line-clamp-2 font-label-md group-hover:text-primary transition-colors leading-snug"><?= htmlspecialchars($prod['name']) ?></h3>
                             <div class="flex items-center justify-between pt-2 border-t border-outline-variant/10">
                                 <span class="font-extrabold text-sm text-primary">₱<?= number_format($prod['price'], 2) ?></span>
-                                <button class="w-8 h-8 rounded-full bg-primary-fixed-dim hover:bg-primary hover:text-on-primary text-primary flex items-center justify-center transition-all duration-200 border-0 cursor-pointer group/btn">
+                                <button type="button" aria-label="Add <?= htmlspecialchars($prod['name'], ENT_QUOTES) ?> to order" class="w-8 h-8 rounded-full bg-primary-fixed-dim hover:bg-primary hover:text-on-primary text-primary flex items-center justify-center transition-all duration-200 border-0 cursor-pointer group/btn">
                                     <span class="material-symbols-outlined text-[18px] font-bold group-hover/btn:scale-110 transition-transform">add</span>
                                 </button>
                             </div>
@@ -398,7 +424,7 @@ endif;
     </section>
 
     <!-- Right Section: Order Summary (Cart) -->
-    <section class="w-full md:w-[420px] bg-surface-container-lowest h-full border-s border-outline-variant flex flex-col shadow-lg z-10 shrink-0 relative">
+    <section id="posOrder" aria-label="Current order" class="pos-order w-full md:w-[420px] bg-surface-container-lowest h-full border-s border-outline-variant flex flex-col shadow-lg z-10 shrink-0 relative">
         <!-- Premium Cart Accent Bar -->
         <div class="cart-accent-bar shrink-0"></div>
         
@@ -481,6 +507,11 @@ endif;
     </section>
 </main>
 
+<nav class="pos-mobile-navigation" aria-label="POS sections">
+    <a href="#posCatalog"><span class="material-symbols-outlined" aria-hidden="true">restaurant_menu</span>Browse menu</a>
+    <a href="#posOrder"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span>View order</a>
+</nav>
+
 <!-- Payment Modal Overlay -->
 <div id="paymentModal" class="fixed inset-0 bg-black/60 modal-backdrop-premium z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
     <div class="bg-surface-container-lowest w-full max-w-[460px] rounded-3xl border border-outline-variant border-opacity-40 shadow-2xl p-6 relative mx-4 transform scale-95 transition-transform duration-300" id="paymentModalContent">
@@ -512,21 +543,10 @@ endif;
             <!-- Payment Method Selection Segmented Group -->
             <div class="space-y-2">
                 <label class="font-bold text-[10px] text-on-surface-variant uppercase tracking-wider block">Payment Channel</label>
-                <div class="grid grid-cols-3 gap-2" id="paymentMethodSelectGroup">
-                    <button type="button" onclick="setPaymentMethod('Cash')" id="btnPayCash" class="flex flex-col items-center justify-center py-2.5 rounded-xl border border-outline-variant border-opacity-40 transition-all font-bold text-xs gap-1 cursor-pointer bg-gradient-to-r from-primary to-secondary text-on-primary shadow-md">
-                        <span class="material-symbols-outlined text-[20px]">payments</span>
-                        <span>Cash</span>
-                    </button>
-                    <button type="button" onclick="setPaymentMethod('GCash')" id="btnPayGCash" class="flex flex-col items-center justify-center py-2.5 rounded-xl border border-outline-variant border-opacity-40 transition-all font-bold text-xs gap-1 cursor-pointer bg-surface-container-low text-on-surface-variant hover:border-primary hover:text-primary">
-                        <span class="material-symbols-outlined text-[20px]">account_balance_wallet</span>
-                        <span>GCash</span>
-                    </button>
-                    <button type="button" onclick="setPaymentMethod('Credit Card')" id="btnPayCard" class="flex flex-col items-center justify-center py-2.5 rounded-xl border border-outline-variant border-opacity-40 transition-all font-bold text-xs gap-1 cursor-pointer bg-surface-container-low text-on-surface-variant hover:border-primary hover:text-primary">
-                        <span class="material-symbols-outlined text-[20px]">credit_card</span>
-                        <span>Card</span>
-                    </button>
-                </div>
-                <input type="hidden" id="paymentMethod" value="Cash">
+                <?php require_once __DIR__.'/../../models/CheckoutPolicy.php';$manualMethods=CheckoutPolicy::methods(); ?>
+                <select id="manualPaymentChoice" aria-label="Payment channel" class="w-full p-3 rounded-xl border" onchange="setPaymentMethod(this.value)"><?php foreach($manualMethods as $method): ?><option value="<?= htmlspecialchars($method,ENT_QUOTES) ?>"><?= htmlspecialchars($method) ?></option><?php endforeach; ?></select>
+                <input type="hidden" id="paymentMethod" value="<?= htmlspecialchars($manualMethods[0],ENT_QUOTES) ?>">
+                <script>window.manualPaymentMethods=<?= json_encode($manualMethods,JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>;</script>
             </div>
 
             <!-- Amount Tendered Field -->

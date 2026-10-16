@@ -948,8 +948,8 @@ ob_start();
                                 <i class="fa-solid ${pIcon} ${pColor} text-xs"></i>
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-on-surface-variant" style="font-size: 12px;">${p.name}</span>
-                                <span class="text-[9px] text-on-surface-variant/40 opacity-80 uppercase tracking-tighter">System Access</span>
+                                <span class="font-bold text-on-surface-variant" style="font-size: 12px;">${$('<span>').text(p.description || p.name).html()}</span>
+                                <span class="text-[9px] text-on-surface-variant/40 opacity-80 tracking-tighter">${$('<span>').text(p.name).html()}</span>
                             </div>
                         </div>
                         <div class="form-check form-switch premium-switch p-0 m-0">
@@ -1112,7 +1112,7 @@ ob_start();
 
                 $(this).find('.permission-item').each(function() {
                     const permName = $(this).data('perm-name').toLowerCase();
-                    const isMatch = permName.includes(term) || moduleName.includes(term);
+                    const isMatch = permName.includes(term) || $(this).text().toLowerCase().includes(term) || moduleName.includes(term);
                     $(this).toggle(isMatch);
                     if (isMatch) hasVisiblePerm = true;
                 });

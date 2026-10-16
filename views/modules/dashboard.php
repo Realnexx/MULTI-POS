@@ -17,27 +17,14 @@ $top_selling = $top_selling ?? [];
 $all_branches = $all_branches ?? [];
 $selected_branch = $selected_branch ?? 'all';
 
-require_once __DIR__ . '/../../models/ActivityLog.php';
-$recent_activities = [];
-if (class_exists('ActivityLog') && method_exists('ActivityLog', 'getDTLogs')) {
-    try {
-        $recent_activities = ActivityLog::getDTLogs(0, 5, [], 'created_at', 'DESC');
-    } catch (Exception $e) {
-    }
-}
+$recent_activities = $recent_activities ?? [];
 
 $current_branch = $selected_branch ?? 'all';
-$display_branch = ($current_branch === 'all' || !$current_branch) ? 'All Branches' : htmlspecialchars($current_branch);
+$display_branch = htmlspecialchars($branch_name ?? 'All Branches');
 $display_date = empty($_GET['date_range']) ? 'Today' : htmlspecialchars($_GET['date_range']);
 
-$completed_orders = 0;
-$pending_orders = 0;
-foreach ($recent_sales as $sale) {
-    strtolower($sale['status'] ?? '') === 'completed' ? $completed_orders++ : $pending_orders++;
-}
-if ($completed_orders === 0 && $pending_orders === 0 && $stats['orders_today'] > 0) {
-    $completed_orders = $stats['orders_today'];
-}
+$completed_orders = (int)($stats['completed_orders'] ?? $stats['orders_today']);
+$pending_orders = (int)($stats['pending_orders'] ?? 0);
 
 $user_first = htmlspecialchars(explode(' ', $_SESSION['user']['name'] ?? 'Admin')[0]);
 
@@ -289,7 +276,7 @@ ob_start();
         top: 28px;
         width: 2px;
         bottom: 0;
-        background: linear-gradient(to bottom, #e5eaef, transparent);
+        background: #e5eaef;
     }
 
     .dash-tl-dot {
@@ -384,7 +371,7 @@ ob_start();
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: linear-gradient(135deg, #5d87ff22, #3eb7ff22);
+        background: #5d87ff22;
         color: #5d87ff;
         font-weight: 800;
         font-size: 0.75rem;
@@ -455,17 +442,17 @@ ob_start();
     }
 
     .rank-badge.gold {
-        background: linear-gradient(135deg, #ffd700, #ffae1f);
+        background: #ffd700;
         color: #7a4800;
     }
 
     .rank-badge.silver {
-        background: linear-gradient(135deg, #d4d8e2, #b0b7c9);
+        background: #d4d8e2;
         color: #3a3f52;
     }
 
     .rank-badge.bronze {
-        background: linear-gradient(135deg, #d4845a, #b0622a);
+        background: #d4845a;
         color: #fff;
     }
 
@@ -544,23 +531,25 @@ ob_start();
         </div>
     </div>
 
+    <?php require __DIR__.'/../partials/dashboard_operations.php'; ?>
+
     <!-- ============ KPI CARDS ROW ============ -->
     <div class="row g-aurora mb-4">
 
         <!-- Revenue Today -->
         <div class="col-6 col-lg-3">
             <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:linear-gradient(90deg,#5d87ff,#3eb7ff);"></div>
+                <div class="kpi-glow" style="background:#5d87ff;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="kpi-icon-wrap" style="background:rgba(93,135,255,0.12);">
                             <iconify-icon icon="solar:wallet-money-bold-duotone"
                                 style="color:#5d87ff;font-size:1.5rem;"></iconify-icon>
                         </div>
-                        <span class="kpi-trend neutral"><i class="ti ti-trending-up"></i> Today</span>
+                        <span class="kpi-trend neutral"><i class="ti ti-trending-up"></i> <?= $display_date ?></span>
                     </div>
                     <div class="kpi-value text-dark mb-1">₱<?= number_format($stats['sales_today'], 2) ?></div>
-                    <div class="kpi-label">Gross Revenue</div>
+                    <div class="kpi-label">Selected-period sales</div>
                     <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
                         Avg <strong class="text-dark">₱<?= number_format($stats['avg_order_value'], 2) ?></strong> /
                         ticket
@@ -572,7 +561,7 @@ ob_start();
         <!-- Orders Today -->
         <div class="col-6 col-lg-3">
             <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:linear-gradient(90deg,#13deb9,#3eb7ff);"></div>
+                <div class="kpi-glow" style="background:#13deb9;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="kpi-icon-wrap" style="background:rgba(19,222,185,0.12);">
@@ -582,7 +571,7 @@ ob_start();
                         <span class="kpi-trend up"><i class="ti ti-check"></i> Done</span>
                     </div>
                     <div class="kpi-value text-dark mb-1"><?= number_format($stats['orders_today']) ?></div>
-                    <div class="kpi-label">Orders Today</div>
+                    <div class="kpi-label">Selected-period transactions</div>
                     <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
                         <span class="text-success fw-bold"><?= $completed_orders ?></span> completed &middot; <span
                             class="text-warning fw-bold"><?= $pending_orders ?></span> pending
@@ -594,7 +583,7 @@ ob_start();
         <!-- Total Products -->
         <div class="col-6 col-lg-3">
             <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:linear-gradient(90deg,#ffae1f,#ffd700);"></div>
+                <div class="kpi-glow" style="background:#ffae1f;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="kpi-icon-wrap" style="background:rgba(255,174,31,0.12);">
@@ -617,7 +606,7 @@ ob_start();
         <!-- Team Members -->
         <div class="col-6 col-lg-3">
             <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:linear-gradient(90deg,#fa5454,#ffae1f);"></div>
+                <div class="kpi-glow" style="background:#fa5454;"></div>
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center justify-content-between mb-3">
                         <div class="kpi-icon-wrap" style="background:rgba(250,84,84,0.10);">
@@ -661,14 +650,14 @@ ob_start();
                             onchange="this.form.submit()">
                             <option value="all" <?= ($current_branch === 'all') ? 'selected' : '' ?>>All Branches</option>
                             <?php foreach ($all_branches as $b): ?>
-                                <option value="<?= htmlspecialchars($b['name']) ?>" <?= ($current_branch === $b['name']) ? 'selected' : '' ?>>
+                                <option value="<?= (int)$b['id'] ?>" <?= ((string)$current_branch === (string)$b['id']) ? 'selected' : '' ?>>
                                     <?= htmlspecialchars($b['name']) ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                 <?php else: ?>
-                    <input type="hidden" name="branch" value="all">
+                    <input type="hidden" name="branch" value="<?= htmlspecialchars($selected_branch) ?>">
                 <?php endif; ?>
 
                 <div class="col-12 col-sm-6 col-lg-5">
@@ -852,7 +841,7 @@ ob_start();
                 <div class="aurora-card-header">
                     <div>
                         <div class="aurora-card-title">Recent Transactions</div>
-                        <div class="aurora-card-subtitle">Latest processed sales tickets across branches</div>
+                        <div class="aurora-card-subtitle">Latest processed sales tickets for the selected branch</div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         <?php if(User::has_permission($_SESSION['user']['id'],'access_pos')): ?><a href="<?= url('?route=pos/history') ?>"
@@ -863,7 +852,7 @@ ob_start();
                     </div>
                 </div>
                 <div class="aurora-card-body pt-2">
-                    <div>
+                    <div class="table-responsive">
                         <table class="dash-table">
                             <thead>
                                 <tr>
@@ -1086,8 +1075,8 @@ ob_start();
             chart: { type: 'area', height: 80, sparkline: { enabled: true }, fontFamily: "'Plus Jakarta Sans', sans-serif" },
             stroke: { curve: 'smooth', width: 2.5 },
             fill: {
-                colors: ['#5d87ff'], type: 'gradient',
-                gradient: { shadeIntensity: 0, inverseColors: false, opacityFrom: 0.3, opacityTo: 0.02, stops: [0, 100] }
+                colors: ['#5d87ff'], type: 'solid',
+                opacity: 0.15
             },
             colors: ['#5d87ff'],
             tooltip: { theme: 'dark', x: { show: false }, y: { formatter: v => '₱' + Number(v).toLocaleString() } }

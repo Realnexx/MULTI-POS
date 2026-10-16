@@ -15,6 +15,7 @@ function access_denied($message = 'You do not have access to this action.', $sta
     exit;
 }
 function require_permissions(array $permissions) {
+    require_once __DIR__.'/session.php';enforce_session_timeout();
     if (empty($_SESSION['user']['id'])) {
         if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest' || strpos($_SERVER['SCRIPT_NAME'] ?? '', '/ajax/') !== false || strpos($_GET['route'] ?? '', 'ajax/') === 0) access_denied('Please sign in to continue.',401);
         require_login();

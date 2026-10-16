@@ -28,8 +28,8 @@ $can_view_logs = User::has_permission($user_id, 'view_activity_logs');
 $can_manage_website = User::has_permission($user_id, 'access_website_admin');
 ?>
 
-<aside class="left-sidebar">
-  <div>
+<aside class="left-sidebar staff-sidebar" aria-label="Main navigation">
+  <div class="sidebar-shell">
     <div class="brand-logo d-flex align-items-center justify-content-between px-4 py-3">
       <a href="<?= url($can_view_dashboard ? '?route=dashboard' : '?route=home') ?>" class="logo-wrap d-flex align-items-center gap-2 text-decoration-none">
         <img 
@@ -51,7 +51,7 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
     </div>
 
     <!-- Sidebar navigation-->
-    <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
+    <nav class="sidebar-nav scroll-sidebar" aria-label="Workspace pages">
       <ul id="sidebarnav">
 
         <!-- OVERVIEW -->
@@ -102,10 +102,13 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
 
         <?php endif; ?>
 
-        <?php if(User::has_permission($user_id,'manage_online_orders')): ?>
+        <?php require_once __DIR__.'/../../../models/OnlineOrder.php'; if(OnlineOrder::can_view($user_id)): ?>
         <li class="sidebar-item"><a class="sidebar-link <?= $route === 'admin/online_orders' ? 'active' : '' ?>" href="<?= url('?route=admin/online_orders') ?>"><iconify-icon icon="solar:bag-4-line-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Online Orders</span></a></li>
         <?php endif; ?>
         <!-- INVENTORY & FINANCE -->
+        <?php $canShift=false; foreach (['manage_cashier_schedules','view_own_shifts','open_cash_shift','close_cash_shift','cash_drawer_movements','view_cash_shifts','manage_cash_shifts','approve_cash_shifts','manage_registers','view_shift_reports'] as $shiftPermission) if (User::has_permission($user_id,$shiftPermission)) $canShift=true; if ($canShift): ?>
+        <li class="sidebar-item <?= $route==='pos/shifts'?'selected':'' ?>"><a class="sidebar-link primary-hover-bg" href="<?= url('?route=pos/shifts') ?>"><iconify-icon icon="solar:wallet-money-bold-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Cashier Shifts</span></a></li>
+        <?php endif; ?>
         <li class="nav-small-cap">
           <iconify-icon icon="solar:menu-dots-linear" class="nav-small-cap-icon fs-4"></iconify-icon>
           <span class="hide-menu">INVENTORY &amp; FINANCE</span>
@@ -118,8 +121,26 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
             <span class="hide-menu">Stock &amp; Inventory</span>
           </a>
         </li>
+        <li class="sidebar-item <?= $route === 'inventory/recipes' ? 'selected' : '' ?>">
+          <a class="sidebar-link primary-hover-bg <?= $route === 'inventory/recipes' ? 'active' : '' ?>" href="<?= url('?route=inventory/recipes') ?>" aria-expanded="false">
+            <iconify-icon icon="solar:clipboard-list-line-duotone" class="fs-6"></iconify-icon>
+            <span class="hide-menu">Recipe Management</span>
+          </a>
+        </li>
         <?php endif; ?>
 
+        <?php if (User::has_permission($user_id,'view_suppliers') || User::has_permission($user_id,'manage_suppliers')): ?>
+        <li class="sidebar-item <?= $route==='inventory/suppliers'?'selected':'' ?>"><a class="sidebar-link primary-hover-bg" href="<?= url('?route=inventory/suppliers') ?>"><iconify-icon icon="solar:users-group-rounded-bold-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Suppliers</span></a></li>
+        <?php endif; ?>
+        <?php if (User::has_permission($user_id,'view_purchase_orders') || User::has_permission($user_id,'create_purchase_orders') || User::has_permission($user_id,'approve_purchase_orders') || User::has_permission($user_id,'receive_purchases') || User::has_permission($user_id,'return_purchases')): ?>
+        <li class="sidebar-item <?= $route==='inventory/purchases'?'selected':'' ?>"><a class="sidebar-link primary-hover-bg" href="<?= url('?route=inventory/purchases') ?>"><iconify-icon icon="solar:bag-check-bold-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Purchase Orders</span></a></li>
+        <?php endif; ?>
+        <?php if (User::has_permission($user_id,'view_purchase_reports')): ?>
+        <li class="sidebar-item <?= $route==='inventory/purchase_reports'?'selected':'' ?>"><a class="sidebar-link primary-hover-bg" href="<?= url('?route=inventory/purchase_reports') ?>"><iconify-icon icon="solar:chart-square-bold-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Purchasing Reports</span></a></li>
+        <?php endif; ?>
+        <?php if (User::has_permission($user_id,'transfer_products') || User::has_permission($user_id,'approve_stock_transfers') || User::has_permission($user_id,'receive_stock_transfers') || User::has_permission($user_id,'view_stock_transfers')): ?>
+        <li class="sidebar-item <?= $route === 'inventory/transfers' ? 'selected' : '' ?>"><a class="sidebar-link primary-hover-bg" href="<?= url('?route=inventory/transfers') ?>"><iconify-icon icon="solar:transfer-horizontal-bold-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Stock Transfers</span></a></li>
+        <?php endif; ?>
         <?php if ($can_edit_product): ?>
         <li class="sidebar-item <?= $route === 'inventory/categories' ? 'selected' : '' ?>">
           <a class="sidebar-link primary-hover-bg <?= $route === 'inventory/categories' ? 'active' : '' ?>" href="<?= url('?route=inventory/categories') ?>" aria-expanded="false">
@@ -210,15 +231,14 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
         <?php if(User::has_permission($user_id,'view_monitoring')): ?>
         <li class="sidebar-item"><a href="<?= url('?route=admin/monitoring') ?>" class="sidebar-link <?= $route==='admin/monitoring'?'active':'' ?>"><iconify-icon icon="solar:chart-2-line-duotone" class="fs-6"></iconify-icon><span class="hide-menu">Page &amp; Security Monitoring</span></a></li>
         <?php endif; ?>
-        <!-- LOGOUT -->
-        <li class="sidebar-item mt-3 mb-4">
-          <a class="sidebar-link primary-hover-bg text-danger" href="javascript:void(0)" onclick="openLogoutModal(event)" aria-expanded="false">
-            <iconify-icon icon="solar:logout-2-line-duotone" class="fs-6 text-danger"></iconify-icon>
-            <span class="hide-menu text-danger">Logout</span>
-          </a>
-        </li>
 
       </ul>
     </nav>
+    <div class="sidebar-footer">
+      <a class="sidebar-link sidebar-logout" href="javascript:void(0)" onclick="openLogoutModal(event)">
+        <iconify-icon icon="solar:logout-2-line-duotone" aria-hidden="true"></iconify-icon>
+        <span>Logout</span>
+      </a>
+    </div>
   </div>
 </aside>

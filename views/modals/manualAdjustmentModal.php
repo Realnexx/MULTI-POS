@@ -184,7 +184,7 @@
             <!-- Top Gradient Accent Bar -->
             <div class="adj-modal-accent-bar"></div>
 
-            <form id="stockAdjustmentForm">
+            <form id="stockAdjustmentForm" novalidate>
 <input type="hidden" name="request_key" value="<?= bin2hex(random_bytes(16)) ?>">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="action" value="adjust_stock">
@@ -214,6 +214,11 @@
 
                 <!-- Modal Body -->
                 <div class="modal-body px-4 pt-2 pb-2">
+                    <div id="adj-recipe-panel" class="alert alert-info d-none" aria-live="polite">
+                        <strong>Recipe stock adjustment</strong><p id="adj-recipe-message" class="small my-2"></p>
+                        <div id="adj-recipe-requirements" class="small mb-2"></div>
+                        <label id="adj-recipe-confirm-label" class="small d-none"><input type="checkbox" name="confirm_recipe_preparation" value="1" id="adj-recipe-confirm"> I confirm these units are being prepared. Switch this product to finished-stock sales so its recipe ingredients are not deducted again at checkout.</label>
+                    </div>
                     <!-- Searchable Product Selection (Visible only when adjusting without a pre-selected row) -->
                     <div class="adj-spec-card position-relative" id="adj_product_search_container">
                         <div class="adj-card-label">

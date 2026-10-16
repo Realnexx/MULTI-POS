@@ -5,11 +5,26 @@ require_once __DIR__ . '/User.php';
 
 class Sale
 {
-    public static function create_sale($cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items = [], $order_type = 'Dine-in')
+    public static function stock_return_suggestions()
+    {
+        $user=(int)($_SESSION['user']['id'] ?? 0);
+        if (!User::has_permission($user,'manage_inventory') || !RecipeInventory::ready()) return [];
+        $context=User::access_context($user);
+        if (!$context['global'] && !$context['branch_id']) return [];
+        $sql="SELECT s.id,s.created_at,s.final_amount,b.name branch_name FROM sales s LEFT JOIN branches b ON b.id=s.branch_id
+            WHERE NOT EXISTS (SELECT 1 FROM inventory_reversals r WHERE r.sale_id=s.id)
+            AND (EXISTS (SELECT 1 FROM inventory_operations io WHERE io.kind='sale' AND io.result_id=s.id)
+                OR EXISTS (SELECT 1 FROM online_orders o JOIN inventory_operations io ON io.id=o.operation_id WHERE o.sale_id=s.id))";
+        $params=[]; $types='';
+        if (!$context['global']) { $sql.=' AND s.branch_id=?'; $params[]=$context['branch_id']; $types='i'; }
+        return RecipeInventory::rows($sql.' ORDER BY s.id DESC LIMIT 100',$types,$params);
+    }
+
+    public static function create_sale($cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items = [], $order_type = 'Dine-in', $requireDrawer=false)
     {
         try {
             return RecipeInventory::checkout($cashier_id,$branch_id,$items,$discount_amount,$amount_tendered,$payment_method,$order_type,
-                $_POST['request_key'] ?? ($_SESSION['pos_checkout_key'] ?? ''));
+                $_POST['request_key'] ?? ($_SESSION['pos_checkout_key'] ?? ''),$requireDrawer);
         } catch (Throwable $error) {
             error_log('Checkout failed: ' . $error->getMessage());
             $_SESSION['checkout_error'] = $error instanceof DomainException || $error instanceof InvalidArgumentException
@@ -21,7 +36,7 @@ class Sale
     public static function get_all_sales()
     {
         global $conn;
-        $query = "SELECT s.*, u.name as cashier_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id ORDER BY s.id DESC";
+        $query = "SELECT s.*, COALESCE(u.name,'Online payment') as cashier_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id ORDER BY s.id DESC";
         return $conn->query($query)->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -44,7 +59,7 @@ class Sale
             $date_cond .= " AND DATE(s.created_at) <= '$ed'";
         }
 
-        $query = "SELECT s.*, u.name as cashier_name, u.branch as branch_name
+        $query = "SELECT s.*, COALESCE(u.name,'Online payment') as cashier_name, (SELECT name FROM branches WHERE id=s.branch_id) as branch_name
                   FROM sales s
                   LEFT JOIN users u ON s.cashier_id = u.id
                   WHERE 1=1 $branch_cond $date_cond
@@ -55,7 +70,7 @@ class Sale
     public static function find_sale_by_id($sale_id)
     {
         global $conn;
-        $stmt = $conn->prepare("SELECT s.*, u.name as cashier_name, b.name as branch_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id LEFT JOIN branches b ON s.branch_id = b.id WHERE s.id = ?");
+        $stmt = $conn->prepare("SELECT s.*, COALESCE(u.name,'Online payment') as cashier_name, b.name as branch_name FROM sales s LEFT JOIN users u ON s.cashier_id = u.id LEFT JOIN branches b ON s.branch_id = b.id WHERE s.id = ?");
         $stmt->bind_param("i", $sale_id);
         $stmt->execute();
         $sale = $stmt->get_result()->fetch_assoc();
@@ -305,7 +320,7 @@ class Sale
         $order_by_clean = isset($allowed_columns[$order_by]) ? $allowed_columns[$order_by] : 's.id';
         $order_dir_clean = strtoupper($order_dir) === 'ASC' ? 'ASC' : 'DESC';
 
-        $query = "SELECT s.*, u.name as cashier_name, u.branch as branch_name,
+        $query = "SELECT s.*, COALESCE(u.name,'Online payment') as cashier_name, (SELECT name FROM branches WHERE id=s.branch_id) as branch_name,
                   (SELECT GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') FROM sales_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = s.id) as products
                   FROM sales s 
                   LEFT JOIN users u ON s.cashier_id = u.id 
@@ -576,7 +591,7 @@ class Sale
         global $conn;
         $order_dir = strtoupper((string)$order_dir) === 'ASC' ? 'ASC' : 'DESC';
 
-        $sql = "SELECT s.*, u.name as cashier_name,
+        $sql = "SELECT s.*, COALESCE(u.name,'Online payment') as cashier_name,
                 (SELECT GROUP_CONCAT(DISTINCT p.name SEPARATOR ', ') FROM sales_items si LEFT JOIN products p ON si.product_id = p.id WHERE si.sale_id = s.id) as products,
                 (SELECT SUM(quantity) FROM sales_items WHERE sale_id = s.id) as total_qty
                 FROM sales s 
@@ -698,7 +713,10 @@ class Sale
             $current=$rows[0]['status'];
             if ($current === $status) return true;
             if (!(($current === 'Completed' && $status === 'Refunded') || ($current === 'Pending' && $status === 'Cancelled'))) return false;
+            require_once __DIR__.'/PayMongo.php';
+            PayMongo::assertLocalRefundAllowed($sale_id);
             // Status-only refunds never return prepared food to usable inventory.
+            if ($status==='Refunded') { require_once __DIR__.'/CashShift.php'; CashShift::refund($rows[0],(int)($_SESSION['user']['id'] ?? 0)); }
             RecipeInventory::query('UPDATE sales SET status = ? WHERE id = ?','si',[$status,$sale_id]);
             if($status==='Refunded'){require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($sale_id,(int)($_SESSION['user']['id'] ?? 0));}
             return true;

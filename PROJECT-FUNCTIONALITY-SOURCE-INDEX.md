@@ -1,0 +1,2836 @@
+# Functionality source index
+
+Reviewed 16 October 2026. This index complements PROJECT-FUNCTIONALITY-INVENTORY.md. It records declarations and file presence, not successful execution of every declaration. Private configuration contents are intentionally excluded.
+
+## Main dispatcher routes
+
+- `admin/monitoring` — [index.php:38](C:/xampp/htdocs/pos/index.php:38)
+- `home` — [index.php:42](C:/xampp/htdocs/pos/index.php:42)
+- `products` — [index.php:45](C:/xampp/htdocs/pos/index.php:45)
+- `product_detail` — [index.php:48](C:/xampp/htdocs/pos/index.php:48)
+- `about` — [index.php:51](C:/xampp/htdocs/pos/index.php:51)
+- `contact` — [index.php:54](C:/xampp/htdocs/pos/index.php:54)
+- `branches` — [index.php:57](C:/xampp/htdocs/pos/index.php:57)
+- `cart` — [index.php:60](C:/xampp/htdocs/pos/index.php:60)
+- `cart/checkout` — [index.php:63](C:/xampp/htdocs/pos/index.php:63)
+- `orders` — [index.php:64](C:/xampp/htdocs/pos/index.php:64)
+- `order_tracking` — [index.php:65](C:/xampp/htdocs/pos/index.php:65)
+- `admin/online_orders` — [index.php:66](C:/xampp/htdocs/pos/index.php:66)
+- `cart/add` — [index.php:69](C:/xampp/htdocs/pos/index.php:69)
+- `cart/remove` — [index.php:72](C:/xampp/htdocs/pos/index.php:72)
+- `cart/update` — [index.php:75](C:/xampp/htdocs/pos/index.php:75)
+- `login` — [index.php:80](C:/xampp/htdocs/pos/index.php:80)
+- `customer_login` — [index.php:83](C:/xampp/htdocs/pos/index.php:83)
+- `forgot_password` — [index.php:86](C:/xampp/htdocs/pos/index.php:86)
+- `reset_password` — [index.php:89](C:/xampp/htdocs/pos/index.php:89)
+- `register` — [index.php:92](C:/xampp/htdocs/pos/index.php:92)
+- `setup_profile` — [index.php:95](C:/xampp/htdocs/pos/index.php:95)
+- `notification` — [index.php:98](C:/xampp/htdocs/pos/index.php:98)
+- `logout` — [index.php:101](C:/xampp/htdocs/pos/index.php:101)
+- `admin/start` — [index.php:106](C:/xampp/htdocs/pos/index.php:106)
+- `dashboard` — [index.php:110](C:/xampp/htdocs/pos/index.php:110)
+- `admin/expenses` — [index.php:113](C:/xampp/htdocs/pos/index.php:113)
+- `admin/users` — [index.php:116](C:/xampp/htdocs/pos/index.php:116)
+- `admin/users/data` — [index.php:119](C:/xampp/htdocs/pos/index.php:119)
+- `admin/users/single` — [index.php:122](C:/xampp/htdocs/pos/index.php:122)
+- `admin/roles/data` — [index.php:125](C:/xampp/htdocs/pos/index.php:125)
+- `admin/permissions/data` — [index.php:128](C:/xampp/htdocs/pos/index.php:128)
+- `admin/expenses/data` — [index.php:131](C:/xampp/htdocs/pos/index.php:131)
+- `admin/expenses/print` — [index.php:134](C:/xampp/htdocs/pos/index.php:134)
+- `admin/expenses/summary_print` — [index.php:137](C:/xampp/htdocs/pos/index.php:137)
+- `admin/roles` — [index.php:140](C:/xampp/htdocs/pos/index.php:140)
+- `admin/cms` — [index.php:143](C:/xampp/htdocs/pos/index.php:143)
+- `admin/reports` — [index.php:146](C:/xampp/htdocs/pos/index.php:146)
+- `admin/reports/print` — [index.php:149](C:/xampp/htdocs/pos/index.php:149)
+- `admin/branches` — [index.php:152](C:/xampp/htdocs/pos/index.php:152)
+- `admin/branches/report` — [index.php:155](C:/xampp/htdocs/pos/index.php:155)
+- `admin/settings` — [index.php:158](C:/xampp/htdocs/pos/index.php:158)
+- `admin/activity_logs` — [index.php:161](C:/xampp/htdocs/pos/index.php:161)
+- `admin/activity_logs/data` — [index.php:164](C:/xampp/htdocs/pos/index.php:164)
+- `admin/activity_logs/print` — [index.php:167](C:/xampp/htdocs/pos/index.php:167)
+- `pos` — [index.php:172](C:/xampp/htdocs/pos/index.php:172)
+- `pos/history` — [index.php:175](C:/xampp/htdocs/pos/index.php:175)
+- `pos/history/data` — [index.php:178](C:/xampp/htdocs/pos/index.php:178)
+- `pos/history/stats` — [index.php:181](C:/xampp/htdocs/pos/index.php:181)
+- `pos/history/update_status` — [index.php:184](C:/xampp/htdocs/pos/index.php:184)
+- `pos/receipt` — [index.php:187](C:/xampp/htdocs/pos/index.php:187)
+- `inventory/products` — [index.php:192](C:/xampp/htdocs/pos/index.php:192)
+- `inventory/categories` — [index.php:195](C:/xampp/htdocs/pos/index.php:195)
+- `inventory/logs/print` — [index.php:198](C:/xampp/htdocs/pos/index.php:198)
+- `inventory/logs` — [index.php:201](C:/xampp/htdocs/pos/index.php:201)
+- `inventory/low_stock` — [index.php:204](C:/xampp/htdocs/pos/index.php:204)
+- `ajax/pos_cart` — [index.php:209](C:/xampp/htdocs/pos/index.php:209)
+- `ajax/inventory_action` — [index.php:212](C:/xampp/htdocs/pos/index.php:212)
+- `ajax/role_action` — [index.php:215](C:/xampp/htdocs/pos/index.php:215)
+- `ajax/cms_action` — [index.php:218](C:/xampp/htdocs/pos/index.php:218)
+- `ajax/branch_action` — [index.php:221](C:/xampp/htdocs/pos/index.php:221)
+- `ajax/expense_action` — [index.php:224](C:/xampp/htdocs/pos/index.php:224)
+
+## Main controller/model/service/middleware declarations and AJAX actions
+
+### ajax/branch_action.php
+
+[ajax/branch_action.php](C:/xampp/htdocs/pos/ajax/branch_action.php)
+
+- action `list` (line 12)
+- action `get` (line 27)
+- action `get_managers` (line 37)
+- action `get_staff` (line 43)
+- action `create` (line 51)
+- action `delete` (line 91)
+- action `update` (line 104)
+
+### ajax/cms_action.php
+
+[ajax/cms_action.php](C:/xampp/htdocs/pos/ajax/cms_action.php)
+
+- action `mark_read` (line 28)
+
+### ajax/expense_action.php
+
+[ajax/expense_action.php](C:/xampp/htdocs/pos/ajax/expense_action.php)
+
+- action `create` (line 12)
+- action `delete` (line 31)
+- action `single` (line 44)
+- action `update` (line 55)
+
+### ajax/inventory_action.php
+
+[ajax/inventory_action.php](C:/xampp/htdocs/pos/ajax/inventory_action.php)
+
+- action `get_category_products` (line 29)
+- action `quick_restock` (line 35)
+- action `adjust_stock` (line 52)
+- action `get_next_batch` (line 76)
+- action `get_next_product_id` (line 86)
+- action `get_product_modifiers` (line 91)
+- action `save_product_modifiers` (line 98)
+- action `check_recipe_availability` (line 109)
+- action `products_datatable` (line 116)
+- action `get_categories` (line 183)
+- action `get_active_batches` (line 188)
+- action `get_branches` (line 199)
+- action `get_batch_breakdown` (line 204)
+- action `update_batch_data` (line 214)
+- action `get_product_recipe` (line 231)
+- action `save_product_recipe` (line 242)
+- action `prepare_recipe_batch` (line 254)
+- action `reverse_sale_stock` (line 260)
+- action `record_waste` (line 266)
+- action `get_ingredients_list` (line 272)
+- action `logs_datatable` (line 278)
+- action `get_attributes` (line 325)
+- action `save_attribute` (line 330)
+- action `get_product_variants` (line 340)
+- action `save_product_variants` (line 346)
+- action `get_product_attribute_values` (line 368)
+- action `save_product_attributes` (line 374)
+- action `sales_dt` (line 403)
+- action `logs_dt` (line 427)
+- action `expenses_dt` (line 451)
+
+### ajax/notification_action.php
+
+[ajax/notification_action.php](C:/xampp/htdocs/pos/ajax/notification_action.php)
+
+- action `get_alerts` (line 19)
+- action `mark_read` (line 35)
+- action `mark_all_read` (line 46)
+
+### ajax/pos_cart.php
+
+[ajax/pos_cart.php](C:/xampp/htdocs/pos/ajax/pos_cart.php)
+
+- action `load` (line 43)
+- action `set_order_type` (line 47)
+- action `add` (line 58)
+- action `update_qty` (line 128)
+- action `remove` (line 155)
+- action `clear` (line 162)
+- action `set_discount` (line 167)
+- action `get_receipt` (line 172)
+- action `checkout` (line 195)
+
+### ajax/pos_pin.php
+
+[ajax/pos_pin.php](C:/xampp/htdocs/pos/ajax/pos_pin.php)
+
+- Shared bootstrap/helper implementation; no named function/action declaration.
+
+### ajax/report_action.php
+
+[ajax/report_action.php](C:/xampp/htdocs/pos/ajax/report_action.php)
+
+- action `get_dt_sales` (line 22)
+- action `get_dt_inventory_logs` (line 45)
+- action `get_summary_stats` (line 68)
+
+### ajax/role_action.php
+
+[ajax/role_action.php](C:/xampp/htdocs/pos/ajax/role_action.php)
+
+- action `get_permissions` (line 28)
+- action `add_permission` (line 38)
+- action `get_modules` (line 70)
+- action `update_permission` (line 75)
+- action `delete_permission` (line 107)
+
+### controllers/AdminController.php
+
+[controllers/AdminController.php](C:/xampp/htdocs/pos/controllers/AdminController.php)
+
+- method `dashboard` (line 13)
+- method `users` (line 52)
+- action `create` (line 59)
+- action `edit` (line 89)
+- action `delete` (line 112)
+- method `getUserData` (line 129)
+- method `getRoles` (line 158)
+- method `getPermissionsData` (line 178)
+- method `getSingleUser` (line 188)
+- method `roles` (line 208)
+- action `create` (line 215)
+- action `edit` (line 230)
+- action `delete` (line 242)
+- method `cms` (line 262)
+- action `update_content` (line 268)
+- action `mark_read` (line 281)
+- method `reports` (line 295)
+- method `reportsPrint` (line 305)
+- method `branches` (line 384)
+- method `branchesReport` (line 396)
+- method `settings` (line 407)
+- method `handleUserImage` (line 489)
+- method `activityLogs` (line 503)
+- method `activityLogsPrint` (line 513)
+- method `getActivityLogsData` (line 532)
+- method `validateRoleAccess` (line 600)
+- method `validateUserAccess` (line 613)
+
+### controllers/AuthController.php
+
+[controllers/AuthController.php](C:/xampp/htdocs/pos/controllers/AuthController.php)
+
+- method `login` (line 9)
+- method `customer_login` (line 66)
+- method `auth_error` (line 71)
+- method `register` (line 78)
+- method `forgot_password` (line 105)
+- method `reset_password` (line 128)
+- method `setup_profile` (line 147)
+- method `notification` (line 269)
+- method `logout` (line 285)
+
+### controllers/ExpenseController.php
+
+[controllers/ExpenseController.php](C:/xampp/htdocs/pos/controllers/ExpenseController.php)
+
+- method `index` (line 9)
+- method `data` (line 86)
+- method `print` (line 152)
+- method `summary_print` (line 210)
+- method `printDate` (line 286)
+
+### controllers/InventoryController.php
+
+[controllers/InventoryController.php](C:/xampp/htdocs/pos/controllers/InventoryController.php)
+
+- method `products` (line 12)
+- action `create` (line 73)
+- action `edit` (line 214)
+- action `delete` (line 331)
+- method `categories` (line 357)
+- action `create` (line 365)
+- action `edit` (line 376)
+- action `delete` (line 388)
+- method `logs` (line 410)
+- action `adjust_stock` (line 418)
+- method `printLogs` (line 480)
+- method `printDate` (line 517)
+- method `low_stock` (line 528)
+
+### controllers/MonitoringController.php
+
+[controllers/MonitoringController.php](C:/xampp/htdocs/pos/controllers/MonitoringController.php)
+
+- method `index` (line 4)
+
+### controllers/OnlineOrderController.php
+
+[controllers/OnlineOrderController.php](C:/xampp/htdocs/pos/controllers/OnlineOrderController.php)
+
+- method `index` (line 4)
+
+### controllers/PosController.php
+
+[controllers/PosController.php](C:/xampp/htdocs/pos/controllers/PosController.php)
+
+- method `index` (line 10)
+- method `history` (line 87)
+- method `receipt` (line 180)
+- method `historyData` (line 423)
+- method `historyStats` (line 558)
+- method `updateStatus` (line 580)
+
+### controllers/WebsiteController.php
+
+[controllers/WebsiteController.php](C:/xampp/htdocs/pos/controllers/WebsiteController.php)
+
+- method `home` (line 12)
+- method `products` (line 38)
+- method `product_detail` (line 48)
+- method `about` (line 65)
+- method `contact` (line 70)
+- method `branches` (line 92)
+- method `cart` (line 99)
+- method `cart_write` (line 113)
+- method `cart_result` (line 114)
+- method `cart_add` (line 119)
+- method `cart_update` (line 124)
+- method `cart_remove` (line 127)
+- method `checkout` (line 128)
+- method `orders` (line 136)
+- method `order_tracking` (line 137)
+
+### middleware/access_policy.php
+
+[middleware/access_policy.php](C:/xampp/htdocs/pos/middleware/access_policy.php)
+
+- method `access_page_rules` (line 3)
+- method `access_ajax_rules` (line 17)
+- method `authorize_page` (line 41)
+- method `authorize_action` (line 61)
+- method `require_write_request` (line 81)
+- method `enforce_branch_context` (line 87)
+
+### middleware/auth.php
+
+[middleware/auth.php](C:/xampp/htdocs/pos/middleware/auth.php)
+
+- method `require_login` (line 4)
+- method `require_guest` (line 11)
+- method `enforce_csrf` (line 18)
+
+### middleware/rbac.php
+
+[middleware/rbac.php](C:/xampp/htdocs/pos/middleware/rbac.php)
+
+- method `access_denied` (line 7)
+- method `require_permissions` (line 17)
+- method `require_permission` (line 25)
+
+### middleware/session.php
+
+[middleware/session.php](C:/xampp/htdocs/pos/middleware/session.php)
+
+- method `enforce_session_timeout` (line 3)
+
+### models/ActivityLog.php
+
+[models/ActivityLog.php](C:/xampp/htdocs/pos/models/ActivityLog.php)
+
+- method `log` (line 5)
+- method `countAll` (line 15)
+- method `countFiltered` (line 21)
+- method `getDTLogs` (line 67)
+
+### models/AuthSecurity.php
+
+[models/AuthSecurity.php](C:/xampp/htdocs/pos/models/AuthSecurity.php)
+
+- method `config` (line 3)
+- method `migrate` (line 7)
+- method `input` (line 12)
+- method `ip` (line 15)
+- method `password_error` (line 16)
+- method `consume` (line 22)
+- method `clear_limit` (line 37)
+- method `version` (line 41)
+- method `establish` (line 44)
+- method `issue_reset` (line 48)
+- method `valid_reset` (line 58)
+- method `revoke_reset` (line 62)
+- method `reset_password` (line 65)
+
+### models/Branch.php
+
+[models/Branch.php](C:/xampp/htdocs/pos/models/Branch.php)
+
+- method `for_current_user` (line 6)
+- method `get_all_active` (line 13)
+- method `get_all` (line 23)
+- method `get_potential_managers` (line 38)
+- method `find_by_id` (line 51)
+- method `update` (line 64)
+- method `get_potential_staff` (line 88)
+- method `get_assigned_users` (line 101)
+- method `create` (line 113)
+- method `delete` (line 136)
+- method `assign_users` (line 150)
+- method `get_stats` (line 169)
+
+### models/Cart.php
+
+[models/Cart.php](C:/xampp/htdocs/pos/models/Cart.php)
+
+- method `owner_key` (line 5)
+- method `lock_owner` (line 6)
+- method `owner` (line 11)
+- method `fingerprint` (line 12)
+- method `available` (line 16)
+- method `quantity` (line 20)
+- method `add` (line 21)
+- method `write_quantity` (line 29)
+- method `update` (line 36)
+- method `remove` (line 39)
+- method `clear` (line 42)
+- method `get_items` (line 45)
+- method `migrate` (line 50)
+
+### models/Expense.php
+
+[models/Expense.php](C:/xampp/htdocs/pos/models/Expense.php)
+
+- method `get_all_filtered` (line 3)
+- method `get_all` (line 25)
+- method `create` (line 34)
+- method `delete` (line 49)
+- method `get_by_id` (line 55)
+- method `update` (line 62)
+- method `get_dt_expenses` (line 80)
+- method `count_dt_expenses_filtered` (line 122)
+- method `get_total_expenses_count` (line 156)
+- method `get_stats` (line 175)
+
+### models/InventoryQuantity.php
+
+[models/InventoryQuantity.php](C:/xampp/htdocs/pos/models/InventoryQuantity.php)
+
+- method `parse` (line 7)
+- method `format` (line 20)
+- method `unit` (line 25)
+- method `convert` (line 33)
+
+### models/Monitoring.php
+
+[models/Monitoring.php](C:/xampp/htdocs/pos/models/Monitoring.php)
+
+- method `migrate` (line 5)
+- method `route` (line 9)
+- method `branch` (line 13)
+- method `security` (line 17)
+- method `start` (line 22)
+- method `finish` (line 28)
+- method `report` (line 40)
+
+### models/OnlineOrder.php
+
+[models/OnlineOrder.php](C:/xampp/htdocs/pos/models/OnlineOrder.php)
+
+- method `migrate` (line 6)
+- method `enabled` (line 12)
+- method `event` (line 13)
+- method `place` (line 14)
+- method `detail` (line 39)
+- method `list_for` (line 44)
+- method `update_status` (line 49)
+- method `record_payment` (line 74)
+- method `sync_refund` (line 81)
+
+### models/PermissionSeeder.php
+
+[models/PermissionSeeder.php](C:/xampp/htdocs/pos/models/PermissionSeeder.php)
+
+- method `run` (line 3)
+
+### models/Product.php
+
+[models/Product.php](C:/xampp/htdocs/pos/models/Product.php)
+
+- method `get_all_ingredients` (line 7)
+- method `get_all_products` (line 17)
+- method `get_featured_products` (line 68)
+- method `get_best_sellers` (line 75)
+- method `find_by_id` (line 82)
+- method `get_related_products` (line 93)
+- method `get_all_categories` (line 104)
+- method `get_product_type_counts` (line 112)
+- method `create_category` (line 125)
+- method `update_category` (line 135)
+- method `delete_category` (line 145)
+- method `create` (line 156)
+- method `update` (line 202)
+- method `delete` (line 241)
+- method `adjust_stock` (line 256)
+- method `deduct_stock_fifo` (line 261)
+- method `get_recipes` (line 266)
+- method `save_recipes` (line 278)
+- method `get_modifiers` (line 283)
+- method `save_modifiers` (line 297)
+- method `check_recipe_stock` (line 302)
+- method `get_variants` (line 307)
+- method `save_variants` (line 317)
+- method `get_attributes` (line 374)
+- method `save_attribute` (line 380)
+- method `get_product_attribute_values` (line 388)
+- method `save_product_attributes` (line 401)
+- method `get_product_batches` (line 413)
+- method `get_active_batches` (line 422)
+- method `get_next_batch_number` (line 428)
+- method `get_next_product_id` (line 436)
+- method `get_dt_inventory_logs` (line 444)
+- method `count_dt_inventory_logs_filtered` (line 497)
+- method `get_total_inventory_logs_count` (line 545)
+- method `get_inventory_logs_stats` (line 569)
+- method `get_inventory_logs` (line 594)
+- method `get_low_stock_products` (line 605)
+- method `get_branch_stocks` (line 616)
+- method `get_branch_performance_stats` (line 629)
+- method `catalog_rows` (line 660)
+- method `get_dt_products` (line 692)
+- method `get_total_products_count` (line 698)
+- method `count_dt_products_filtered` (line 703)
+- method `get_inventory_stats` (line 708)
+- method `sync_product_stock` (line 721)
+- method `get_product_batch_breakdown` (line 730)
+- method `update_product_batch` (line 764)
+- method `generate_unique_sku` (line 782)
+- method `generate_unique_barcode` (line 798)
+
+### models/RecipeInventory.php
+
+[models/RecipeInventory.php](C:/xampp/htdocs/pos/models/RecipeInventory.php)
+
+- method `ready` (line 10)
+- method `cents` (line 19)
+- method `query` (line 26)
+- method `rows` (line 35)
+- method `atomic` (line 40)
+- method `branch` (line 60)
+- method `product` (line 79)
+- method `lockProducts` (line 86)
+- method `ingredient` (line 98)
+- method `saveRecipe` (line 112)
+- method `setMode` (line 140)
+- method `validateIdentity` (line 157)
+- method `saveModifiers` (line 172)
+- method `balance` (line 201)
+- method `syncTotal` (line 213)
+- method `recipe` (line 218)
+- method `availability` (line 231)
+- method `checkRecipe` (line 251)
+- method `catalogAvailability` (line 263)
+- method `operation` (line 275)
+- method `complete` (line 286)
+- method `consume` (line 292)
+- method `receive` (line 320)
+- method `adjust` (line 337)
+- action `initial` (line 348)
+- method `prepare` (line 359)
+- method `quoteItem` (line 380)
+- method `checkout` (line 415)
+- method `reverseSale` (line 474)
+
+### models/Role.php
+
+[models/Role.php](C:/xampp/htdocs/pos/models/Role.php)
+
+- method `get_all_roles` (line 6)
+- method `get_all_permissions` (line 19)
+- method `get_role_permissions` (line 33)
+- method `create` (line 44)
+- method `update` (line 67)
+- method `delete` (line 86)
+- method `add_permission` (line 97)
+- method `get_unique_modules` (line 111)
+- method `update_permission` (line 118)
+- method `delete_permission` (line 131)
+
+### models/Sale.php
+
+[models/Sale.php](C:/xampp/htdocs/pos/models/Sale.php)
+
+- method `create_sale` (line 8)
+- method `get_all_sales` (line 21)
+- method `get_recent_transactions` (line 28)
+- method `find_sale_by_id` (line 55)
+- method `get_dashboard_stats` (line 90)
+- method `get_top_selling_products` (line 185)
+- method `get_filtered_sales` (line 220)
+- method `get_filtered_sales_count` (line 320)
+- method `get_total_sales_count` (line 405)
+- method `get_top_branches_by_sales` (line 424)
+- method `get_today_stats` (line 450)
+- method `get_filtered_stats` (line 488)
+- method `get_dt_sales` (line 574)
+- method `count_dt_sales_filtered` (line 623)
+- method `get_summary_stats` (line 666)
+- method `update_status` (line 692)
+
+### models/Setting.php
+
+[models/Setting.php](C:/xampp/htdocs/pos/models/Setting.php)
+
+- method `get` (line 3)
+- method `set` (line 15)
+- method `get_by_category` (line 23)
+- method `update_all` (line 36)
+
+### models/StockNotification.php
+
+[models/StockNotification.php](C:/xampp/htdocs/pos/models/StockNotification.php)
+
+- method `sync_stock_alerts` (line 9)
+- method `get_alert_counts` (line 118)
+- method `get_active_alerts` (line 150)
+- method `mark_as_read` (line 194)
+- method `mark_all_as_read` (line 205)
+- method `format_time_ago` (line 218)
+
+### models/User.php
+
+[models/User.php](C:/xampp/htdocs/pos/models/User.php)
+
+- method `access_context` (line 5)
+- method `has_all_branch_access` (line 26)
+- method `landing_route` (line 27)
+- method `find_by_email` (line 34)
+- method `find_by_username_or_email` (line 44)
+- method `find_by_id` (line 54)
+- method `directory_condition` (line 65)
+- method `get_dt_users` (line 74)
+- method `count_all_users` (line 111)
+- method `count_filtered_users` (line 117)
+- method `get_role_distribution` (line 136)
+- method `get_all_users` (line 147)
+- method `create` (line 158)
+- method `update` (line 183)
+- method `update_profile` (line 223)
+- method `log_activity` (line 277)
+- method `set_status` (line 287)
+- method `delete` (line 297)
+- method `get_user_roles` (line 306)
+- method `is_superadmin` (line 316)
+- method `can_manage_user` (line 322)
+- method `has_permission` (line 332)
+- method `update_password` (line 340)
+- method `verify_pin` (line 350)
+
+### models/Website.php
+
+[models/Website.php](C:/xampp/htdocs/pos/models/Website.php)
+
+- method `get_content` (line 5)
+- method `update_content` (line 16)
+- method `save_contact_message` (line 30)
+- method `get_all_messages` (line 39)
+- method `mark_message_read` (line 45)
+
+### services/PasswordMailer.php
+
+[services/PasswordMailer.php](C:/xampp/htdocs/pos/services/PasswordMailer.php)
+
+- method `settings` (line 7)
+- method `reset_url` (line 14)
+- method `send_reset` (line 20)
+
+## AuroraTabs handler operations
+
+- [auroratabs/app/admin/endpoints/activity_logs_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/activity_logs_handler.php): `list` (line 15); `delete_bulk` (line 28); `export` (line 47); `clear` (line 79)
+- [auroratabs/app/admin/endpoints/admin_users_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/admin_users_handler.php): `list` (line 16); `list_judges` (line 31); `list_deleted` (line 46); `create` (line 61); `update` (line 111); `delete` (line 144); `restore` (line 168); `permanent_delete` (line 192); `toggle_status` (line 216); `reset_password` (line 242)
+- [auroratabs/app/admin/endpoints/assignment_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/assignment_handler.php): `list_all_candidates` (line 16); `list_competitions` (line 31); `assign_bulk` (line 41); `unassign` (line 89)
+- [auroratabs/app/admin/endpoints/candidates_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/candidates_handler.php): `list` (line 16); `list_competitions` (line 30); `get_next_number` (line 40); `create` (line 59); `update` (line 113); `delete` (line 168); `list_deleted` (line 191); `restore` (line 206); `permanent_delete` (line 229); `empty_trash` (line 252)
+- [auroratabs/app/admin/endpoints/categories_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/categories_handler.php): `list` (line 16); `get` (line 49); `create` (line 65); `update` (line 101); `delete` (line 139); `list_deleted` (line 163); `restore` (line 178); `permanent_delete` (line 201); `empty_trash` (line 224); `get_competitions` (line 234)
+- [auroratabs/app/admin/endpoints/competitions_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/competitions_handler.php): `list` (line 16); `get` (line 31); `list_deleted` (line 47); `create` (line 61); `update` (line 108); `toggle_status` (line 152); `delete` (line 171); `restore` (line 198); `permanent_delete` (line 221); `empty_trash` (line 244); `get_dependencies` (line 254); `upload_logo` (line 276)
+- [auroratabs/app/admin/endpoints/criteria_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/criteria_handler.php): `list` (line 16); `list_categories` (line 57); `get_competitions` (line 72); `get_categories_by_comp` (line 82); `get_by_category` (line 97); `update_weights` (line 112); `create` (line 134); `update` (line 174); `delete` (line 214); `list_deleted` (line 236); `restore` (line 251); `permanent_delete` (line 272); `empty_trash` (line 293); `toggle_required` (line 303)
+- [auroratabs/app/admin/endpoints/dashboard_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/dashboard_handler.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/admin/endpoints/debug_me.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/debug_me.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/admin/endpoints/export_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/export_handler.php): `candidates` (line 71); `judges` (line 91); `scores` (line 105); `votes` (line 131)
+- [auroratabs/app/admin/endpoints/final_results_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/final_results_handler.php): `get_competitions` (line 22); `get_final_results` (line 32)
+- [auroratabs/app/admin/endpoints/finance_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/finance_handler.php): `get_dashboard_stats` (line 19); `get_transactions` (line 47); `export_csv` (line 61)
+- [auroratabs/app/admin/endpoints/formulas_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/formulas_handler.php): `save` (line 16); `list` (line 49); `get` (line 59); `delete` (line 74)
+- [auroratabs/app/admin/endpoints/judge_assignments_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/judge_assignments_handler.php): `list_judges` (line 16); `list_competitions` (line 29); `list_assignments` (line 39); `assign_bulk` (line 54); `unassign` (line 125)
+- [auroratabs/app/admin/endpoints/judge_reports_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/judge_reports_handler.php): `get_active_competitions` (line 18); `get_categories` (line 31); `get_reports` (line 53)
+- [auroratabs/app/admin/endpoints/judge_submissions_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/judge_submissions_handler.php): `list` (line 16); `unlock` (line 64); `unlock_category` (line 150); `clear_all` (line 187); `view_details` (line 210); `get_competitions` (line 244); `list_locks` (line 254); `lock` (line 294); `unlock_all_comp` (line 340); `lock_all_comp` (line 363); `get_unlock_limit` (line 407); `update_unlock_limit` (line 419)
+- [auroratabs/app/admin/endpoints/live_results_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/live_results_handler.php): `get_live_results` (line 22)
+- [auroratabs/app/admin/endpoints/modules_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/modules_handler.php): `list` (line 16); `create` (line 25); `update` (line 45); `delete` (line 66)
+- [auroratabs/app/admin/endpoints/ojt_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/ojt_handler.php): `get_students` (line 44); `export_students` (line 100); `get_local_students` (line 165); `get_student` (line 210); `update_student` (line 225); `delete_student` (line 248); `get_attendance_record` (line 261); `record_attendance_multi` (line 289); `record_attendance` (line 346); `get_attendance_logs` (line 393); `get_hours_summary` (line 462); `save_monthly_attendance` (line 526); `get_monthly_attendance` (line 592); `save_manual_monthly_hours` (line 623)
+- [auroratabs/app/admin/endpoints/organizations_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/organizations_handler.php): `list` (line 16); `list_users` (line 26); `list_deleted` (line 36); `create` (line 46); `update` (line 86); `delete` (line 122); `restore` (line 146); `toggle_status` (line 170); `permanent_delete` (line 197)
+- [auroratabs/app/admin/endpoints/paymongo_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/paymongo_handler.php): `create_checkout` (line 24)
+- [auroratabs/app/admin/endpoints/permissions_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/permissions_handler.php): `get_role_permissions` (line 15); `save_permissions` (line 44)
+- [auroratabs/app/admin/endpoints/print_template.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/print_template.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/admin/endpoints/profile_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/profile_handler.php): `get_profile` (line 22); `update_avatar` (line 58); `update_details` (line 111); `update_password` (line 160)
+- [auroratabs/app/admin/endpoints/rankings_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/rankings_handler.php): `get_competitions` (line 20); `get_categories` (line 30); `get_rankings` (line 44)
+- [auroratabs/app/admin/endpoints/recalculate_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/recalculate_handler.php): `get_competitions` (line 22); `get_history` (line 29); `recalculate` (line 52)
+- [auroratabs/app/admin/endpoints/register_ojt_modules.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/register_ojt_modules.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/admin/endpoints/roles_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/roles_handler.php): `list` (line 15); `create` (line 27); `update` (line 46); `delete` (line 66)
+- [auroratabs/app/admin/endpoints/scoring_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/scoring_handler.php): `get_judge_data` (line 16); `get_category_details` (line 79); `save_score` (line 153); `finalize` (line 234); `unlock_self` (line 327)
+- [auroratabs/app/admin/endpoints/security_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/security_handler.php): `get_settings` (line 18); `update_settings` (line 32)
+- [auroratabs/app/admin/endpoints/summary_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/summary_handler.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/admin/endpoints/tabulator_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/tabulator_handler.php): `get_data` (line 16); `toggle_assignment` (line 66)
+- [auroratabs/app/admin/endpoints/vote_package_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/vote_package_handler.php): `fetch` (line 16); `save` (line 33); `delete` (line 71)
+- [auroratabs/app/admin/endpoints/voting_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/voting_handler.php): `get_active_competitions` (line 19); `get_all_competitions` (line 31); `get_user_info` (line 41); `get_candidates` (line 85); `cast_vote` (line 123); `get_rankings` (line 209); `get_voter_list` (line 301); `process_purchase` (line 322); `get_vote_logs` (line 382)
+- [auroratabs/app/admin/endpoints/voting_reports_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/voting_reports_handler.php): `get_active_competitions` (line 16); `get_reports` (line 27)
+- [auroratabs/app/admin/endpoints/voting_settings_handler.php](C:/xampp/htdocs/pos/auroratabs/app/admin/endpoints/voting_settings_handler.php): `get_payment_fee_info` (line 31); `get_paymongo_settings` (line 44); `save_paymongo_settings` (line 72); `fetch_paymongo_methods` (line 97)
+- [auroratabs/app/auth/endpoints/auth_login.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_login.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_login_audience.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_login_audience.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_login_organizer.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_login_organizer.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_process_payment.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_process_payment.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_register.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_register.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_resend_otp.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_resend_otp.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_verify_otp.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_verify_otp.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/auth_verify_otp_standalone.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/auth_verify_otp_standalone.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/check_email.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/check_email.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/check_lockout.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/check_lockout.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/check_username.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/check_username.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/get_roles.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/get_roles.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/auth/endpoints/get_roles_all.php](C:/xampp/htdocs/pos/auroratabs/app/auth/endpoints/get_roles_all.php): direct endpoint; inspect its request handler.
+- [auroratabs/app/endpoints/tracker.php](C:/xampp/htdocs/pos/auroratabs/app/endpoints/tracker.php): `get_student_info` (line 33); `record_attendance` (line 50)
+
+## Interface files
+
+- [auroratabs/app/admin/activity-logs.php](C:/xampp/htdocs/pos/auroratabs/app/admin/activity-logs.php)
+- [auroratabs/app/admin/admin-users.php](C:/xampp/htdocs/pos/auroratabs/app/admin/admin-users.php)
+- [auroratabs/app/admin/assign-candidates.php](C:/xampp/htdocs/pos/auroratabs/app/admin/assign-candidates.php)
+- [auroratabs/app/admin/audience-rankings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/audience-rankings.php)
+- [auroratabs/app/admin/audience-voting.php](C:/xampp/htdocs/pos/auroratabs/app/admin/audience-voting.php)
+- [auroratabs/app/admin/candidates.php](C:/xampp/htdocs/pos/auroratabs/app/admin/candidates.php)
+- [auroratabs/app/admin/categories.php](C:/xampp/htdocs/pos/auroratabs/app/admin/categories.php)
+- [auroratabs/app/admin/competition-summary.php](C:/xampp/htdocs/pos/auroratabs/app/admin/competition-summary.php)
+- [auroratabs/app/admin/competitions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/competitions.php)
+- [auroratabs/app/admin/create-competition.php](C:/xampp/htdocs/pos/auroratabs/app/admin/create-competition.php)
+- [auroratabs/app/admin/criteria-weights.php](C:/xampp/htdocs/pos/auroratabs/app/admin/criteria-weights.php)
+- [auroratabs/app/admin/criteria.php](C:/xampp/htdocs/pos/auroratabs/app/admin/criteria.php)
+- [auroratabs/app/admin/db_diag_fetch.php](C:/xampp/htdocs/pos/auroratabs/app/admin/db_diag_fetch.php)
+- [auroratabs/app/admin/debug_manage_students_permission.php](C:/xampp/htdocs/pos/auroratabs/app/admin/debug_manage_students_permission.php)
+- [auroratabs/app/admin/debug_sidebar_permissions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/debug_sidebar_permissions.php)
+- [auroratabs/app/admin/deleted-candidates.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-candidates.php)
+- [auroratabs/app/admin/deleted-categories.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-categories.php)
+- [auroratabs/app/admin/deleted-competitions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-competitions.php)
+- [auroratabs/app/admin/deleted-criteria.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-criteria.php)
+- [auroratabs/app/admin/deleted-formulas.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-formulas.php)
+- [auroratabs/app/admin/deleted-judges.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-judges.php)
+- [auroratabs/app/admin/deleted-organizations.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-organizations.php)
+- [auroratabs/app/admin/deleted-users.php](C:/xampp/htdocs/pos/auroratabs/app/admin/deleted-users.php)
+- [auroratabs/app/admin/discount-code.html](C:/xampp/htdocs/pos/auroratabs/app/admin/discount-code.html)
+- [auroratabs/app/admin/display-screens.php](C:/xampp/htdocs/pos/auroratabs/app/admin/display-screens.php)
+- [auroratabs/app/admin/display-settings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/display-settings.php)
+- [auroratabs/app/admin/docs.html](C:/xampp/htdocs/pos/auroratabs/app/admin/docs.html)
+- [auroratabs/app/admin/export-data.php](C:/xampp/htdocs/pos/auroratabs/app/admin/export-data.php)
+- [auroratabs/app/admin/export_ojt_attendance.php](C:/xampp/htdocs/pos/auroratabs/app/admin/export_ojt_attendance.php)
+- [auroratabs/app/admin/final-results.php](C:/xampp/htdocs/pos/auroratabs/app/admin/final-results.php)
+- [auroratabs/app/admin/formula-builder.php](C:/xampp/htdocs/pos/auroratabs/app/admin/formula-builder.php)
+- [auroratabs/app/admin/formula-management.php](C:/xampp/htdocs/pos/auroratabs/app/admin/formula-management.php)
+- [auroratabs/app/admin/general-settings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/general-settings.php)
+- [auroratabs/app/admin/hire-us.html](C:/xampp/htdocs/pos/auroratabs/app/admin/hire-us.html)
+- [auroratabs/app/admin/index.php](C:/xampp/htdocs/pos/auroratabs/app/admin/index.php)
+- [auroratabs/app/admin/judge-assignments.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judge-assignments.php)
+- [auroratabs/app/admin/judge-locks.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judge-locks.php)
+- [auroratabs/app/admin/judge-reports.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judge-reports.php)
+- [auroratabs/app/admin/judge-scoring.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judge-scoring.php)
+- [auroratabs/app/admin/judge-submissions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judge-submissions.php)
+- [auroratabs/app/admin/judges-list.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judges-list.php)
+- [auroratabs/app/admin/judges.php](C:/xampp/htdocs/pos/auroratabs/app/admin/judges.php)
+- [auroratabs/app/admin/live-results.php](C:/xampp/htdocs/pos/auroratabs/app/admin/live-results.php)
+- [auroratabs/app/admin/logout.php](C:/xampp/htdocs/pos/auroratabs/app/admin/logout.php)
+- [auroratabs/app/admin/notifications.php](C:/xampp/htdocs/pos/auroratabs/app/admin/notifications.php)
+- [auroratabs/app/admin/ojt_attendance.php](C:/xampp/htdocs/pos/auroratabs/app/admin/ojt_attendance.php)
+- [auroratabs/app/admin/ojt_students.php](C:/xampp/htdocs/pos/auroratabs/app/admin/ojt_students.php)
+- [auroratabs/app/admin/ojt_students_all.php](C:/xampp/htdocs/pos/auroratabs/app/admin/ojt_students_all.php)
+- [auroratabs/app/admin/ojt_students_local.php](C:/xampp/htdocs/pos/auroratabs/app/admin/ojt_students_local.php)
+- [auroratabs/app/admin/ojt_summary.php](C:/xampp/htdocs/pos/auroratabs/app/admin/ojt_summary.php)
+- [auroratabs/app/admin/organizations.php](C:/xampp/htdocs/pos/auroratabs/app/admin/organizations.php)
+- [auroratabs/app/admin/payment-success.php](C:/xampp/htdocs/pos/auroratabs/app/admin/payment-success.php)
+- [auroratabs/app/admin/pricing-plans.php](C:/xampp/htdocs/pos/auroratabs/app/admin/pricing-plans.php)
+- [auroratabs/app/admin/print-audience-rankings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print-audience-rankings.php)
+- [auroratabs/app/admin/print-category-results.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print-category-results.php)
+- [auroratabs/app/admin/print-export-pdf.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print-export-pdf.php)
+- [auroratabs/app/admin/print-final-results.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print-final-results.php)
+- [auroratabs/app/admin/print-judge-log.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print-judge-log.php)
+- [auroratabs/app/admin/print_ojt_attendance.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print_ojt_attendance.php)
+- [auroratabs/app/admin/print_ojt_students.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print_ojt_students.php)
+- [auroratabs/app/admin/print_ojt_summary.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print_ojt_summary.php)
+- [auroratabs/app/admin/print_ojt_summary_all.php](C:/xampp/htdocs/pos/auroratabs/app/admin/print_ojt_summary_all.php)
+- [auroratabs/app/admin/profile.php](C:/xampp/htdocs/pos/auroratabs/app/admin/profile.php)
+- [auroratabs/app/admin/rankings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/rankings.php)
+- [auroratabs/app/admin/recalculate-results.php](C:/xampp/htdocs/pos/auroratabs/app/admin/recalculate-results.php)
+- [auroratabs/app/admin/restricted.php](C:/xampp/htdocs/pos/auroratabs/app/admin/restricted.php)
+- [auroratabs/app/admin/roles-permissions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/roles-permissions.php)
+- [auroratabs/app/admin/security-settings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/security-settings.php)
+- [auroratabs/app/admin/tabulators.php](C:/xampp/htdocs/pos/auroratabs/app/admin/tabulators.php)
+- [auroratabs/app/admin/test_new_permissions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/test_new_permissions.php)
+- [auroratabs/app/admin/test_permissions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/test_permissions.php)
+- [auroratabs/app/admin/test_sidebar_fix.php](C:/xampp/htdocs/pos/auroratabs/app/admin/test_sidebar_fix.php)
+- [auroratabs/app/admin/transactions.php](C:/xampp/htdocs/pos/auroratabs/app/admin/transactions.php)
+- [auroratabs/app/admin/vote-logs.php](C:/xampp/htdocs/pos/auroratabs/app/admin/vote-logs.php)
+- [auroratabs/app/admin/vote-packages.php](C:/xampp/htdocs/pos/auroratabs/app/admin/vote-packages.php)
+- [auroratabs/app/admin/vote-purchases.php](C:/xampp/htdocs/pos/auroratabs/app/admin/vote-purchases.php)
+- [auroratabs/app/admin/voting-reports.php](C:/xampp/htdocs/pos/auroratabs/app/admin/voting-reports.php)
+- [auroratabs/app/admin/voting-settings.php](C:/xampp/htdocs/pos/auroratabs/app/admin/voting-settings.php)
+- [auroratabs/app/admin/voting-toggle.php](C:/xampp/htdocs/pos/auroratabs/app/admin/voting-toggle.php)
+- [auroratabs/app/auth/index.php](C:/xampp/htdocs/pos/auroratabs/app/auth/index.php)
+- [auroratabs/app/auth/login-admin.php](C:/xampp/htdocs/pos/auroratabs/app/auth/login-admin.php)
+- [auroratabs/app/auth/login-audience.php](C:/xampp/htdocs/pos/auroratabs/app/auth/login-audience.php)
+- [auroratabs/app/auth/login-organizer.php](C:/xampp/htdocs/pos/auroratabs/app/auth/login-organizer.php)
+- [auroratabs/app/auth/login.php](C:/xampp/htdocs/pos/auroratabs/app/auth/login.php)
+- [auroratabs/app/auth/migrate_competitions_created_by.php](C:/xampp/htdocs/pos/auroratabs/app/auth/migrate_competitions_created_by.php)
+- [auroratabs/app/auth/migrate_competitions_payment.php](C:/xampp/htdocs/pos/auroratabs/app/auth/migrate_competitions_payment.php)
+- [auroratabs/app/auth/pay-gcash.php](C:/xampp/htdocs/pos/auroratabs/app/auth/pay-gcash.php)
+- [auroratabs/app/auth/register-organizer.php](C:/xampp/htdocs/pos/auroratabs/app/auth/register-organizer.php)
+- [auroratabs/app/auth/register.php](C:/xampp/htdocs/pos/auroratabs/app/auth/register.php)
+- [auroratabs/app/auth/verify-otp.php](C:/xampp/htdocs/pos/auroratabs/app/auth/verify-otp.php)
+- [views/auth/customer_login.php](C:/xampp/htdocs/pos/views/auth/customer_login.php)
+- [views/auth/forgot_password.php](C:/xampp/htdocs/pos/views/auth/forgot_password.php)
+- [views/auth/login.php](C:/xampp/htdocs/pos/views/auth/login.php)
+- [views/auth/notification.php](C:/xampp/htdocs/pos/views/auth/notification.php)
+- [views/auth/register.php](C:/xampp/htdocs/pos/views/auth/register.php)
+- [views/auth/reset_password.php](C:/xampp/htdocs/pos/views/auth/reset_password.php)
+- [views/auth/setup_profile.php](C:/xampp/htdocs/pos/views/auth/setup_profile.php)
+- [views/components/admin/footer.php](C:/xampp/htdocs/pos/views/components/admin/footer.php)
+- [views/components/admin/header.php](C:/xampp/htdocs/pos/views/components/admin/header.php)
+- [views/components/admin/links.php](C:/xampp/htdocs/pos/views/components/admin/links.php)
+- [views/components/admin/scripts.php](C:/xampp/htdocs/pos/views/components/admin/scripts.php)
+- [views/components/admin/sidebar.php](C:/xampp/htdocs/pos/views/components/admin/sidebar.php)
+- [views/errors/access_denied.php](C:/xampp/htdocs/pos/views/errors/access_denied.php)
+- [views/layouts/admin.php](C:/xampp/htdocs/pos/views/layouts/admin.php)
+- [views/layouts/main.php](C:/xampp/htdocs/pos/views/layouts/main.php)
+- [views/layouts/pos_layout.php](C:/xampp/htdocs/pos/views/layouts/pos_layout.php)
+- [views/layouts/report_print.php](C:/xampp/htdocs/pos/views/layouts/report_print.php)
+- [views/modals/createProductModal.php](C:/xampp/htdocs/pos/views/modals/createProductModal.php)
+- [views/modals/deleteProductModal.php](C:/xampp/htdocs/pos/views/modals/deleteProductModal.php)
+- [views/modals/editBatchModal.php](C:/xampp/htdocs/pos/views/modals/editBatchModal.php)
+- [views/modals/editProductModal.php](C:/xampp/htdocs/pos/views/modals/editProductModal.php)
+- [views/modals/manualAdjustmentModal.php](C:/xampp/htdocs/pos/views/modals/manualAdjustmentModal.php)
+- [views/modals/stockHistoryModal.php](C:/xampp/htdocs/pos/views/modals/stockHistoryModal.php)
+- [views/modals/viewProductModal.php](C:/xampp/htdocs/pos/views/modals/viewProductModal.php)
+- [views/modules/activity_logs.php](C:/xampp/htdocs/pos/views/modules/activity_logs.php)
+- [views/modules/activity_logs_print.php](C:/xampp/htdocs/pos/views/modules/activity_logs_print.php)
+- [views/modules/branch_report.php](C:/xampp/htdocs/pos/views/modules/branch_report.php)
+- [views/modules/branches.php](C:/xampp/htdocs/pos/views/modules/branches.php)
+- [views/modules/categories.php](C:/xampp/htdocs/pos/views/modules/categories.php)
+- [views/modules/cms.php](C:/xampp/htdocs/pos/views/modules/cms.php)
+- [views/modules/dashboard.php](C:/xampp/htdocs/pos/views/modules/dashboard.php)
+- [views/modules/expenses.php](C:/xampp/htdocs/pos/views/modules/expenses.php)
+- [views/modules/expenses_print.php](C:/xampp/htdocs/pos/views/modules/expenses_print.php)
+- [views/modules/expenses_summary_print.php](C:/xampp/htdocs/pos/views/modules/expenses_summary_print.php)
+- [views/modules/history.php](C:/xampp/htdocs/pos/views/modules/history.php)
+- [views/modules/inventory_logs_print.php](C:/xampp/htdocs/pos/views/modules/inventory_logs_print.php)
+- [views/modules/logs.php](C:/xampp/htdocs/pos/views/modules/logs.php)
+- [views/modules/low_stock.php](C:/xampp/htdocs/pos/views/modules/low_stock.php)
+- [views/modules/monitoring.php](C:/xampp/htdocs/pos/views/modules/monitoring.php)
+- [views/modules/online_orders.php](C:/xampp/htdocs/pos/views/modules/online_orders.php)
+- [views/modules/pos.php](C:/xampp/htdocs/pos/views/modules/pos.php)
+- [views/modules/pos_branch_select.php](C:/xampp/htdocs/pos/views/modules/pos_branch_select.php)
+- [views/modules/products.php](C:/xampp/htdocs/pos/views/modules/products.php)
+- [views/modules/receipt.php](C:/xampp/htdocs/pos/views/modules/receipt.php)
+- [views/modules/reports.php](C:/xampp/htdocs/pos/views/modules/reports.php)
+- [views/modules/reports_print.php](C:/xampp/htdocs/pos/views/modules/reports_print.php)
+- [views/modules/roles.php](C:/xampp/htdocs/pos/views/modules/roles.php)
+- [views/modules/settings.php](C:/xampp/htdocs/pos/views/modules/settings.php)
+- [views/modules/staff_start.php](C:/xampp/htdocs/pos/views/modules/staff_start.php)
+- [views/modules/users.php](C:/xampp/htdocs/pos/views/modules/users.php)
+- [views/partials/auth_feedback.php](C:/xampp/htdocs/pos/views/partials/auth_feedback.php)
+- [views/partials/footer_home.php](C:/xampp/htdocs/pos/views/partials/footer_home.php)
+- [views/partials/header_home.php](C:/xampp/htdocs/pos/views/partials/header_home.php)
+- [views/partials/logout_modal.php](C:/xampp/htdocs/pos/views/partials/logout_modal.php)
+- [views/partials/pos_branch_modal.php](C:/xampp/htdocs/pos/views/partials/pos_branch_modal.php)
+- [views/partials/recipe_quantity_preview.php](C:/xampp/htdocs/pos/views/partials/recipe_quantity_preview.php)
+- [views/partials/shop_close.php](C:/xampp/htdocs/pos/views/partials/shop_close.php)
+- [views/partials/shop_header.php](C:/xampp/htdocs/pos/views/partials/shop_header.php)
+- [views/partials/shop_open.php](C:/xampp/htdocs/pos/views/partials/shop_open.php)
+- [views/partials/shop_product_card.php](C:/xampp/htdocs/pos/views/partials/shop_product_card.php)
+- [views/partials/shop_setup.php](C:/xampp/htdocs/pos/views/partials/shop_setup.php)
+- [views/partials/site_favicon.php](C:/xampp/htdocs/pos/views/partials/site_favicon.php)
+- [views/partials/toast.php](C:/xampp/htdocs/pos/views/partials/toast.php)
+- [views/website/about.php](C:/xampp/htdocs/pos/views/website/about.php)
+- [views/website/branches.php](C:/xampp/htdocs/pos/views/website/branches.php)
+- [views/website/cart.php](C:/xampp/htdocs/pos/views/website/cart.php)
+- [views/website/contact.php](C:/xampp/htdocs/pos/views/website/contact.php)
+- [views/website/home.php](C:/xampp/htdocs/pos/views/website/home.php)
+- [views/website/order_tracking.php](C:/xampp/htdocs/pos/views/website/order_tracking.php)
+- [views/website/orders.php](C:/xampp/htdocs/pos/views/website/orders.php)
+- [views/website/product_detail.php](C:/xampp/htdocs/pos/views/website/product_detail.php)
+- [views/website/products.php](C:/xampp/htdocs/pos/views/website/products.php)
+
+## Classified file manifest
+
+1950 files indexed. Scratch output, deployment staging, Git internals, node_modules and Python caches are excluded; vendor assets are classified rather than counted as business features.
+
+### AuroraTabs presentation, dependency or temporary material (755)
+
+- `auroratabs/app/admin/src/assets/css/custom.css`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/fonts/tabler-icons.eot`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/fonts/tabler-icons.svg`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/fonts/tabler-icons.ttf`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/fonts/tabler-icons.woff`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/fonts/tabler-icons.woff2`
+- `auroratabs/app/admin/src/assets/css/icons/tabler-icons/tabler-icons.css`
+- `auroratabs/app/admin/src/assets/css/styles.min.css`
+- `auroratabs/app/admin/src/assets/css/styles.min.css.map`
+- `auroratabs/app/admin/src/assets/images/backgrounds/sidebar-buynow-bg.png`
+- `auroratabs/app/admin/src/assets/images/logos/aurora-logo.png`
+- `auroratabs/app/admin/src/assets/images/logos/BNSC-logo.png`
+- `auroratabs/app/admin/src/assets/images/logos/cot.png`
+- `auroratabs/app/admin/src/assets/images/logos/favicon.png`
+- `auroratabs/app/admin/src/assets/images/logos/logo-wrappixel.svg`
+- `auroratabs/app/admin/src/assets/images/logos/logo.svg`
+- `auroratabs/app/admin/src/assets/images/products/s1.jpg`
+- `auroratabs/app/admin/src/assets/images/products/s11.jpg`
+- `auroratabs/app/admin/src/assets/images/products/s4.jpg`
+- `auroratabs/app/admin/src/assets/images/products/s5.jpg`
+- `auroratabs/app/admin/src/assets/images/products/s7.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user1.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user2.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user3.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user4.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user5.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user_1_1770167570.png`
+- `auroratabs/app/admin/src/assets/images/profile/user_1_1770167591.png`
+- `auroratabs/app/admin/src/assets/images/profile/user_1_1770169120.jpg`
+- `auroratabs/app/admin/src/assets/images/profile/user_1_1773912952.png`
+- `auroratabs/app/admin/src/assets/js/alert_utils.js`
+- `auroratabs/app/admin/src/assets/js/app.min.js`
+- `auroratabs/app/admin/src/assets/js/custom.js`
+- `auroratabs/app/admin/src/assets/js/dashboard.js`
+- `auroratabs/app/admin/src/assets/js/sidebarmenu.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.amd.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.common.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.css`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.esm.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/apexcharts.min.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ar.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/be-cyrl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/be-latn.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ca.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/cs.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/da.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/de.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/el.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/en.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/es.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/et.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/fa.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/fi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/fr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/he.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/hi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/hr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/hu.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/hy.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/id.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/it.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ja.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ka.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ko.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/lt.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/lv.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ms.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/nb.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/nl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/pl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/pt-br.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/pt.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/rs.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ru.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/se.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/sk.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/sl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/sq.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/th.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/tr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/ua.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/vi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/zh-cn.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/dist/locales/zh-tw.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/LICENSE`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/package.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/README.md`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/apexcharts.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/apexcharts.css`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-camera.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-home.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-menu.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-minus-square.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-minus.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-pan-hand.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-pan.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-plus-square.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-plus.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-refresh.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-reset.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-select.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-select1.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-zoom-in.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-zoom-out.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/assets/ico-zoom.svg`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Bar.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/BarStacked.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/BoxCandleStick.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/common/bar/DataLabels.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/common/bar/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/common/circle/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/common/line/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/common/treemap/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/HeatMap.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Line.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Pie.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Radar.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Radial.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/RangeBar.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Scatter.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/charts/Treemap.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/libs/monotone-cubic.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/libs/Treemap-squared.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ar.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/be-cyrl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/be-latn.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ca.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/cs.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/da.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/de.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/el.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/en.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/es.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/et.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/fa.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/fi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/fr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/he.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/hi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/hr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/hu.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/hy.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/id.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/it.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ja.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ka.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ko.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/lt.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/lv.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ms.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/nb.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/nl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/pl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/pt-br.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/pt.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/rs.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ru.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/se.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/sk.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/sl.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/sq.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/th.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/tr.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/ua.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/vi.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/zh-cn.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/locales/zh-tw.json`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Animations.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/annotations/Annotations.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/annotations/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/annotations/PointsAnnotations.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/annotations/XAxisAnnotations.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/annotations/YAxisAnnotations.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/axes/Axes.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/axes/AxesUtils.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/axes/Grid.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/axes/XAxis.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/axes/YAxis.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Base.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Core.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/CoreUtils.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Crosshairs.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Data.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/DataLabels.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/dimensions/Dimensions.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/dimensions/Grid.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/dimensions/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/dimensions/XAxis.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/dimensions/YAxis.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Events.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Exports.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Fill.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Filters.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Formatters.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Graphics.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/helpers/Destroy.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/helpers/InitCtxVariables.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/helpers/Localization.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/helpers/UpdateHelpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/legend/Helpers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/legend/Legend.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Markers.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Range.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Responsive.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Scales.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Series.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/settings/Config.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/settings/Defaults.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/settings/Globals.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/settings/Options.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Theme.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/TimeScale.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/TitleSubtitle.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/Toolbar.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/AxesTooltip.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Intersect.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Labels.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Marker.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Position.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/README.md`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Tooltip.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/tooltip/Utils.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/modules/ZoomPanSelection.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/svgjs/svg.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/utils/DateTime.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/utils/Resize.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/src/utils/Utils.js`
+- `auroratabs/app/admin/src/assets/libs/apexcharts/types/apexcharts.d.ts`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.rtl.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.rtl.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.rtl.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-grid.rtl.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.rtl.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.rtl.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.rtl.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-reboot.rtl.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.rtl.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.rtl.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.rtl.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap-utilities.rtl.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.rtl.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.rtl.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.rtl.min.css`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/css/bootstrap.rtl.min.css.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.bundle.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.bundle.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.esm.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.esm.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.esm.min.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.esm.min.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.min.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/dist/js/bootstrap.min.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/alert.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/alert.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/base-component.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/base-component.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/button.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/button.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/carousel.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/carousel.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/collapse.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/collapse.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/data.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/data.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/event-handler.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/event-handler.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/manipulator.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/manipulator.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/selector-engine.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dom/selector-engine.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dropdown.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/dropdown.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/modal.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/modal.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/offcanvas.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/offcanvas.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/popover.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/popover.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/scrollspy.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/scrollspy.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/tab.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/tab.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/toast.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/toast.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/tooltip.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/tooltip.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/backdrop.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/backdrop.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/component-functions.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/component-functions.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/config.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/config.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/focustrap.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/focustrap.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/index.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/index.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/sanitizer.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/sanitizer.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/scrollbar.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/scrollbar.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/swipe.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/swipe.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/template-factory.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/dist/util/template-factory.js.map`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/index.esm.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/index.umd.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/alert.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/base-component.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/button.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/carousel.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/collapse.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/dom/data.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/dom/event-handler.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/dom/manipulator.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/dom/selector-engine.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/dropdown.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/modal.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/offcanvas.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/popover.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/scrollspy.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/tab.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/toast.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/tooltip.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/backdrop.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/component-functions.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/config.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/focustrap.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/index.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/sanitizer.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/scrollbar.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/swipe.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/js/src/util/template-factory.js`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/LICENSE`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/package.json`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/README.md`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_accordion.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_alert.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_badge.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_breadcrumb.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_button-group.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_buttons.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_card.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_carousel.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_close.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_containers.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_dropdown.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_forms.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_functions.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_grid.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_helpers.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_images.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_list-group.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_maps.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_mixins.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_modal.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_nav.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_navbar.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_offcanvas.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_pagination.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_placeholders.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_popover.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_progress.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_reboot.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_root.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_spinners.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_tables.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_toasts.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_tooltip.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_transitions.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_type.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_utilities.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_variables-dark.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/_variables.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/bootstrap-grid.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/bootstrap-reboot.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/bootstrap-utilities.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/bootstrap.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_floating-labels.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_form-check.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_form-control.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_form-range.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_form-select.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_form-text.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_input-group.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_labels.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/forms/_validation.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_clearfix.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_color-bg.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_colored-links.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_focus-ring.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_icon-link.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_position.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_ratio.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_stacks.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_stretched-link.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_text-truncation.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_visually-hidden.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/helpers/_vr.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_alert.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_backdrop.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_banner.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_border-radius.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_box-shadow.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_breakpoints.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_buttons.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_caret.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_clearfix.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_color-mode.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_color-scheme.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_container.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_deprecate.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_forms.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_gradients.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_grid.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_image.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_list-group.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_lists.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_pagination.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_reset-text.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_resize.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_table-variants.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_text-truncate.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_transition.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_utilities.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/mixins/_visually-hidden.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/utilities/_api.scss`
+- `auroratabs/app/admin/src/assets/libs/bootstrap/scss/vendor/_rfs.scss`
+- `auroratabs/app/admin/src/assets/libs/jquery/AUTHORS.txt`
+- `auroratabs/app/admin/src/assets/libs/jquery/bower.json`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.min.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.min.map`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.slim.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.slim.min.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/dist/jquery.slim.min.map`
+- `auroratabs/app/admin/src/assets/libs/jquery/LICENSE.txt`
+- `auroratabs/app/admin/src/assets/libs/jquery/package.json`
+- `auroratabs/app/admin/src/assets/libs/jquery/README.md`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/jsonp.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/load.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/script.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/var/location.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/var/nonce.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/var/rquery.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax/xhr.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/ajax.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes/attr.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes/classes.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes/prop.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes/support.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes/val.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/attributes.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/callbacks.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/access.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/camelCase.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/DOMEval.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/init.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/isAttached.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/nodeName.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/parseHTML.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/parseXML.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/ready-no-deferred.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/ready.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/readyException.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/stripAndCollapse.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/support.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/toType.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/var/rhtml.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core/var/rsingleTag.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/core.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/addGetHookIf.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/adjustCSS.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/curCSS.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/finalPropName.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/hiddenVisibleSelectors.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/showHide.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/support.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/cssExpand.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/getStyles.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/isHiddenWithinTree.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/rboxStyle.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/rcustomProp.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/rnumnonpx.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css/var/swap.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/css.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/data/Data.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/data/var/acceptData.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/data/var/dataPriv.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/data/var/dataUser.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/data.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/deferred/exceptionHook.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/deferred.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/deprecated/ajax-event-alias.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/deprecated/event.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/deprecated.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/dimensions.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/effects/animatedSelector.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/effects/Tween.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/effects.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/event/trigger.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/event.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/exports/amd.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/exports/global.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/jquery.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/_evalUrl.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/buildFragment.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/getAll.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/setGlobalEval.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/support.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/var/rscriptType.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/var/rtagName.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation/wrapMap.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/manipulation.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/offset.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/queue/delay.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/queue.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/selector/contains.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/selector/escapeSelector.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/selector-native.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/selector.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/serialize.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/traversing/findFilter.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/traversing/var/dir.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/traversing/var/rneedsContext.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/traversing/var/siblings.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/traversing.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/arr.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/class2type.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/document.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/documentElement.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/flat.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/fnToString.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/getProto.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/hasOwn.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/indexOf.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/isFunction.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/isWindow.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/ObjectFunctionString.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/pnum.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/pop.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/push.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/rcheckableType.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/rcssNum.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/rnothtmlwhite.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/rtrimCSS.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/slice.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/sort.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/splice.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/support.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/toString.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/var/whitespace.js`
+- `auroratabs/app/admin/src/assets/libs/jquery/src/wrap.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar-core.esm.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar-core.esm.js.map`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.css`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.d.ts`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.esm.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.esm.js.map`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.min.css`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.min.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/dist/simplebar.umd.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/LICENSE`
+- `auroratabs/app/admin/src/assets/libs/simplebar/package.json`
+- `auroratabs/app/admin/src/assets/libs/simplebar/README.md`
+- `auroratabs/app/admin/src/assets/libs/simplebar/src/helpers.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/src/index.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/src/scrollbar-width.js`
+- `auroratabs/app/admin/src/assets/libs/simplebar/src/simplebar.css`
+- `auroratabs/app/admin/src/assets/libs/simplebar/src/simplebar.js`
+- `auroratabs/app/admin/src/assets/scss/component/_card.scss`
+- `auroratabs/app/admin/src/assets/scss/component/_reboot.scss`
+- `auroratabs/app/admin/src/assets/scss/layouts/_header.scss`
+- `auroratabs/app/admin/src/assets/scss/layouts/_layouts.scss`
+- `auroratabs/app/admin/src/assets/scss/layouts/_sidebar.scss`
+- `auroratabs/app/admin/src/assets/scss/pages/_dashboard1.scss`
+- `auroratabs/app/admin/src/assets/scss/styles.scss`
+- `auroratabs/app/admin/src/assets/scss/utilities/_icon-size.scss`
+- `auroratabs/app/admin/src/assets/scss/variables/_theme-variables.scss`
+- `auroratabs/app/admin/src/assets/scss/variables/_variables.scss`
+- `auroratabs/app/admin/src/html/authentication-login.html`
+- `auroratabs/app/admin/src/html/authentication-register.html`
+- `auroratabs/app/admin/src/html/icon-tabler.html`
+- `auroratabs/app/admin/src/html/index.html`
+- `auroratabs/app/admin/src/html/sample-page.html`
+- `auroratabs/app/admin/src/html/ui-alerts.html`
+- `auroratabs/app/admin/src/html/ui-buttons.html`
+- `auroratabs/app/admin/src/html/ui-card.html`
+- `auroratabs/app/admin/src/html/ui-forms.html`
+- `auroratabs/app/admin/src/html/ui-typography.html`
+- `auroratabs/app/public/assets/css/main.css`
+- `auroratabs/app/public/assets/img/about.jpg`
+- `auroratabs/app/public/assets/img/alt-features.png`
+- `auroratabs/app/public/assets/img/apple-touch-icon.png`
+- `auroratabs/app/public/assets/img/aurora-logo.png`
+- `auroratabs/app/public/assets/img/aurora.png`
+- `auroratabs/app/public/assets/img/blog/blog-1.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-2.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-3.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-4.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-author.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-inside-post.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-recent-1.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-recent-2.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-recent-3.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-recent-4.jpg`
+- `auroratabs/app/public/assets/img/blog/blog-recent-5.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-1.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-2.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-3.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-4.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-5.jpg`
+- `auroratabs/app/public/assets/img/blog/comments-6.jpg`
+- `auroratabs/app/public/assets/img/clients/client-1.png`
+- `auroratabs/app/public/assets/img/clients/client-2.png`
+- `auroratabs/app/public/assets/img/clients/client-3.png`
+- `auroratabs/app/public/assets/img/clients/client-4.png`
+- `auroratabs/app/public/assets/img/clients/client-5.png`
+- `auroratabs/app/public/assets/img/clients/client-6.png`
+- `auroratabs/app/public/assets/img/clients/client-7.png`
+- `auroratabs/app/public/assets/img/clients/client-8.png`
+- `auroratabs/app/public/assets/img/favicon.png`
+- `auroratabs/app/public/assets/img/features.png`
+- `auroratabs/app/public/assets/img/hero-bg.png`
+- `auroratabs/app/public/assets/img/hero-img.png`
+- `auroratabs/app/public/assets/img/logo.png`
+- `auroratabs/app/public/assets/img/portfolio/app-1.jpg`
+- `auroratabs/app/public/assets/img/portfolio/app-2.jpg`
+- `auroratabs/app/public/assets/img/portfolio/app-3.jpg`
+- `auroratabs/app/public/assets/img/portfolio/books-1.jpg`
+- `auroratabs/app/public/assets/img/portfolio/books-2.jpg`
+- `auroratabs/app/public/assets/img/portfolio/books-3.jpg`
+- `auroratabs/app/public/assets/img/portfolio/branding-1.jpg`
+- `auroratabs/app/public/assets/img/portfolio/branding-2.jpg`
+- `auroratabs/app/public/assets/img/portfolio/branding-3.jpg`
+- `auroratabs/app/public/assets/img/portfolio/product-1.jpg`
+- `auroratabs/app/public/assets/img/portfolio/product-2.jpg`
+- `auroratabs/app/public/assets/img/portfolio/product-3.jpg`
+- `auroratabs/app/public/assets/img/services.jpg`
+- `auroratabs/app/public/assets/img/team/team-1.jpg`
+- `auroratabs/app/public/assets/img/team/team-2.jpg`
+- `auroratabs/app/public/assets/img/team/team-3.jpg`
+- `auroratabs/app/public/assets/img/team/team-4.jpg`
+- `auroratabs/app/public/assets/img/team-shape.svg`
+- `auroratabs/app/public/assets/img/testimonials/testimonials-1.jpg`
+- `auroratabs/app/public/assets/img/testimonials/testimonials-2.jpg`
+- `auroratabs/app/public/assets/img/testimonials/testimonials-3.jpg`
+- `auroratabs/app/public/assets/img/testimonials/testimonials-4.jpg`
+- `auroratabs/app/public/assets/img/testimonials/testimonials-5.jpg`
+- `auroratabs/app/public/assets/img/values-1.png`
+- `auroratabs/app/public/assets/img/values-2.png`
+- `auroratabs/app/public/assets/img/values-3.png`
+- `auroratabs/app/public/assets/js/main.js`
+- `auroratabs/app/public/assets/scss/Readme.txt`
+- `auroratabs/app/public/assets/vendor/aos/aos.cjs.js`
+- `auroratabs/app/public/assets/vendor/aos/aos.css`
+- `auroratabs/app/public/assets/vendor/aos/aos.esm.js`
+- `auroratabs/app/public/assets/vendor/aos/aos.js`
+- `auroratabs/app/public/assets/vendor/aos/aos.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.rtl.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.rtl.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.rtl.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-grid.rtl.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.rtl.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.rtl.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.rtl.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-reboot.rtl.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.rtl.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.rtl.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.rtl.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap-utilities.rtl.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.rtl.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.rtl.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.rtl.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/bootstrap.rtl.min.css.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/css/prb.txt`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.bundle.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.bundle.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.bundle.min.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.esm.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.esm.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.esm.min.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.esm.min.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.min.js`
+- `auroratabs/app/public/assets/vendor/bootstrap/js/bootstrap.min.js.map`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/bootstrap-icons.css`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/bootstrap-icons.json`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/bootstrap-icons.min.css`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/bootstrap-icons.scss`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff`
+- `auroratabs/app/public/assets/vendor/bootstrap-icons/fonts/bootstrap-icons.woff2`
+- `auroratabs/app/public/assets/vendor/glightbox/css/glightbox.css`
+- `auroratabs/app/public/assets/vendor/glightbox/css/glightbox.min.css`
+- `auroratabs/app/public/assets/vendor/glightbox/js/glightbox.js`
+- `auroratabs/app/public/assets/vendor/glightbox/js/glightbox.min.js`
+- `auroratabs/app/public/assets/vendor/imagesloaded/imagesloaded.pkgd.min.js`
+- `auroratabs/app/public/assets/vendor/isotope-layout/isotope.pkgd.js`
+- `auroratabs/app/public/assets/vendor/isotope-layout/isotope.pkgd.min.js`
+- `auroratabs/app/public/assets/vendor/php-email-form/validate.js`
+- `auroratabs/app/public/assets/vendor/purecounter/purecounter_vanilla.js`
+- `auroratabs/app/public/assets/vendor/purecounter/purecounter_vanilla.js.map`
+- `auroratabs/app/public/assets/vendor/swiper/swiper-bundle.min.css`
+- `auroratabs/app/public/assets/vendor/swiper/swiper-bundle.min.js`
+- `auroratabs/app/public/assets/vendor/swiper/swiper-bundle.min.js.map`
+- `auroratabs/temp/blog-details.html`
+- `auroratabs/temp/blog.html`
+- `auroratabs/temp/create_recalculation_tables.sql`
+- `auroratabs/temp/debug_live.php`
+- `auroratabs/temp/index.html`
+- `auroratabs/temp/portfolio-details.html`
+- `auroratabs/temp/Readme.txt`
+- `auroratabs/temp/samp.php`
+- `auroratabs/temp/service-details.html`
+- `auroratabs/temp/starter-page.html`
+- `auroratabs/temp/verify_recalc_tables.php`
+
+### Bundled AuroraTabs application, documentation or maintenance material (294)
+
+- `auroratabs/add_candidate_id_to_locks.sql`
+- `auroratabs/app/admin/activity-logs.php`
+- `auroratabs/app/admin/admin-users.php`
+- `auroratabs/app/admin/assign-candidates.php`
+- `auroratabs/app/admin/audience-rankings.php`
+- `auroratabs/app/admin/audience-voting.php`
+- `auroratabs/app/admin/candidates.php`
+- `auroratabs/app/admin/categories.php`
+- `auroratabs/app/admin/competition-summary.php`
+- `auroratabs/app/admin/competitions.php`
+- `auroratabs/app/admin/components/footer.php`
+- `auroratabs/app/admin/components/header.php`
+- `auroratabs/app/admin/components/links.php`
+- `auroratabs/app/admin/components/scripts.php`
+- `auroratabs/app/admin/components/sidebar copy.php`
+- `auroratabs/app/admin/components/sidebar.php`
+- `auroratabs/app/admin/components/sidebar_debug.php`
+- `auroratabs/app/admin/create-competition.php`
+- `auroratabs/app/admin/criteria-weights.php`
+- `auroratabs/app/admin/criteria.php`
+- `auroratabs/app/admin/db_diag_fetch.php`
+- `auroratabs/app/admin/debug_manage_students_permission.php`
+- `auroratabs/app/admin/debug_sidebar_permissions.php`
+- `auroratabs/app/admin/deleted-candidates.php`
+- `auroratabs/app/admin/deleted-categories.php`
+- `auroratabs/app/admin/deleted-competitions.php`
+- `auroratabs/app/admin/deleted-criteria.php`
+- `auroratabs/app/admin/deleted-formulas.php`
+- `auroratabs/app/admin/deleted-judges.php`
+- `auroratabs/app/admin/deleted-organizations.php`
+- `auroratabs/app/admin/deleted-users.php`
+- `auroratabs/app/admin/discount-code.html`
+- `auroratabs/app/admin/display-screens.php`
+- `auroratabs/app/admin/display-settings.php`
+- `auroratabs/app/admin/docs.html`
+- `auroratabs/app/admin/endpoints/activity_logs_handler.php`
+- `auroratabs/app/admin/endpoints/admin_users_handler.php`
+- `auroratabs/app/admin/endpoints/assignment_handler.php`
+- `auroratabs/app/admin/endpoints/candidates_handler.php`
+- `auroratabs/app/admin/endpoints/categories_handler.php`
+- `auroratabs/app/admin/endpoints/competitions_handler.php`
+- `auroratabs/app/admin/endpoints/criteria_handler.php`
+- `auroratabs/app/admin/endpoints/dashboard_handler.php`
+- `auroratabs/app/admin/endpoints/debug_me.php`
+- `auroratabs/app/admin/endpoints/export_handler.php`
+- `auroratabs/app/admin/endpoints/final_results_handler.php`
+- `auroratabs/app/admin/endpoints/finance_handler.php`
+- `auroratabs/app/admin/endpoints/formulas_handler.php`
+- `auroratabs/app/admin/endpoints/judge_assignments_handler.php`
+- `auroratabs/app/admin/endpoints/judge_reports_handler.php`
+- `auroratabs/app/admin/endpoints/judge_submissions_handler.php`
+- `auroratabs/app/admin/endpoints/live_results_handler.php`
+- `auroratabs/app/admin/endpoints/modules_handler.php`
+- `auroratabs/app/admin/endpoints/ojt.sql`
+- `auroratabs/app/admin/endpoints/ojt_handler.php`
+- `auroratabs/app/admin/endpoints/organizations_handler.php`
+- `auroratabs/app/admin/endpoints/paymongo_handler.php`
+- `auroratabs/app/admin/endpoints/permissions_handler.php`
+- `auroratabs/app/admin/endpoints/print_template.php`
+- `auroratabs/app/admin/endpoints/profile_handler.php`
+- `auroratabs/app/admin/endpoints/rankings_handler.php`
+- `auroratabs/app/admin/endpoints/recalculate_handler.php`
+- `auroratabs/app/admin/endpoints/register_ojt_modules.php`
+- `auroratabs/app/admin/endpoints/roles_handler.php`
+- `auroratabs/app/admin/endpoints/scoring_handler.php`
+- `auroratabs/app/admin/endpoints/security_handler.php`
+- `auroratabs/app/admin/endpoints/summary_handler.php`
+- `auroratabs/app/admin/endpoints/tabulator_handler.php`
+- `auroratabs/app/admin/endpoints/tmp_debug_engine.txt`
+- `auroratabs/app/admin/endpoints/vote_package_handler.php`
+- `auroratabs/app/admin/endpoints/voting_handler.php`
+- `auroratabs/app/admin/endpoints/voting_reports_handler.php`
+- `auroratabs/app/admin/endpoints/voting_settings_handler.php`
+- `auroratabs/app/admin/export-data.php`
+- `auroratabs/app/admin/export_ojt_attendance.php`
+- `auroratabs/app/admin/final-results.php`
+- `auroratabs/app/admin/formula-builder.php`
+- `auroratabs/app/admin/formula-management.php`
+- `auroratabs/app/admin/general-settings.php`
+- `auroratabs/app/admin/hire-us.html`
+- `auroratabs/app/admin/index.php`
+- `auroratabs/app/admin/judge-assignments.php`
+- `auroratabs/app/admin/judge-locks.php`
+- `auroratabs/app/admin/judge-reports.php`
+- `auroratabs/app/admin/judge-scoring.php`
+- `auroratabs/app/admin/judge-submissions.php`
+- `auroratabs/app/admin/judges-list.php`
+- `auroratabs/app/admin/judges.php`
+- `auroratabs/app/admin/live-results.php`
+- `auroratabs/app/admin/logout.php`
+- `auroratabs/app/admin/notifications.php`
+- `auroratabs/app/admin/ojt_attendance.php`
+- `auroratabs/app/admin/ojt_students.php`
+- `auroratabs/app/admin/ojt_students_all.php`
+- `auroratabs/app/admin/ojt_students_local.php`
+- `auroratabs/app/admin/ojt_summary.php`
+- `auroratabs/app/admin/organizations.php`
+- `auroratabs/app/admin/package-lock.json`
+- `auroratabs/app/admin/package.json`
+- `auroratabs/app/admin/payment-success.php`
+- `auroratabs/app/admin/pricing-plans.php`
+- `auroratabs/app/admin/print-audience-rankings.php`
+- `auroratabs/app/admin/print-category-results.php`
+- `auroratabs/app/admin/print-export-pdf.php`
+- `auroratabs/app/admin/print-final-results.php`
+- `auroratabs/app/admin/print-judge-log.php`
+- `auroratabs/app/admin/print_ojt_attendance.php`
+- `auroratabs/app/admin/print_ojt_students.php`
+- `auroratabs/app/admin/print_ojt_summary.php`
+- `auroratabs/app/admin/print_ojt_summary_all.php`
+- `auroratabs/app/admin/profile.php`
+- `auroratabs/app/admin/rankings.php`
+- `auroratabs/app/admin/README.md`
+- `auroratabs/app/admin/recalculate-results.php`
+- `auroratabs/app/admin/restricted.php`
+- `auroratabs/app/admin/roles-permissions.php`
+- `auroratabs/app/admin/security-settings.php`
+- `auroratabs/app/admin/tabulators.php`
+- `auroratabs/app/admin/test_new_permissions.php`
+- `auroratabs/app/admin/test_permissions.php`
+- `auroratabs/app/admin/test_sidebar_fix.php`
+- `auroratabs/app/admin/text.md`
+- `auroratabs/app/admin/transactions.php`
+- `auroratabs/app/admin/uploads/avatars/avatar_1_1773912829.png`
+- `auroratabs/app/admin/vote-logs.php`
+- `auroratabs/app/admin/vote-packages.php`
+- `auroratabs/app/admin/vote-purchases.php`
+- `auroratabs/app/admin/voting-reports.php`
+- `auroratabs/app/admin/voting-settings.php`
+- `auroratabs/app/admin/voting-toggle.php`
+- `auroratabs/app/aurora.php`
+- `auroratabs/app/auth/config/db_connection.php`
+- `auroratabs/app/auth/config/ojt_db.php`
+- `auroratabs/app/auth/endpoints/auth_login.php`
+- `auroratabs/app/auth/endpoints/auth_login_audience.php`
+- `auroratabs/app/auth/endpoints/auth_login_organizer.php`
+- `auroratabs/app/auth/endpoints/auth_process_payment.php`
+- `auroratabs/app/auth/endpoints/auth_register.php`
+- `auroratabs/app/auth/endpoints/auth_resend_otp.php`
+- `auroratabs/app/auth/endpoints/auth_verify_otp.php`
+- `auroratabs/app/auth/endpoints/auth_verify_otp_standalone.php`
+- `auroratabs/app/auth/endpoints/check_email.php`
+- `auroratabs/app/auth/endpoints/check_lockout.php`
+- `auroratabs/app/auth/endpoints/check_username.php`
+- `auroratabs/app/auth/endpoints/get_roles.php`
+- `auroratabs/app/auth/endpoints/get_roles_all.php`
+- `auroratabs/app/auth/helpers/email_helper.php`
+- `auroratabs/app/auth/helpers/formula_engine.php`
+- `auroratabs/app/auth/helpers/jwt_utils.php`
+- `auroratabs/app/auth/helpers/log_helper.php`
+- `auroratabs/app/auth/helpers/security_helper.php`
+- `auroratabs/app/auth/index.php`
+- `auroratabs/app/auth/login-admin.php`
+- `auroratabs/app/auth/login-audience.php`
+- `auroratabs/app/auth/login-organizer.php`
+- `auroratabs/app/auth/login.php`
+- `auroratabs/app/auth/migrate_competitions_created_by.php`
+- `auroratabs/app/auth/migrate_competitions_payment.php`
+- `auroratabs/app/auth/pay-gcash.php`
+- `auroratabs/app/auth/register-organizer.php`
+- `auroratabs/app/auth/register.php`
+- `auroratabs/app/auth/verify-otp.php`
+- `auroratabs/app/endpoints/tracker.php`
+- `auroratabs/app/index.php`
+- `auroratabs/app/public/components/header.php`
+- `auroratabs/app/public/components/links.php`
+- `auroratabs/app/public/components/scripts.php`
+- `auroratabs/app/public/forms/contact.php`
+- `auroratabs/app/public/forms/newsletter.php`
+- `auroratabs/app/public/forms/Readme.txt`
+- `auroratabs/app/uploads/candidates/cand_69b9f4189b277.png`
+- `auroratabs/app/uploads/candidates/cand_69b9f4582674a.jpg`
+- `auroratabs/app/uploads/candidates/cand_69b9f45fbe9f1.jpg`
+- `auroratabs/app/uploads/candidates/cand_69b9f46be3d41.png`
+- `auroratabs/app/uploads/candidates/cand_69ba2f25e7f0d.png`
+- `auroratabs/app/uploads/candidates/cand_69ba2f36dd0da.png`
+- `auroratabs/app/uploads/competitions/comp_1_1773826371.png`
+- `auroratabs/app/uploads/competitions/comp_2_1773826362.png`
+- `auroratabs/app/uploads/competitions/comp_3_1773826353.png`
+- `auroratabs/check_db.php`
+- `auroratabs/check_settings.php`
+- `auroratabs/check_structure.php`
+- `auroratabs/create_table_temp.php`
+- `auroratabs/curl_debug.txt`
+- `auroratabs/curl_debug_utf8.txt`
+- `auroratabs/diag_db.php`
+- `auroratabs/documentation/system_documentation.md`
+- `auroratabs/fix_judge_assignments_fk.sql`
+- `auroratabs/gas_get_test.txt`
+- `auroratabs/gas_get_test_utf8.txt`
+- `auroratabs/gas_output.txt`
+- `auroratabs/gas_output_utf8.txt`
+- `auroratabs/gas_test_custom.txt`
+- `auroratabs/gas_test_final.txt`
+- `auroratabs/gas_test_final_v2.txt`
+- `auroratabs/gas_test_final_v3.txt`
+- `auroratabs/gas_test_final_v4.txt`
+- `auroratabs/gas_test_final_v5.txt`
+- `auroratabs/gas_test_final_v6.txt`
+- `auroratabs/gas_test_final_v7.txt`
+- `auroratabs/get_schema.php`
+- `auroratabs/get_schema_v2.php`
+- `auroratabs/get_schema_v3.php`
+- `auroratabs/index.php`
+- `auroratabs/list_columns.php`
+- `auroratabs/migrate_ojt.php`
+- `auroratabs/migrate_otp.php`
+- `auroratabs/package-lock.json`
+- `auroratabs/package.json`
+- `auroratabs/profile copy.php`
+- `auroratabs/profile.php`
+- `auroratabs/README.md`
+- `auroratabs/schema.php`
+- `auroratabs/schema.sql`
+- `auroratabs/schema_output.json`
+- `auroratabs/temp_migration.php`
+- `auroratabs/test_db.php`
+- `auroratabs/test_gas.php`
+- `auroratabs/test_has_permission.php`
+- `auroratabs/test_org_reg.php`
+- `auroratabs/test_permissions.php`
+- `auroratabs/test_reg.php`
+- `auroratabs/tmp_alter_db.php`
+- `auroratabs/tmp_alter_votes.php`
+- `auroratabs/tmp_cand_schema.php`
+- `auroratabs/tmp_candidate_score_detailed.txt`
+- `auroratabs/tmp_candidates_list.txt`
+- `auroratabs/tmp_check_all_cat_scores_v3.php`
+- `auroratabs/tmp_check_all_results.php`
+- `auroratabs/tmp_check_all_scores_v2.php`
+- `auroratabs/tmp_check_all_scores_v4.php`
+- `auroratabs/tmp_check_comp_formula.php`
+- `auroratabs/tmp_check_db.php`
+- `auroratabs/tmp_check_dept_gender.php`
+- `auroratabs/tmp_check_dept_gender.txt`
+- `auroratabs/tmp_check_dept_gender_utf8.txt`
+- `auroratabs/tmp_check_gateways.php`
+- `auroratabs/tmp_check_locks.php`
+- `auroratabs/tmp_check_locks4.php`
+- `auroratabs/tmp_check_locks_schema.php`
+- `auroratabs/tmp_check_photo.php`
+- `auroratabs/tmp_check_qa_criteria.php`
+- `auroratabs/tmp_check_txn.php`
+- `auroratabs/tmp_check_txn_json.php`
+- `auroratabs/tmp_check_votes_schema.php`
+- `auroratabs/tmp_cols.php`
+- `auroratabs/tmp_cols_candidates.txt`
+- `auroratabs/tmp_cols_candidates_utf8.txt`
+- `auroratabs/tmp_cols_criteria.txt`
+- `auroratabs/tmp_cols_criteria_utf8.txt`
+- `auroratabs/tmp_cols_jl.txt`
+- `auroratabs/tmp_cols_jl_utf8.txt`
+- `auroratabs/tmp_cols_output_utf8.txt`
+- `auroratabs/tmp_cols_scores.txt`
+- `auroratabs/tmp_cols_scores_utf8.txt`
+- `auroratabs/tmp_comp3_analysis.php`
+- `auroratabs/tmp_comp3_analysis.txt`
+- `auroratabs/tmp_compare_criteria.php`
+- `auroratabs/tmp_count_judges.php`
+- `auroratabs/tmp_db_schema.php`
+- `auroratabs/tmp_db_schema_check.php`
+- `auroratabs/tmp_db_schema_final.txt`
+- `auroratabs/tmp_db_schema_output.txt`
+- `auroratabs/tmp_db_schema_specific.php`
+- `auroratabs/tmp_debug_candidate_score.php`
+- `auroratabs/tmp_debug_comp_times.php`
+- `auroratabs/tmp_debug_votes_table.php`
+- `auroratabs/tmp_diag_cat.php`
+- `auroratabs/tmp_diag_judge.php`
+- `auroratabs/tmp_exhaustive_breakdown.txt`
+- `auroratabs/tmp_exhaustive_breakdown_cand4.txt`
+- `auroratabs/tmp_exhaustive_breakdown_cand6.txt`
+- `auroratabs/tmp_exhaustive_breakdown_cand7.txt`
+- `auroratabs/tmp_exhaustive_score_breakdown.php`
+- `auroratabs/tmp_fix_locks.php`
+- `auroratabs/tmp_fix_locks2.php`
+- `auroratabs/tmp_fix_locks3.php`
+- `auroratabs/tmp_full_schema.php`
+- `auroratabs/tmp_get_judge_count.php`
+- `auroratabs/tmp_get_photos.php`
+- `auroratabs/tmp_get_votes.php`
+- `auroratabs/tmp_ja.php`
+- `auroratabs/tmp_list_candidates.php`
+- `auroratabs/tmp_list_criteria_scores.php`
+- `auroratabs/tmp_list_formulas.php`
+- `auroratabs/tmp_live_diag.php`
+- `auroratabs/tmp_live_test.php`
+- `auroratabs/tmp_photo_paths.txt`
+- `auroratabs/tmp_read_formula_exact.php`
+- `auroratabs/tmp_schema.txt`
+- `auroratabs/tmp_schema_output.txt`
+- `auroratabs/tmp_show_votes.php`
+- `auroratabs/tmp_votes_schema.txt`
+- `auroratabs/verify_permission_fix.php`
+
+### Bundled third-party presentation/mail dependency (610)
+
+- `assets/admin/css/custom.css`
+- `assets/admin/css/icons/tabler-icons/fonts/tabler-icons.eot`
+- `assets/admin/css/icons/tabler-icons/fonts/tabler-icons.svg`
+- `assets/admin/css/icons/tabler-icons/fonts/tabler-icons.ttf`
+- `assets/admin/css/icons/tabler-icons/fonts/tabler-icons.woff`
+- `assets/admin/css/icons/tabler-icons/fonts/tabler-icons.woff2`
+- `assets/admin/css/icons/tabler-icons/tabler-icons.css`
+- `assets/admin/css/styles.min.css`
+- `assets/admin/css/styles.min.css.map`
+- `assets/admin/images/backgrounds/sidebar-buynow-bg.png`
+- `assets/admin/images/logos/aurora-logo.png`
+- `assets/admin/images/logos/BNSC-logo.png`
+- `assets/admin/images/logos/cot.png`
+- `assets/admin/images/logos/favicon.png`
+- `assets/admin/images/logos/logo-wrappixel.svg`
+- `assets/admin/images/logos/logo.svg`
+- `assets/admin/images/products/s1.jpg`
+- `assets/admin/images/products/s11.jpg`
+- `assets/admin/images/products/s4.jpg`
+- `assets/admin/images/products/s5.jpg`
+- `assets/admin/images/products/s7.jpg`
+- `assets/admin/images/profile/user1.jpg`
+- `assets/admin/images/profile/user2.jpg`
+- `assets/admin/images/profile/user3.jpg`
+- `assets/admin/images/profile/user4.jpg`
+- `assets/admin/images/profile/user5.jpg`
+- `assets/admin/images/profile/user_1_1770167570.png`
+- `assets/admin/images/profile/user_1_1770167591.png`
+- `assets/admin/images/profile/user_1_1770169120.jpg`
+- `assets/admin/images/profile/user_1_1773912952.png`
+- `assets/admin/js/alert_utils.js`
+- `assets/admin/js/app.min.js`
+- `assets/admin/js/custom.js`
+- `assets/admin/js/dashboard.js`
+- `assets/admin/js/sidebarmenu.js`
+- `assets/admin/libs/apexcharts/dist/apexcharts.amd.js`
+- `assets/admin/libs/apexcharts/dist/apexcharts.common.js`
+- `assets/admin/libs/apexcharts/dist/apexcharts.css`
+- `assets/admin/libs/apexcharts/dist/apexcharts.esm.js`
+- `assets/admin/libs/apexcharts/dist/apexcharts.js`
+- `assets/admin/libs/apexcharts/dist/apexcharts.min.js`
+- `assets/admin/libs/apexcharts/dist/locales/ar.json`
+- `assets/admin/libs/apexcharts/dist/locales/be-cyrl.json`
+- `assets/admin/libs/apexcharts/dist/locales/be-latn.json`
+- `assets/admin/libs/apexcharts/dist/locales/ca.json`
+- `assets/admin/libs/apexcharts/dist/locales/cs.json`
+- `assets/admin/libs/apexcharts/dist/locales/da.json`
+- `assets/admin/libs/apexcharts/dist/locales/de.json`
+- `assets/admin/libs/apexcharts/dist/locales/el.json`
+- `assets/admin/libs/apexcharts/dist/locales/en.json`
+- `assets/admin/libs/apexcharts/dist/locales/es.json`
+- `assets/admin/libs/apexcharts/dist/locales/et.json`
+- `assets/admin/libs/apexcharts/dist/locales/fa.json`
+- `assets/admin/libs/apexcharts/dist/locales/fi.json`
+- `assets/admin/libs/apexcharts/dist/locales/fr.json`
+- `assets/admin/libs/apexcharts/dist/locales/he.json`
+- `assets/admin/libs/apexcharts/dist/locales/hi.json`
+- `assets/admin/libs/apexcharts/dist/locales/hr.json`
+- `assets/admin/libs/apexcharts/dist/locales/hu.json`
+- `assets/admin/libs/apexcharts/dist/locales/hy.json`
+- `assets/admin/libs/apexcharts/dist/locales/id.json`
+- `assets/admin/libs/apexcharts/dist/locales/it.json`
+- `assets/admin/libs/apexcharts/dist/locales/ja.json`
+- `assets/admin/libs/apexcharts/dist/locales/ka.json`
+- `assets/admin/libs/apexcharts/dist/locales/ko.json`
+- `assets/admin/libs/apexcharts/dist/locales/lt.json`
+- `assets/admin/libs/apexcharts/dist/locales/lv.json`
+- `assets/admin/libs/apexcharts/dist/locales/ms.json`
+- `assets/admin/libs/apexcharts/dist/locales/nb.json`
+- `assets/admin/libs/apexcharts/dist/locales/nl.json`
+- `assets/admin/libs/apexcharts/dist/locales/pl.json`
+- `assets/admin/libs/apexcharts/dist/locales/pt-br.json`
+- `assets/admin/libs/apexcharts/dist/locales/pt.json`
+- `assets/admin/libs/apexcharts/dist/locales/rs.json`
+- `assets/admin/libs/apexcharts/dist/locales/ru.json`
+- `assets/admin/libs/apexcharts/dist/locales/se.json`
+- `assets/admin/libs/apexcharts/dist/locales/sk.json`
+- `assets/admin/libs/apexcharts/dist/locales/sl.json`
+- `assets/admin/libs/apexcharts/dist/locales/sq.json`
+- `assets/admin/libs/apexcharts/dist/locales/th.json`
+- `assets/admin/libs/apexcharts/dist/locales/tr.json`
+- `assets/admin/libs/apexcharts/dist/locales/ua.json`
+- `assets/admin/libs/apexcharts/dist/locales/vi.json`
+- `assets/admin/libs/apexcharts/dist/locales/zh-cn.json`
+- `assets/admin/libs/apexcharts/dist/locales/zh-tw.json`
+- `assets/admin/libs/apexcharts/LICENSE`
+- `assets/admin/libs/apexcharts/package.json`
+- `assets/admin/libs/apexcharts/README.md`
+- `assets/admin/libs/apexcharts/src/apexcharts.js`
+- `assets/admin/libs/apexcharts/src/assets/apexcharts.css`
+- `assets/admin/libs/apexcharts/src/assets/ico-camera.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-home.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-menu.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-minus-square.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-minus.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-pan-hand.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-pan.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-plus-square.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-plus.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-refresh.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-reset.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-select.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-select1.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-zoom-in.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-zoom-out.svg`
+- `assets/admin/libs/apexcharts/src/assets/ico-zoom.svg`
+- `assets/admin/libs/apexcharts/src/charts/Bar.js`
+- `assets/admin/libs/apexcharts/src/charts/BarStacked.js`
+- `assets/admin/libs/apexcharts/src/charts/BoxCandleStick.js`
+- `assets/admin/libs/apexcharts/src/charts/common/bar/DataLabels.js`
+- `assets/admin/libs/apexcharts/src/charts/common/bar/Helpers.js`
+- `assets/admin/libs/apexcharts/src/charts/common/circle/Helpers.js`
+- `assets/admin/libs/apexcharts/src/charts/common/line/Helpers.js`
+- `assets/admin/libs/apexcharts/src/charts/common/treemap/Helpers.js`
+- `assets/admin/libs/apexcharts/src/charts/HeatMap.js`
+- `assets/admin/libs/apexcharts/src/charts/Line.js`
+- `assets/admin/libs/apexcharts/src/charts/Pie.js`
+- `assets/admin/libs/apexcharts/src/charts/Radar.js`
+- `assets/admin/libs/apexcharts/src/charts/Radial.js`
+- `assets/admin/libs/apexcharts/src/charts/RangeBar.js`
+- `assets/admin/libs/apexcharts/src/charts/Scatter.js`
+- `assets/admin/libs/apexcharts/src/charts/Treemap.js`
+- `assets/admin/libs/apexcharts/src/libs/monotone-cubic.js`
+- `assets/admin/libs/apexcharts/src/libs/Treemap-squared.js`
+- `assets/admin/libs/apexcharts/src/locales/ar.json`
+- `assets/admin/libs/apexcharts/src/locales/be-cyrl.json`
+- `assets/admin/libs/apexcharts/src/locales/be-latn.json`
+- `assets/admin/libs/apexcharts/src/locales/ca.json`
+- `assets/admin/libs/apexcharts/src/locales/cs.json`
+- `assets/admin/libs/apexcharts/src/locales/da.json`
+- `assets/admin/libs/apexcharts/src/locales/de.json`
+- `assets/admin/libs/apexcharts/src/locales/el.json`
+- `assets/admin/libs/apexcharts/src/locales/en.json`
+- `assets/admin/libs/apexcharts/src/locales/es.json`
+- `assets/admin/libs/apexcharts/src/locales/et.json`
+- `assets/admin/libs/apexcharts/src/locales/fa.json`
+- `assets/admin/libs/apexcharts/src/locales/fi.json`
+- `assets/admin/libs/apexcharts/src/locales/fr.json`
+- `assets/admin/libs/apexcharts/src/locales/he.json`
+- `assets/admin/libs/apexcharts/src/locales/hi.json`
+- `assets/admin/libs/apexcharts/src/locales/hr.json`
+- `assets/admin/libs/apexcharts/src/locales/hu.json`
+- `assets/admin/libs/apexcharts/src/locales/hy.json`
+- `assets/admin/libs/apexcharts/src/locales/id.json`
+- `assets/admin/libs/apexcharts/src/locales/it.json`
+- `assets/admin/libs/apexcharts/src/locales/ja.json`
+- `assets/admin/libs/apexcharts/src/locales/ka.json`
+- `assets/admin/libs/apexcharts/src/locales/ko.json`
+- `assets/admin/libs/apexcharts/src/locales/lt.json`
+- `assets/admin/libs/apexcharts/src/locales/lv.json`
+- `assets/admin/libs/apexcharts/src/locales/ms.json`
+- `assets/admin/libs/apexcharts/src/locales/nb.json`
+- `assets/admin/libs/apexcharts/src/locales/nl.json`
+- `assets/admin/libs/apexcharts/src/locales/pl.json`
+- `assets/admin/libs/apexcharts/src/locales/pt-br.json`
+- `assets/admin/libs/apexcharts/src/locales/pt.json`
+- `assets/admin/libs/apexcharts/src/locales/rs.json`
+- `assets/admin/libs/apexcharts/src/locales/ru.json`
+- `assets/admin/libs/apexcharts/src/locales/se.json`
+- `assets/admin/libs/apexcharts/src/locales/sk.json`
+- `assets/admin/libs/apexcharts/src/locales/sl.json`
+- `assets/admin/libs/apexcharts/src/locales/sq.json`
+- `assets/admin/libs/apexcharts/src/locales/th.json`
+- `assets/admin/libs/apexcharts/src/locales/tr.json`
+- `assets/admin/libs/apexcharts/src/locales/ua.json`
+- `assets/admin/libs/apexcharts/src/locales/vi.json`
+- `assets/admin/libs/apexcharts/src/locales/zh-cn.json`
+- `assets/admin/libs/apexcharts/src/locales/zh-tw.json`
+- `assets/admin/libs/apexcharts/src/modules/Animations.js`
+- `assets/admin/libs/apexcharts/src/modules/annotations/Annotations.js`
+- `assets/admin/libs/apexcharts/src/modules/annotations/Helpers.js`
+- `assets/admin/libs/apexcharts/src/modules/annotations/PointsAnnotations.js`
+- `assets/admin/libs/apexcharts/src/modules/annotations/XAxisAnnotations.js`
+- `assets/admin/libs/apexcharts/src/modules/annotations/YAxisAnnotations.js`
+- `assets/admin/libs/apexcharts/src/modules/axes/Axes.js`
+- `assets/admin/libs/apexcharts/src/modules/axes/AxesUtils.js`
+- `assets/admin/libs/apexcharts/src/modules/axes/Grid.js`
+- `assets/admin/libs/apexcharts/src/modules/axes/XAxis.js`
+- `assets/admin/libs/apexcharts/src/modules/axes/YAxis.js`
+- `assets/admin/libs/apexcharts/src/modules/Base.js`
+- `assets/admin/libs/apexcharts/src/modules/Core.js`
+- `assets/admin/libs/apexcharts/src/modules/CoreUtils.js`
+- `assets/admin/libs/apexcharts/src/modules/Crosshairs.js`
+- `assets/admin/libs/apexcharts/src/modules/Data.js`
+- `assets/admin/libs/apexcharts/src/modules/DataLabels.js`
+- `assets/admin/libs/apexcharts/src/modules/dimensions/Dimensions.js`
+- `assets/admin/libs/apexcharts/src/modules/dimensions/Grid.js`
+- `assets/admin/libs/apexcharts/src/modules/dimensions/Helpers.js`
+- `assets/admin/libs/apexcharts/src/modules/dimensions/XAxis.js`
+- `assets/admin/libs/apexcharts/src/modules/dimensions/YAxis.js`
+- `assets/admin/libs/apexcharts/src/modules/Events.js`
+- `assets/admin/libs/apexcharts/src/modules/Exports.js`
+- `assets/admin/libs/apexcharts/src/modules/Fill.js`
+- `assets/admin/libs/apexcharts/src/modules/Filters.js`
+- `assets/admin/libs/apexcharts/src/modules/Formatters.js`
+- `assets/admin/libs/apexcharts/src/modules/Graphics.js`
+- `assets/admin/libs/apexcharts/src/modules/helpers/Destroy.js`
+- `assets/admin/libs/apexcharts/src/modules/helpers/InitCtxVariables.js`
+- `assets/admin/libs/apexcharts/src/modules/helpers/Localization.js`
+- `assets/admin/libs/apexcharts/src/modules/helpers/UpdateHelpers.js`
+- `assets/admin/libs/apexcharts/src/modules/legend/Helpers.js`
+- `assets/admin/libs/apexcharts/src/modules/legend/Legend.js`
+- `assets/admin/libs/apexcharts/src/modules/Markers.js`
+- `assets/admin/libs/apexcharts/src/modules/Range.js`
+- `assets/admin/libs/apexcharts/src/modules/Responsive.js`
+- `assets/admin/libs/apexcharts/src/modules/Scales.js`
+- `assets/admin/libs/apexcharts/src/modules/Series.js`
+- `assets/admin/libs/apexcharts/src/modules/settings/Config.js`
+- `assets/admin/libs/apexcharts/src/modules/settings/Defaults.js`
+- `assets/admin/libs/apexcharts/src/modules/settings/Globals.js`
+- `assets/admin/libs/apexcharts/src/modules/settings/Options.js`
+- `assets/admin/libs/apexcharts/src/modules/Theme.js`
+- `assets/admin/libs/apexcharts/src/modules/TimeScale.js`
+- `assets/admin/libs/apexcharts/src/modules/TitleSubtitle.js`
+- `assets/admin/libs/apexcharts/src/modules/Toolbar.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/AxesTooltip.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Intersect.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Labels.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Marker.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Position.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/README.md`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Tooltip.js`
+- `assets/admin/libs/apexcharts/src/modules/tooltip/Utils.js`
+- `assets/admin/libs/apexcharts/src/modules/ZoomPanSelection.js`
+- `assets/admin/libs/apexcharts/src/svgjs/svg.js`
+- `assets/admin/libs/apexcharts/src/utils/DateTime.js`
+- `assets/admin/libs/apexcharts/src/utils/Resize.js`
+- `assets/admin/libs/apexcharts/src/utils/Utils.js`
+- `assets/admin/libs/apexcharts/types/apexcharts.d.ts`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.rtl.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.rtl.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.rtl.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-grid.rtl.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.rtl.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.rtl.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.rtl.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-reboot.rtl.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.rtl.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.rtl.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.rtl.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap-utilities.rtl.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.min.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.rtl.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.rtl.css.map`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.rtl.min.css`
+- `assets/admin/libs/bootstrap/dist/css/bootstrap.rtl.min.css.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.js.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.min.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.min.js.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.esm.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.esm.js.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.esm.min.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.esm.min.js.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.js.map`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.min.js`
+- `assets/admin/libs/bootstrap/dist/js/bootstrap.min.js.map`
+- `assets/admin/libs/bootstrap/js/dist/alert.js`
+- `assets/admin/libs/bootstrap/js/dist/alert.js.map`
+- `assets/admin/libs/bootstrap/js/dist/base-component.js`
+- `assets/admin/libs/bootstrap/js/dist/base-component.js.map`
+- `assets/admin/libs/bootstrap/js/dist/button.js`
+- `assets/admin/libs/bootstrap/js/dist/button.js.map`
+- `assets/admin/libs/bootstrap/js/dist/carousel.js`
+- `assets/admin/libs/bootstrap/js/dist/carousel.js.map`
+- `assets/admin/libs/bootstrap/js/dist/collapse.js`
+- `assets/admin/libs/bootstrap/js/dist/collapse.js.map`
+- `assets/admin/libs/bootstrap/js/dist/dom/data.js`
+- `assets/admin/libs/bootstrap/js/dist/dom/data.js.map`
+- `assets/admin/libs/bootstrap/js/dist/dom/event-handler.js`
+- `assets/admin/libs/bootstrap/js/dist/dom/event-handler.js.map`
+- `assets/admin/libs/bootstrap/js/dist/dom/manipulator.js`
+- `assets/admin/libs/bootstrap/js/dist/dom/manipulator.js.map`
+- `assets/admin/libs/bootstrap/js/dist/dom/selector-engine.js`
+- `assets/admin/libs/bootstrap/js/dist/dom/selector-engine.js.map`
+- `assets/admin/libs/bootstrap/js/dist/dropdown.js`
+- `assets/admin/libs/bootstrap/js/dist/dropdown.js.map`
+- `assets/admin/libs/bootstrap/js/dist/modal.js`
+- `assets/admin/libs/bootstrap/js/dist/modal.js.map`
+- `assets/admin/libs/bootstrap/js/dist/offcanvas.js`
+- `assets/admin/libs/bootstrap/js/dist/offcanvas.js.map`
+- `assets/admin/libs/bootstrap/js/dist/popover.js`
+- `assets/admin/libs/bootstrap/js/dist/popover.js.map`
+- `assets/admin/libs/bootstrap/js/dist/scrollspy.js`
+- `assets/admin/libs/bootstrap/js/dist/scrollspy.js.map`
+- `assets/admin/libs/bootstrap/js/dist/tab.js`
+- `assets/admin/libs/bootstrap/js/dist/tab.js.map`
+- `assets/admin/libs/bootstrap/js/dist/toast.js`
+- `assets/admin/libs/bootstrap/js/dist/toast.js.map`
+- `assets/admin/libs/bootstrap/js/dist/tooltip.js`
+- `assets/admin/libs/bootstrap/js/dist/tooltip.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/backdrop.js`
+- `assets/admin/libs/bootstrap/js/dist/util/backdrop.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/component-functions.js`
+- `assets/admin/libs/bootstrap/js/dist/util/component-functions.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/config.js`
+- `assets/admin/libs/bootstrap/js/dist/util/config.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/focustrap.js`
+- `assets/admin/libs/bootstrap/js/dist/util/focustrap.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/index.js`
+- `assets/admin/libs/bootstrap/js/dist/util/index.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/sanitizer.js`
+- `assets/admin/libs/bootstrap/js/dist/util/sanitizer.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/scrollbar.js`
+- `assets/admin/libs/bootstrap/js/dist/util/scrollbar.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/swipe.js`
+- `assets/admin/libs/bootstrap/js/dist/util/swipe.js.map`
+- `assets/admin/libs/bootstrap/js/dist/util/template-factory.js`
+- `assets/admin/libs/bootstrap/js/dist/util/template-factory.js.map`
+- `assets/admin/libs/bootstrap/js/index.esm.js`
+- `assets/admin/libs/bootstrap/js/index.umd.js`
+- `assets/admin/libs/bootstrap/js/src/alert.js`
+- `assets/admin/libs/bootstrap/js/src/base-component.js`
+- `assets/admin/libs/bootstrap/js/src/button.js`
+- `assets/admin/libs/bootstrap/js/src/carousel.js`
+- `assets/admin/libs/bootstrap/js/src/collapse.js`
+- `assets/admin/libs/bootstrap/js/src/dom/data.js`
+- `assets/admin/libs/bootstrap/js/src/dom/event-handler.js`
+- `assets/admin/libs/bootstrap/js/src/dom/manipulator.js`
+- `assets/admin/libs/bootstrap/js/src/dom/selector-engine.js`
+- `assets/admin/libs/bootstrap/js/src/dropdown.js`
+- `assets/admin/libs/bootstrap/js/src/modal.js`
+- `assets/admin/libs/bootstrap/js/src/offcanvas.js`
+- `assets/admin/libs/bootstrap/js/src/popover.js`
+- `assets/admin/libs/bootstrap/js/src/scrollspy.js`
+- `assets/admin/libs/bootstrap/js/src/tab.js`
+- `assets/admin/libs/bootstrap/js/src/toast.js`
+- `assets/admin/libs/bootstrap/js/src/tooltip.js`
+- `assets/admin/libs/bootstrap/js/src/util/backdrop.js`
+- `assets/admin/libs/bootstrap/js/src/util/component-functions.js`
+- `assets/admin/libs/bootstrap/js/src/util/config.js`
+- `assets/admin/libs/bootstrap/js/src/util/focustrap.js`
+- `assets/admin/libs/bootstrap/js/src/util/index.js`
+- `assets/admin/libs/bootstrap/js/src/util/sanitizer.js`
+- `assets/admin/libs/bootstrap/js/src/util/scrollbar.js`
+- `assets/admin/libs/bootstrap/js/src/util/swipe.js`
+- `assets/admin/libs/bootstrap/js/src/util/template-factory.js`
+- `assets/admin/libs/bootstrap/LICENSE`
+- `assets/admin/libs/bootstrap/package.json`
+- `assets/admin/libs/bootstrap/README.md`
+- `assets/admin/libs/bootstrap/scss/_accordion.scss`
+- `assets/admin/libs/bootstrap/scss/_alert.scss`
+- `assets/admin/libs/bootstrap/scss/_badge.scss`
+- `assets/admin/libs/bootstrap/scss/_breadcrumb.scss`
+- `assets/admin/libs/bootstrap/scss/_button-group.scss`
+- `assets/admin/libs/bootstrap/scss/_buttons.scss`
+- `assets/admin/libs/bootstrap/scss/_card.scss`
+- `assets/admin/libs/bootstrap/scss/_carousel.scss`
+- `assets/admin/libs/bootstrap/scss/_close.scss`
+- `assets/admin/libs/bootstrap/scss/_containers.scss`
+- `assets/admin/libs/bootstrap/scss/_dropdown.scss`
+- `assets/admin/libs/bootstrap/scss/_forms.scss`
+- `assets/admin/libs/bootstrap/scss/_functions.scss`
+- `assets/admin/libs/bootstrap/scss/_grid.scss`
+- `assets/admin/libs/bootstrap/scss/_helpers.scss`
+- `assets/admin/libs/bootstrap/scss/_images.scss`
+- `assets/admin/libs/bootstrap/scss/_list-group.scss`
+- `assets/admin/libs/bootstrap/scss/_maps.scss`
+- `assets/admin/libs/bootstrap/scss/_mixins.scss`
+- `assets/admin/libs/bootstrap/scss/_modal.scss`
+- `assets/admin/libs/bootstrap/scss/_nav.scss`
+- `assets/admin/libs/bootstrap/scss/_navbar.scss`
+- `assets/admin/libs/bootstrap/scss/_offcanvas.scss`
+- `assets/admin/libs/bootstrap/scss/_pagination.scss`
+- `assets/admin/libs/bootstrap/scss/_placeholders.scss`
+- `assets/admin/libs/bootstrap/scss/_popover.scss`
+- `assets/admin/libs/bootstrap/scss/_progress.scss`
+- `assets/admin/libs/bootstrap/scss/_reboot.scss`
+- `assets/admin/libs/bootstrap/scss/_root.scss`
+- `assets/admin/libs/bootstrap/scss/_spinners.scss`
+- `assets/admin/libs/bootstrap/scss/_tables.scss`
+- `assets/admin/libs/bootstrap/scss/_toasts.scss`
+- `assets/admin/libs/bootstrap/scss/_tooltip.scss`
+- `assets/admin/libs/bootstrap/scss/_transitions.scss`
+- `assets/admin/libs/bootstrap/scss/_type.scss`
+- `assets/admin/libs/bootstrap/scss/_utilities.scss`
+- `assets/admin/libs/bootstrap/scss/_variables-dark.scss`
+- `assets/admin/libs/bootstrap/scss/_variables.scss`
+- `assets/admin/libs/bootstrap/scss/bootstrap-grid.scss`
+- `assets/admin/libs/bootstrap/scss/bootstrap-reboot.scss`
+- `assets/admin/libs/bootstrap/scss/bootstrap-utilities.scss`
+- `assets/admin/libs/bootstrap/scss/bootstrap.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_floating-labels.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_form-check.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_form-control.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_form-range.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_form-select.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_form-text.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_input-group.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_labels.scss`
+- `assets/admin/libs/bootstrap/scss/forms/_validation.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_clearfix.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_color-bg.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_colored-links.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_focus-ring.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_icon-link.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_position.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_ratio.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_stacks.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_stretched-link.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_text-truncation.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_visually-hidden.scss`
+- `assets/admin/libs/bootstrap/scss/helpers/_vr.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_alert.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_backdrop.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_banner.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_border-radius.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_box-shadow.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_breakpoints.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_buttons.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_caret.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_clearfix.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_color-mode.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_color-scheme.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_container.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_deprecate.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_forms.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_gradients.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_grid.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_image.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_list-group.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_lists.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_pagination.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_reset-text.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_resize.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_table-variants.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_text-truncate.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_transition.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_utilities.scss`
+- `assets/admin/libs/bootstrap/scss/mixins/_visually-hidden.scss`
+- `assets/admin/libs/bootstrap/scss/utilities/_api.scss`
+- `assets/admin/libs/bootstrap/scss/vendor/_rfs.scss`
+- `assets/admin/libs/jquery/AUTHORS.txt`
+- `assets/admin/libs/jquery/bower.json`
+- `assets/admin/libs/jquery/dist/jquery.js`
+- `assets/admin/libs/jquery/dist/jquery.min.js`
+- `assets/admin/libs/jquery/dist/jquery.min.map`
+- `assets/admin/libs/jquery/dist/jquery.slim.js`
+- `assets/admin/libs/jquery/dist/jquery.slim.min.js`
+- `assets/admin/libs/jquery/dist/jquery.slim.min.map`
+- `assets/admin/libs/jquery/LICENSE.txt`
+- `assets/admin/libs/jquery/package.json`
+- `assets/admin/libs/jquery/README.md`
+- `assets/admin/libs/jquery/src/ajax/jsonp.js`
+- `assets/admin/libs/jquery/src/ajax/load.js`
+- `assets/admin/libs/jquery/src/ajax/script.js`
+- `assets/admin/libs/jquery/src/ajax/var/location.js`
+- `assets/admin/libs/jquery/src/ajax/var/nonce.js`
+- `assets/admin/libs/jquery/src/ajax/var/rquery.js`
+- `assets/admin/libs/jquery/src/ajax/xhr.js`
+- `assets/admin/libs/jquery/src/ajax.js`
+- `assets/admin/libs/jquery/src/attributes/attr.js`
+- `assets/admin/libs/jquery/src/attributes/classes.js`
+- `assets/admin/libs/jquery/src/attributes/prop.js`
+- `assets/admin/libs/jquery/src/attributes/support.js`
+- `assets/admin/libs/jquery/src/attributes/val.js`
+- `assets/admin/libs/jquery/src/attributes.js`
+- `assets/admin/libs/jquery/src/callbacks.js`
+- `assets/admin/libs/jquery/src/core/access.js`
+- `assets/admin/libs/jquery/src/core/camelCase.js`
+- `assets/admin/libs/jquery/src/core/DOMEval.js`
+- `assets/admin/libs/jquery/src/core/init.js`
+- `assets/admin/libs/jquery/src/core/isAttached.js`
+- `assets/admin/libs/jquery/src/core/nodeName.js`
+- `assets/admin/libs/jquery/src/core/parseHTML.js`
+- `assets/admin/libs/jquery/src/core/parseXML.js`
+- `assets/admin/libs/jquery/src/core/ready-no-deferred.js`
+- `assets/admin/libs/jquery/src/core/ready.js`
+- `assets/admin/libs/jquery/src/core/readyException.js`
+- `assets/admin/libs/jquery/src/core/stripAndCollapse.js`
+- `assets/admin/libs/jquery/src/core/support.js`
+- `assets/admin/libs/jquery/src/core/toType.js`
+- `assets/admin/libs/jquery/src/core/var/rhtml.js`
+- `assets/admin/libs/jquery/src/core/var/rsingleTag.js`
+- `assets/admin/libs/jquery/src/core.js`
+- `assets/admin/libs/jquery/src/css/addGetHookIf.js`
+- `assets/admin/libs/jquery/src/css/adjustCSS.js`
+- `assets/admin/libs/jquery/src/css/curCSS.js`
+- `assets/admin/libs/jquery/src/css/finalPropName.js`
+- `assets/admin/libs/jquery/src/css/hiddenVisibleSelectors.js`
+- `assets/admin/libs/jquery/src/css/showHide.js`
+- `assets/admin/libs/jquery/src/css/support.js`
+- `assets/admin/libs/jquery/src/css/var/cssExpand.js`
+- `assets/admin/libs/jquery/src/css/var/getStyles.js`
+- `assets/admin/libs/jquery/src/css/var/isHiddenWithinTree.js`
+- `assets/admin/libs/jquery/src/css/var/rboxStyle.js`
+- `assets/admin/libs/jquery/src/css/var/rcustomProp.js`
+- `assets/admin/libs/jquery/src/css/var/rnumnonpx.js`
+- `assets/admin/libs/jquery/src/css/var/swap.js`
+- `assets/admin/libs/jquery/src/css.js`
+- `assets/admin/libs/jquery/src/data/Data.js`
+- `assets/admin/libs/jquery/src/data/var/acceptData.js`
+- `assets/admin/libs/jquery/src/data/var/dataPriv.js`
+- `assets/admin/libs/jquery/src/data/var/dataUser.js`
+- `assets/admin/libs/jquery/src/data.js`
+- `assets/admin/libs/jquery/src/deferred/exceptionHook.js`
+- `assets/admin/libs/jquery/src/deferred.js`
+- `assets/admin/libs/jquery/src/deprecated/ajax-event-alias.js`
+- `assets/admin/libs/jquery/src/deprecated/event.js`
+- `assets/admin/libs/jquery/src/deprecated.js`
+- `assets/admin/libs/jquery/src/dimensions.js`
+- `assets/admin/libs/jquery/src/effects/animatedSelector.js`
+- `assets/admin/libs/jquery/src/effects/Tween.js`
+- `assets/admin/libs/jquery/src/effects.js`
+- `assets/admin/libs/jquery/src/event/trigger.js`
+- `assets/admin/libs/jquery/src/event.js`
+- `assets/admin/libs/jquery/src/exports/amd.js`
+- `assets/admin/libs/jquery/src/exports/global.js`
+- `assets/admin/libs/jquery/src/jquery.js`
+- `assets/admin/libs/jquery/src/manipulation/_evalUrl.js`
+- `assets/admin/libs/jquery/src/manipulation/buildFragment.js`
+- `assets/admin/libs/jquery/src/manipulation/getAll.js`
+- `assets/admin/libs/jquery/src/manipulation/setGlobalEval.js`
+- `assets/admin/libs/jquery/src/manipulation/support.js`
+- `assets/admin/libs/jquery/src/manipulation/var/rscriptType.js`
+- `assets/admin/libs/jquery/src/manipulation/var/rtagName.js`
+- `assets/admin/libs/jquery/src/manipulation/wrapMap.js`
+- `assets/admin/libs/jquery/src/manipulation.js`
+- `assets/admin/libs/jquery/src/offset.js`
+- `assets/admin/libs/jquery/src/queue/delay.js`
+- `assets/admin/libs/jquery/src/queue.js`
+- `assets/admin/libs/jquery/src/selector/contains.js`
+- `assets/admin/libs/jquery/src/selector/escapeSelector.js`
+- `assets/admin/libs/jquery/src/selector-native.js`
+- `assets/admin/libs/jquery/src/selector.js`
+- `assets/admin/libs/jquery/src/serialize.js`
+- `assets/admin/libs/jquery/src/traversing/findFilter.js`
+- `assets/admin/libs/jquery/src/traversing/var/dir.js`
+- `assets/admin/libs/jquery/src/traversing/var/rneedsContext.js`
+- `assets/admin/libs/jquery/src/traversing/var/siblings.js`
+- `assets/admin/libs/jquery/src/traversing.js`
+- `assets/admin/libs/jquery/src/var/arr.js`
+- `assets/admin/libs/jquery/src/var/class2type.js`
+- `assets/admin/libs/jquery/src/var/document.js`
+- `assets/admin/libs/jquery/src/var/documentElement.js`
+- `assets/admin/libs/jquery/src/var/flat.js`
+- `assets/admin/libs/jquery/src/var/fnToString.js`
+- `assets/admin/libs/jquery/src/var/getProto.js`
+- `assets/admin/libs/jquery/src/var/hasOwn.js`
+- `assets/admin/libs/jquery/src/var/indexOf.js`
+- `assets/admin/libs/jquery/src/var/isFunction.js`
+- `assets/admin/libs/jquery/src/var/isWindow.js`
+- `assets/admin/libs/jquery/src/var/ObjectFunctionString.js`
+- `assets/admin/libs/jquery/src/var/pnum.js`
+- `assets/admin/libs/jquery/src/var/pop.js`
+- `assets/admin/libs/jquery/src/var/push.js`
+- `assets/admin/libs/jquery/src/var/rcheckableType.js`
+- `assets/admin/libs/jquery/src/var/rcssNum.js`
+- `assets/admin/libs/jquery/src/var/rnothtmlwhite.js`
+- `assets/admin/libs/jquery/src/var/rtrimCSS.js`
+- `assets/admin/libs/jquery/src/var/slice.js`
+- `assets/admin/libs/jquery/src/var/sort.js`
+- `assets/admin/libs/jquery/src/var/splice.js`
+- `assets/admin/libs/jquery/src/var/support.js`
+- `assets/admin/libs/jquery/src/var/toString.js`
+- `assets/admin/libs/jquery/src/var/whitespace.js`
+- `assets/admin/libs/jquery/src/wrap.js`
+- `assets/admin/libs/simplebar/dist/simplebar-core.esm.js`
+- `assets/admin/libs/simplebar/dist/simplebar-core.esm.js.map`
+- `assets/admin/libs/simplebar/dist/simplebar.css`
+- `assets/admin/libs/simplebar/dist/simplebar.d.ts`
+- `assets/admin/libs/simplebar/dist/simplebar.esm.js`
+- `assets/admin/libs/simplebar/dist/simplebar.esm.js.map`
+- `assets/admin/libs/simplebar/dist/simplebar.js`
+- `assets/admin/libs/simplebar/dist/simplebar.min.css`
+- `assets/admin/libs/simplebar/dist/simplebar.min.js`
+- `assets/admin/libs/simplebar/dist/simplebar.umd.js`
+- `assets/admin/libs/simplebar/LICENSE`
+- `assets/admin/libs/simplebar/package.json`
+- `assets/admin/libs/simplebar/README.md`
+- `assets/admin/libs/simplebar/src/helpers.js`
+- `assets/admin/libs/simplebar/src/index.js`
+- `assets/admin/libs/simplebar/src/scrollbar-width.js`
+- `assets/admin/libs/simplebar/src/simplebar.css`
+- `assets/admin/libs/simplebar/src/simplebar.js`
+- `assets/admin/scss/component/_card.scss`
+- `assets/admin/scss/component/_reboot.scss`
+- `assets/admin/scss/layouts/_header.scss`
+- `assets/admin/scss/layouts/_layouts.scss`
+- `assets/admin/scss/layouts/_sidebar.scss`
+- `assets/admin/scss/pages/_dashboard1.scss`
+- `assets/admin/scss/styles.scss`
+- `assets/admin/scss/utilities/_icon-size.scss`
+- `assets/admin/scss/variables/_theme-variables.scss`
+- `assets/admin/scss/variables/_variables.scss`
+- `assets/vendor/aos/aos.css`
+- `assets/vendor/aos/aos.js`
+- `assets/vendor/aos/LICENSE`
+- `assets/vendor/aos/SOURCE.json`
+- `lib/phpmailer/LICENSE`
+- `lib/phpmailer/SOURCE.json`
+- `lib/phpmailer/src/Exception.php`
+- `lib/phpmailer/src/PHPMailer.php`
+- `lib/phpmailer/src/SMTP.php`
+
+### Documentation or implementation prompt (not feature proof) (11)
+
+- `ACCESS-CONTROL.md`
+- `AUTHENTICATION.md`
+- `BURGER-BUSINESS-PROMPT.md`
+- `BURGER-INVENTORY.md`
+- `DEPLOYMENT.md`
+- `MONITORING.md`
+- `MULTI-POS-DEPLOYMENT-PROMPT.md`
+- `ONLINE-ORDERS.md`
+- `prompt.md`
+- `README.md`
+- `z-program-prompt.md`
+
+### Main application runtime/configuration (149)
+
+- `.htaccess`
+- `ajax/branch_action.php`
+- `ajax/cms_action.php`
+- `ajax/expense_action.php`
+- `ajax/inventory_action.php`
+- `ajax/notification_action.php`
+- `ajax/pos_cart.php`
+- `ajax/pos_pin.php`
+- `ajax/report_action.php`
+- `ajax/role_action.php`
+- `assets/.htaccess`
+- `assets/css/access-denied.css`
+- `assets/css/access-management.css`
+- `assets/css/admin-loading.css`
+- `assets/css/admin-pagination.css`
+- `assets/css/branch-management.css`
+- `assets/css/burger-home.css`
+- `assets/css/burger-login.css`
+- `assets/css/burger-motion.css`
+- `assets/css/burger-pages.css`
+- `assets/css/expense-management.css`
+- `assets/css/inventory-reports.css`
+- `assets/css/print-actions.css`
+- `assets/css/report-print.css`
+- `assets/css/style.css`
+- `assets/js/admin-loading.js`
+- `assets/js/admin-pagination.js`
+- `assets/js/auth-forms.js`
+- `assets/js/burger-home.js`
+- `assets/js/burger-login.js`
+- `assets/js/burger-motion.js`
+- `assets/js/main.js`
+- `assets/js/modal-forms.js`
+- `assets/js/recipe-admin.js`
+- `assets/js/request-security.js`
+- `config/app.php`
+- `config/auth.php`
+- `config/config.example.php`
+- `config/db.php`
+- `config/init_db.php`
+- `config/mail.example.php`
+- `config/permissions.php`
+- `config/uploads.php`
+- `controllers/AdminController.php`
+- `controllers/AuthController.php`
+- `controllers/ExpenseController.php`
+- `controllers/InventoryController.php`
+- `controllers/MonitoringController.php`
+- `controllers/OnlineOrderController.php`
+- `controllers/PosController.php`
+- `controllers/WebsiteController.php`
+- `index.php`
+- `middleware/access_policy.php`
+- `middleware/auth.php`
+- `middleware/rbac.php`
+- `middleware/session.php`
+- `models/ActivityLog.php`
+- `models/AuthSecurity.php`
+- `models/Branch.php`
+- `models/Cart.php`
+- `models/Expense.php`
+- `models/InventoryQuantity.php`
+- `models/Monitoring.php`
+- `models/OnlineOrder.php`
+- `models/PermissionSeeder.php`
+- `models/Product.php`
+- `models/RecipeInventory.php`
+- `models/Role.php`
+- `models/Sale.php`
+- `models/Setting.php`
+- `models/StockNotification.php`
+- `models/User.php`
+- `models/Website.php`
+- `services/PasswordMailer.php`
+- `views/auth/customer_login.php`
+- `views/auth/forgot_password.php`
+- `views/auth/login.php`
+- `views/auth/notification.php`
+- `views/auth/register.php`
+- `views/auth/reset_password.php`
+- `views/auth/setup_profile.php`
+- `views/components/admin/footer.php`
+- `views/components/admin/header.php`
+- `views/components/admin/links.php`
+- `views/components/admin/scripts.php`
+- `views/components/admin/sidebar.php`
+- `views/errors/access_denied.php`
+- `views/layouts/admin.php`
+- `views/layouts/admin.php.bak`
+- `views/layouts/main.php`
+- `views/layouts/pos_layout.php`
+- `views/layouts/report_print.php`
+- `views/modals/createProductModal.php`
+- `views/modals/deleteProductModal.php`
+- `views/modals/editBatchModal.php`
+- `views/modals/editProductModal.php`
+- `views/modals/manualAdjustmentModal.php`
+- `views/modals/stockHistoryModal.php`
+- `views/modals/viewProductModal.php`
+- `views/modules/activity_logs.php`
+- `views/modules/activity_logs_print.php`
+- `views/modules/branch_report.php`
+- `views/modules/branches.php`
+- `views/modules/categories.php`
+- `views/modules/cms.php`
+- `views/modules/dashboard.php`
+- `views/modules/expenses.php`
+- `views/modules/expenses_print.php`
+- `views/modules/expenses_summary_print.php`
+- `views/modules/history.php`
+- `views/modules/inventory_logs_print.php`
+- `views/modules/logs.php`
+- `views/modules/low_stock.php`
+- `views/modules/monitoring.php`
+- `views/modules/online_orders.php`
+- `views/modules/pos.php`
+- `views/modules/pos_branch_select.php`
+- `views/modules/products.md`
+- `views/modules/products.php`
+- `views/modules/products_another.md`
+- `views/modules/receipt.php`
+- `views/modules/reports.php`
+- `views/modules/reports_print.php`
+- `views/modules/roles.php`
+- `views/modules/settings.php`
+- `views/modules/staff_start.php`
+- `views/modules/users.php`
+- `views/partials/auth_feedback.php`
+- `views/partials/footer_home.php`
+- `views/partials/header_home.php`
+- `views/partials/logout_modal.php`
+- `views/partials/pos_branch_modal.php`
+- `views/partials/recipe_quantity_preview.php`
+- `views/partials/shop_close.php`
+- `views/partials/shop_header.php`
+- `views/partials/shop_open.php`
+- `views/partials/shop_product_card.php`
+- `views/partials/shop_setup.php`
+- `views/partials/site_favicon.php`
+- `views/partials/toast.php`
+- `views/website/about.php`
+- `views/website/branches.php`
+- `views/website/cart.php`
+- `views/website/contact.php`
+- `views/website/home.php`
+- `views/website/order_tracking.php`
+- `views/website/orders.php`
+- `views/website/product_detail.php`
+- `views/website/products.php`
+
+### Media or uploaded content (33)
+
+- `assets/img/branches/6a1118d3b68ed.png`
+- `assets/img/default.png`
+- `assets/img/logo_1779451879.png`
+- `assets/img/logo_1779452334.png`
+- `assets/img/products/1780466164_rc.jpg`
+- `assets/img/products/1780622926_ChatGPT Image Jun 5, 2026, 08_36_14 AM.png`
+- `assets/img/products/1780622975_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780623051_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780623258_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780623357_Screenshot_20260605-082336.jpg`
+- `assets/img/products/1780623446_Screenshot_20260605-082336.jpg`
+- `assets/img/products/1780623872_Screenshot_20260605-065656.jpg`
+- `assets/img/products/1780624475_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780624594_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780625214_IMG_20260604_120315_311@283368206.jpg`
+- `assets/img/products/1780625553_Screenshot_20260604-202322.jpg`
+- `assets/img/products/1780626625_Screenshot_20260605-082336.jpg`
+- `assets/img/products/1780627581_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780627696_Screenshot_20260605-083128.jpg`
+- `assets/img/products/1780627893_IMG_20260604_120315_311@283368206.jpg`
+- `assets/img/products/1780892054_ChatGPT Image Jun 5, 2026, 03_04_56 PM.png`
+- `assets/img/products/1780892895_ChatGPT Image Jun 8, 2026, 12_15_19 PM.png`
+- `assets/img/products/1788836334_Recollection 2024.png`
+- `assets/img/products/1792030513_e05fbaf5-3305-4417-9dd1-5baa3ca3d3ba.jpg`
+- `assets/img/products/1792053541_Cheddar cheese.jpg`
+- `assets/img/users/6a0e961b67b2b.jpg`
+- `assets/img/users/6a0e97467b440.jpg`
+- `assets/img/users/6a0e9775b6dd5.jpg`
+- `assets/img/users/6a0e978587df2.png`
+- `assets/img/users/6a10536278c15.png`
+- `assets/img/users/6a1053e8479ad.png`
+- `assets/uploads/avatars/avatar_4_1779171789.gif`
+- `assets/video/bg.mp4`
+
+### Private local configuration (contents excluded) (2)
+
+- `config/config.local.php`
+- `config/mail.local.php`
+
+### Root utility, preview, metadata, schema snapshot or other auxiliary file (55)
+
+- `.gitignore`
+- `add_cursor_pointers.php`
+- `add_gen_methods.php`
+- `add_soft_delete.php`
+- `check_branches.php`
+- `check_col.php`
+- `check_db.php`
+- `check_perms_schema.php`
+- `check_recipe.php`
+- `check_recipe2.php`
+- `check_schema.php`
+- `db_repair.php`
+- `db_repair_log.php`
+- `db_repair_log_v4.php`
+- `db_schema.json`
+- `db_schema_debug.json`
+- `debug.log`
+- `debug_schema.php`
+- `download_stitch.php`
+- `ensure_logs.php`
+- `fix_db.php`
+- `fix_edit_modal_patch.php`
+- `inject_image_js.php`
+- `migrate_batches.php`
+- `migrate_batches_v2.php`
+- `migrate_core_fields.php`
+- `migrate_inventory_permissions.php`
+- `migration_add_discountable.php`
+- `migration_fix_products.php`
+- `patch_count_filtered.php`
+- `patch_create_ui_autogen.php`
+- `patch_edit_modal.php`
+- `patch_image_preview.php`
+- `patch_inventory_autogen.php`
+- `patch_inventory_controller.php`
+- `patch_product.php`
+- `patch_product_search.php`
+- `patch_products_js.php`
+- `patch_toggles_design.php`
+- `populate_new_fields.php`
+- `refactor_create_modal.php`
+- `refactor_edit_modal.php`
+- `refactor_toggles_alignment.php`
+- `sample.php`
+- `stitch_pos.html`
+- `stitch_pos_raw.html`
+- `stitch_product_detail.html`
+- `sync_cat_id.php`
+- `test_create.php`
+- `test_header_preview.php`
+- `title_card_preview.html`
+- `update_activity_db.php`
+- `update_db.php`
+- `update_status_db.php`
+- `z-program.php`
+
+### Test, migration or deployment tooling (41)
+
+- `.github/workflows/deploy.yml`
+- `tools/check-smtp.php`
+- `tools/migrate-auth-security.php`
+- `tools/migrate-legacy.php`
+- `tools/migrate-monitoring.php`
+- `tools/migrate-online-orders.php`
+- `tools/migrations/20261015-burger-inventory.sql`
+- `tools/prepare-deploy.py`
+- `tools/seed-permissions.php`
+- `tools/tests/auth-design-token.php`
+- `tools/tests/auth-security-design-check.cjs`
+- `tools/tests/auth-security-http-check.cjs`
+- `tools/tests/auth-security-model-check.php`
+- `tools/tests/auth-smtp-sink.py`
+- `tools/tests/burger-integration.php`
+- `tools/tests/landing-design-check.cjs`
+- `tools/tests/landing-preview.php`
+- `tools/tests/login-branch-check.cjs`
+- `tools/tests/login-branch-model-check.php`
+- `tools/tests/login-design-check.cjs`
+- `tools/tests/modal-forms-check.cjs`
+- `tools/tests/monitoring-browser-check.cjs`
+- `tools/tests/monitoring-check.php`
+- `tools/tests/online-order-browser-check.cjs`
+- `tools/tests/online-order-edge-check.php`
+- `tools/tests/online-order-http-check.cjs`
+- `tools/tests/online-order-model-check.php`
+- `tools/tests/online-order-payment-check.php`
+- `tools/tests/online-order-race.cjs`
+- `tools/tests/online-order-race.php`
+- `tools/tests/public-motion-check.cjs`
+- `tools/tests/public-shop-design-check.cjs`
+- `tools/tests/public-shop-fixture.php`
+- `tools/tests/rbac-fixture.php`
+- `tools/tests/rbac-http-check.cjs`
+- `tools/tests/rbac-inline-check.cjs`
+- `tools/tests/rbac-model-check.php`
+- `tools/tests/rbac-page-check.cjs`
+- `tools/tests/recipe-quantity-preview-check.cjs`
+- `tools/tests/test_deployment.py`
+- `tools/tests/test_inventory_quantity.py`
+

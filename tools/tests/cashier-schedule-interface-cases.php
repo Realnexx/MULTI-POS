@@ -1,0 +1,35 @@
+<?php
+$_SESSION['user']=['id'=>1,'branch_id'=>1];
+for($i=0;$i<245;$i++)RecipeInventory::query("INSERT INTO cashier_schedule_events(branch_id,cashier_id,actor_id,action,reason,created_at) VALUES(1,1,1,'audit_fixture',?,'2034-02-01 12:00:00')",'s',['Audit fixture alpha '.str_pad($i,3,'0',STR_PAD_LEFT).($i===0?' <img src=x onerror=alert(1)>':'')]);
+RecipeInventory::query("INSERT INTO cashier_schedule_events(branch_id,cashier_id,actor_id,action,reason,created_at) VALUES(2,3,3,'audit_fixture','OTHER BRANCH SECRET','2034-02-01 12:00:00')");
+$siRequest=['branch_id'=>'1','draw'=>'7','length'=>'25','start'=>'0','search'=>['value'=>'Audit fixture alpha'],'order'=>[['column'=>'5','dir'=>'asc']]];
+$siFirst=CashierSchedule::auditTable($siRequest);file_put_contents($root.'/scratch/schedule-audit-response.json',json_encode($siFirst));check($siFirst['draw']===7 && $siFirst['recordsFiltered']===245 && count($siFirst['data'])===25,'server audit table searches and paginates more than 200 matching events');
+$siSecond=CashierSchedule::auditTable(array_merge($siRequest,['start'=>'25']));check(!array_intersect(array_column($siFirst['data'],'id'),array_column($siSecond['data'],'id')),'audit pagination returns distinct stable pages');
+$siLast=CashierSchedule::auditTable(array_merge($siRequest,['start'=>'225']));check(count($siLast['data'])===20,'audit table returns remaining last-page rows');
+$siLimited=CashierSchedule::auditTable(array_merge($siRequest,['length'=>'999999']));check(count($siLimited['data'])===100,'audit request cannot force an unbounded page');
+$siDates=CashierSchedule::auditTable(['branch_id'=>1,'recorded_from'=>'2034-02-01','recorded_to'=>'2034-02-01','length'=>10]);check($siDates['recordsFiltered']===245,'audit date filter includes the whole final selected day');
+$siNone=CashierSchedule::auditTable(['branch_id'=>1,'recorded_from'=>'2034-02-02','recorded_to'=>'2034-02-02']);check($siNone['recordsFiltered']===0 && $siNone['data']===[],'audit date filters exclude other recorded days');
+reject(fn()=>CashierSchedule::auditTable(['recorded_from'=>'2034-02-02','recorded_to'=>'2034-02-01']),'audit rejects reversed date filters');
+reject(fn()=>CashierSchedule::auditTable(['recorded_from'=>'2034-02-30']),'audit rejects impossible recorded dates');
+reject(fn()=>CashierSchedule::auditTable(['branch_id'=>2]),'audit model refuses another branch filter');
+reject(fn()=>CashierSchedule::auditTable(['branch_id'=>['1']]),'audit rejects malformed branch input');
+reject(fn()=>CashierSchedule::auditTable(['order'=>'invalid']),'audit rejects malformed ordering input');
+$siEndpoint=endpoint('cash_shift_audit',$siRequest);check($siEndpoint['recordsFiltered']===245 && count($siEndpoint['data'])===25,'authenticated audit endpoint returns real DataTables server-side response');
+$siOther=endpoint('cash_shift_audit',['branch_id'=>2,'draw'=>1]);check(($siOther['success']??true)===false,'audit endpoint denies another branch request');
+$siLiteral=CashierSchedule::auditTable(['branch_id'=>1,'search'=>['value'=>'%']]);check($siLiteral['recordsFiltered']===0,'audit search treats wildcard characters literally');
+$siSort=CashierSchedule::auditTable(array_merge($siRequest,['order'=>[['column'=>'999','dir'=>'desc; DROP TABLE users']]]));check($siSort['recordsFiltered']===245,'audit sorting uses a fixed SQL column and direction whitelist');
+$siDeniedShape=endpoint('cash_shift_audit',['search'=>'bad request']);check(isset($siDeniedShape['error']) && $siDeniedShape['data']===[],'audit endpoint safely rejects malformed table requests');
+$siCashierFilter=CashierSchedule::auditTable(['branch_id'=>1,'cashier_id'=>3]);check($siCashierFilter['recordsTotal']===0,'cashier filter cannot reveal records from another branch');
+$siRole=(int)RecipeInventory::rows('SELECT role_id FROM user_roles WHERE user_id=1 LIMIT 1')[0]['role_id'];
+RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=? AND permission_id=(SELECT id FROM permissions WHERE name=?)','is',[$siRole,'manage_cashier_schedules']);
+$siOwn=CashierSchedule::auditTable(['branch_id'=>1,'cashier_id'=>3,'search'=>['value'=>'Audit fixture alpha']]);check($siOwn['recordsFiltered']===245 && count(array_filter($siOwn['data'],fn($r)=>$r['cashier_name']!==User::find_by_id(1)['name']))===0,'non-manager audit requests stay limited to own history despite cashier filter');
+RecipeInventory::query("INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT ?,id FROM permissions WHERE name='manage_cashier_schedules'",'i',[$siRole]);
+$siPermissions=[];foreach(CashShift::permissions() as $p){if(User::has_permission(1,$p))$siPermissions[]=$p;RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=? AND permission_id=(SELECT id FROM permissions WHERE name=?)','is',[$siRole,$p]);}
+reject(fn()=>CashierSchedule::auditTable([]),'audit model enforces cashier module permission');$siDenied=endpoint('cash_shift_audit',['draw'=>2]);check(($siDenied['success']??true)===false,'audit endpoint denies revoked module permissions');
+foreach($siPermissions as $p)RecipeInventory::query('INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT ?,id FROM permissions WHERE name=?','is',[$siRole,$p]);
+$_SESSION['user']=['id'=>2,'branch_id'=>1];$siGlobal=CashierSchedule::auditTable(['branch_id'=>2,'search'=>['value'=>'OTHER BRANCH SECRET']]);check($siGlobal['recordsFiltered']===1,'global manager can explicitly inspect an authorized branch');$_SESSION['user']=['id'=>1,'branch_id'=>1];
+$siHtml=endpoint('shift_render',['_schedule_from'=>'2032-02-01','_schedule_to'=>'2032-02-29','_schedule_view'=>'calendar'],false);check(strpos($siHtml,'data-cashier-picker')!==false && strpos($siHtml,'data-roles=')!==false,'cashier choices expose escaped assigned roles for badge rendering');
+check(strpos($siHtml,'schedule-section-tab-grace')!==false && strpos($siHtml,'schedule-section-tab-audit')!==false && strpos($siHtml,'id="schedule-audit-table"')!==false,'schedule subsections render as tabs with an audit DataTable');
+check(strpos($siHtml,'Audit fixture alpha')===false && strpos($siHtml,'Schedule audit history (latest')===false,'page does not preload or truncate audit events');
+check(!preg_match('/Warning:|Notice:|Fatal error:/',$siHtml),'schedule role badges and nested tabs render without PHP warnings');
+file_put_contents($root.'/scratch/cashier-planning-rendered.html',$siHtml);

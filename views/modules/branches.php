@@ -3,7 +3,7 @@ $title = "Branch Management";
 ob_start();
 ?>
 
-<link rel="stylesheet" href="<?= url('assets/css/branch-management.css') ?>">
+<link rel="stylesheet" href="<?= url('assets/css/branch-management.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/branch-management.css') ?>">
 <div id="tw-branches" class="branch-workspace">
     <header class="branches-heading">
         <div><h2><span class="material-symbols-outlined">storefront</span> Branch Management</h2><p>Manage your locations, managers and branch teams.</p></div>
@@ -35,8 +35,12 @@ ob_start();
 </div>
 
 
+<script src="<?= url('assets/js/branch-overview.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/branch-overview.js') ?>"></script>
+<script src="<?= url('assets/js/branch-manager-picker.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/branch-manager-picker.js') ?>"></script>
 <script>
     $(document).ready(function() {
+        new BranchOverviewModal(document.getElementById('tw-branches'), <?= json_encode(url('?route=ajax/branch_action')) ?>);
+        const managerPicker = new BranchManagerPicker(document.getElementById('edit_branch_manager_id'));
         loadBranches();
         loadPotentialManagers();
 
@@ -67,11 +71,7 @@ ob_start();
         function loadPotentialManagers() {
             $.getJSON("<?= url('?route=ajax/branch_action&action=get_managers') ?>", function(response) {
                 if (response.success) {
-                    let html = '<option value="">Unassigned</option>';
-                    response.data.forEach(m => {
-                        html += `<option value="${m.id}">${m.name}</option>`;
-                    });
-                    $("#edit_branch_manager_id").html(html);
+                    managerPicker.setManagers(response.data);
                 }
             });
         }
@@ -93,11 +93,15 @@ ob_start();
             const start = (branchPage - 1) * branchPageSize;
             $('#branchesContainer').html(records.slice(start, start + branchPageSize).map(branch => `
                 <article class="branch-card">
-                    <div class="branch-cover"><img src="${escapeBranch(branch.full_image_url)}" alt="${escapeBranch(branch.name)}" loading="lazy"><span class="branch-status ${branch.status === 'Active' ? 'is-active' : ''}">${escapeBranch(branch.status)}</span></div>
-                    <div class="branch-details"><small>BRANCH #${escapeBranch(String(branch.id).padStart(3, '0'))}</small><h5>${escapeBranch(branch.name)}</h5>
-                    <p class="branch-manager">Manager: <strong>${escapeBranch(branch.manager_name || 'Unassigned')}</strong></p>
-                    <p>${escapeBranch(branch.address || 'No address provided')}</p><p>${escapeBranch(branch.phone || 'No phone provided')}</p>
-                    <div class="branch-card-actions"><button class="btn btn-light branch-delete" data-id="${Number(branch.id)}">Delete</button><button class="btn btn-primary branch-edit" data-id="${Number(branch.id)}">Configure</button></div></div>
+                    <div class="branch-cover"><img src="${escapeBranch(branch.full_image_url)}" alt="${escapeBranch(branch.name)}" loading="lazy" decoding="async"></div>
+                    <div class="branch-details">
+                        <div class="branch-card-meta"><small>BRANCH #${escapeBranch(String(branch.id).padStart(3, '0'))}</small><span class="branch-status ${branch.status === 'Active' ? 'is-active' : ''}"><span aria-hidden="true"></span>${escapeBranch(branch.status)}</span></div>
+                        <h5>${escapeBranch(branch.name)}</h5>
+                        <div class="branch-manager"><span class="material-symbols-outlined" aria-hidden="true">person</span><div><span>Branch manager</span><strong>${escapeBranch(branch.manager_name || 'Unassigned')}</strong></div></div>
+                        <div class="branch-contact"><span class="material-symbols-outlined" aria-hidden="true">location_on</span><p>${escapeBranch(branch.address || 'No address provided')}</p></div>
+                        <div class="branch-contact"><span class="material-symbols-outlined" aria-hidden="true">call</span><p>${escapeBranch(branch.phone || 'No phone provided')}</p></div>
+                        <div class="branch-card-actions"><button type="button" class="btn branch-view" data-id="${Number(branch.id)}" aria-label="View ${escapeBranch(branch.name)}"><span class="material-symbols-outlined" aria-hidden="true">visibility</span>View</button><button type="button" class="btn branch-delete" data-id="${Number(branch.id)}" aria-label="Delete ${escapeBranch(branch.name)}"><span class="material-symbols-outlined" aria-hidden="true">delete</span>Delete</button><button type="button" class="btn btn-primary branch-edit" data-id="${Number(branch.id)}" aria-label="Configure ${escapeBranch(branch.name)}"><span class="material-symbols-outlined" aria-hidden="true">tune</span>Configure</button></div>
+                    </div>
                 </article>`).join('') || '<div class="branches-empty">No branches match your search.</div>');
             $('#branchCountFooter').text(records.length ? `Showing ${start + 1}–${Math.min(start + branchPageSize, records.length)} of ${records.length} branches` : '0 branches');
             function pageButton(page, label, disabled, active, aria) {
@@ -125,6 +129,9 @@ ob_start();
 
         window.openCreateModal = function() {
             $("#editBranchForm")[0].reset();
+            managerPicker.close();
+            managerPicker.setValue('');
+            loadPotentialManagers();
             $("#edit_branch_id").val("");
             $("#modal_title").text("Add Branch");
             $("#modal_subtitle").text("Set up the location and assign your team.");
@@ -149,6 +156,9 @@ ob_start();
 
         window.editBranch = function(id) {
             $("#editBranchForm")[0].reset();
+            managerPicker.close();
+            managerPicker.setValue('');
+            loadPotentialManagers();
             $("#edit_branch_id").val(id);
             $("#modal_title").text("Edit Branch");
             $("#modal_subtitle").text("Update the location details and assigned team.");
@@ -179,7 +189,7 @@ ob_start();
                     $("#edit_branch_address").val(b.address);
                     $("#edit_branch_phone").val(b.phone);
                     $("#edit_branch_status").val(b.status);
-                    $("#edit_branch_manager_id").val(b.manager_id || "");
+                    managerPicker.setValue(b.manager_id || "");
                     $("#preview_name_text").text(b.name);
                     
                     if(b.full_image_url) {
@@ -256,15 +266,28 @@ ob_start();
             });
         });
 
-        window.deleteBranch = function(id, name) {
+        window.deleteBranch = async function(id, name) {
+            let validation;
+            try {
+                const response = await $.getJSON("<?= url('?route=ajax/branch_action&action=validate_delete') ?>", {id});
+                if (!response.success || !response.data) throw new Error('Validation unavailable');
+                validation = response.data;
+            } catch(error) {
+                Swal.fire({icon:'error',title:'Unable to validate branch',text:'Please try again. No branch was deleted.'});
+                return;
+            }
+            if (!validation.allowed) {
+                Swal.fire({icon:'info',title:'Branch cannot be deleted',html:'<p>This branch has linked records:</p><ul style="text-align:left">'+validation.reasons.map(reason=>'<li>'+escapeBranch(reason)+'</li>').join('')+'</ul><p>Keep the records and set the branch status to Offline instead.</p>',confirmButtonText:'Understood',customClass:{popup:'branch-confirm-dialog'}});
+                return;
+            }
             Swal.fire({
-                title: 'Decommission Branch?',
-                text: `You are about to remove ${name} from the active registry. This action is recorded in the executive logs.`,
+                title: 'Delete empty branch?',
+                text: `No linked records were found for ${name}. Deletion is permanent and will be validated again before proceeding.`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#5d87ff',
                 cancelButtonColor: '#191c1d',
-                confirmButtonText: 'Yes, Decommission',
+                confirmButtonText: 'Delete branch',
                 background: '#ffffff',
                 customClass: {
                     popup: 'branch-confirm-dialog',

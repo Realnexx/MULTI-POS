@@ -14,38 +14,14 @@ class AdminController {
         require_permission('view_dashboard');
         require_once __DIR__ . '/../models/Branch.php';
 
-        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
-        $all_branches = $is_admin ? Branch::get_all_active() : [];
-
-        // Determine which branch to display data for
-        $selected_branch = 'all'; // Default fallback
-        if ($is_admin) {
-            // Admin: use GET param, fallback to session, fallback to 'all'
-            $selected_branch = $_GET['branch'] ?? $_SESSION['dashboard_branch'] ?? 'all';
-            $_SESSION['dashboard_branch'] = $selected_branch; // persist selection
-        } else {
-            // Non-admin: locked to their own branch
-            $selected_branch = $_SESSION['user']['branch'] ?? null;
-        }
-
-        $branch_filter = ($selected_branch === 'all') ? null : $selected_branch;
-
-        // Date Range logic
-        $date_range = $_GET['date_range'] ?? null; // e.g., "2023-01-01 to 2023-01-07"
-        $start_date = null;
-        $end_date = null;
-
-        if ($date_range) {
-            $dates = explode(' to ', $date_range);
-            $start_date = $dates[0] ?? null;
-            $end_date = $dates[1] ?? $start_date; // fallback to start_date if single date
-        }
-
-        $stats        = Sale::get_dashboard_stats($branch_filter, $start_date, $end_date);
-        $recent_sales = Sale::get_recent_transactions(10, $branch_filter, $start_date, $end_date);
-        $low_stock    = Product::get_low_stock_products();
-        $top_selling  = Sale::get_top_selling_products(3, $branch_filter, $start_date, $end_date);
-
+        require_once __DIR__.'/../models/DashboardData.php';
+        try {
+            $dashboard=DashboardData::load($_GET['branch'] ?? $_SESSION['dashboard_branch'] ?? 'all',$_GET['date_range'] ?? null);
+        } catch(DomainException $error) { access_denied($error->getMessage()); }
+        extract($dashboard,EXTR_SKIP);
+        $is_admin=$can_choose_branch;
+        $all_branches=$can_choose_branch ? Branch::get_all_active() : [];
+        if($can_choose_branch) $_SESSION['dashboard_branch']=$selected_branch;
         require __DIR__ . '/../views/modules/dashboard.php';
     }
 
@@ -56,6 +32,11 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $action = $_POST['action'] ?? '';
             $this->validateUserAccess((int)($_POST['user_id'] ?? 0), (array)($_POST['roles'] ?? []), true);
+            if(in_array($action,['create','edit'],true)&&($action==='create'||!empty($_POST['password']))) {
+                require_once __DIR__.'/../models/AuthSecurity.php';
+                if($error=AuthSecurity::password_error($_POST['password']??'')){set_flash('danger',$error);redirect('?route=admin/users');}
+            }
+
             if ($action === 'create') {
                 $firstname = sanitize($_POST['firstname'] ?? '');
                 $middlename = sanitize($_POST['middlename'] ?? '');
@@ -74,12 +55,8 @@ class AdminController {
                     $image = $this->handleUserImage($_FILES['image'] ?? null);
                     $new_id = User::create($firstname, $middlename, $lastname, $extname, $username, $email, $password, $roles, $image);
                     if ($new_id) {
-                        // Set POS PIN — use provided value or default
-                        $pin = trim($_POST['pos_pin'] ?? '');
-                        if (!preg_match('/^\d{4}$/', $pin)) {
-                            $pin = '1234';
-                        }
-                        $GLOBALS['conn']->query("UPDATE users SET pos_pin = '" . $GLOBALS['conn']->real_escape_string($pin) . "' WHERE id = " . intval($new_id));
+                        $pin=trim($_POST['pos_pin']??'');
+                        if(preg_match('/^[0-9]{4}$/D',$pin)){require_once __DIR__.'/../models/SystemPolicy.php';SystemPolicy::setPin($new_id,$pin);}
                     }
                     User::log_activity($_SESSION['user']['id'], 'USER_CREATE', 'Created user: ' . $email);
                     ActivityLog::log('User Created', 'Created user: ' . $email . ' (ID: ' . $new_id . ')');
@@ -102,7 +79,7 @@ class AdminController {
                 // Handle POS PIN update
                 $pos_pin = trim($_POST['pos_pin'] ?? '');
                 if (!empty($pos_pin) && preg_match('/^\d{4}$/', $pos_pin)) {
-                    $GLOBALS['conn']->query("UPDATE users SET pos_pin = '" . $GLOBALS['conn']->real_escape_string($pos_pin) . "' WHERE id = " . intval($id));
+                    require_once __DIR__.'/../models/SystemPolicy.php';SystemPolicy::setPin($id,$pos_pin);
                 }
 
                 User::log_activity($_SESSION['user']['id'], 'USER_UPDATE', 'Updated user: ' . $email . ' (ID: ' . $id . ')');
@@ -413,6 +390,42 @@ class AdminController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $category = $_POST['setting_category'] ?? 'general';
             
+            if ($category === 'paymongo') {
+                require_once __DIR__.'/../models/PayMongo.php';
+                try {
+                    if(($_POST['paymongo']['action']??'')==='expire')PayMongo::expire($_POST['paymongo']['payment_id']??0,(int)$_SESSION['user']['id']);
+                    elseif(($_POST['paymongo']['action']??'')==='reconcile')PayMongo::reconcile($_POST['paymongo']['payment_id']??0,(int)$_SESSION['user']['id']);
+                    else PayMongo::save($_POST['paymongo'] ?? [],(int)$_SESSION['user']['id']);
+                    ActivityLog::log('Payment Settings Updated','PayMongo settings saved; no credentials logged.');
+                    $messages=['disable'=>'PayMongo disabled for new checkouts. Existing payments can still be verified.','reconcile'=>'Payment status checked.','expire'=>'Unpaid checkout expired. The order can now accept another payment.'];
+                    set_flash('success',$messages[$_POST['paymongo']['action']??'']??'PayMongo keys checked and available payment methods synchronized.');
+                } catch(DomainException $error) { set_flash('danger',$error->getMessage()); }
+                catch(Throwable $error) { error_log('PayMongo settings update failed.');set_flash('danger','Payment settings could not be saved. Existing configuration was kept.'); }
+                redirect('?route=admin/settings&tab=paymongo');
+            }
+
+            if ($category === 'backup') {
+                require_once __DIR__.'/../models/DatabaseBackup.php';
+                try {
+                    DatabaseBackup::authorize((int)$_SESSION['user']['id'],$_POST['current_password']??'');
+                    $action=$_POST['backup_action']??'';
+                    if($action==='save')DatabaseBackup::save($_POST['backup']??[]);
+                    elseif($action==='create')DatabaseBackup::create((int)$_SESSION['user']['id']);
+                    elseif($action==='verify')DatabaseBackup::verify($_POST['backup_id']??'');
+                    elseif($action==='download'||$action==='key') {
+                        $path=$action==='download'?DatabaseBackup::download($_POST['backup_id']??''):null;
+                        ActivityLog::log('Backup Download', $action==='key'?'Recovery key downloaded.':'Encrypted database backup downloaded.');
+                        header('Content-Type: application/octet-stream');header('Cache-Control: no-store, private');header('X-Content-Type-Options: nosniff');
+                        header('Content-Disposition: attachment; filename="'.($action==='key'?'pos-backup-recovery.key':basename($path)).'"');
+                        if($path)readfile($path);else echo DatabaseBackup::recoveryKey();exit;
+                    } else throw new DomainException('Unknown backup action.');
+                    ActivityLog::log('Database Backup', 'Backup action completed: '.$action);
+                    set_flash('success',$action==='verify'?'Restore verified on a temporary database. The live database was unchanged.':'Backup action completed successfully.');
+                }catch(DomainException $e){set_flash('danger',$e->getMessage());}
+                catch(Throwable $e){error_log('Database backup action failed: '.get_class($e));set_flash('danger','Backup action failed. Check storage, database permissions and the maintenance log.');}
+                redirect('?route=admin/settings&tab=backup');
+            }
+
             // Handle Password Update specifically
             if ($category === 'password') {
                 $current_pass = $_POST['current_password'] ?? '';
@@ -424,8 +437,8 @@ class AdminController {
                     set_flash('danger', 'Current password is incorrect.');
                 } elseif ($new_pass !== $confirm_pass) {
                     set_flash('danger', 'New passwords do not match.');
-                } elseif (strlen($new_pass) < 6) {
-                    set_flash('danger', 'New password must be at least 6 characters.');
+                } elseif ($passwordError = AuthSecurity::password_error($new_pass)) {
+                    set_flash('danger', $passwordError);
                 } else {
                     User::update_password($user['id'], $new_pass);
                     User::log_activity($user['id'], 'PASSWORD_CHANGE', 'User changed their own password.');
@@ -435,16 +448,22 @@ class AdminController {
                 redirect('?route=admin/settings&tab=password');
             }
 
-            // Handle User PIN updates specifically if they exist
-            if (isset($_POST['user_pins']) && is_array($_POST['user_pins'])) {
-                foreach ($_POST['user_pins'] as $user_id => $pin) {
-                    $user_id = (int)$user_id;
-                    $pin = substr($pin, 0, 6); // Updated to 6 digits
-                    $GLOBALS['conn']->query("UPDATE users SET pos_pin = '$pin' WHERE id = $user_id");
-                }
-            }
             $data = $_POST['settings'][$category] ?? [];
-            
+            if($category==='security') {
+                require_once __DIR__.'/../models/SystemPolicy.php';
+                try {SystemPolicy::saveSecurity($data,$_POST['user_pins']??[],$_POST['current_password']??'',(int)$_SESSION['user']['id']);ActivityLog::log('Security Settings Updated','Access policies and PINs updated; secrets omitted.');set_flash('success','Security policies updated. When 2FA is enabled, sign in again to verify or enroll your authenticator.');}
+                catch(DomainException $e){set_flash('danger',$e->getMessage());}
+                redirect('?route=admin/settings&tab=security');
+            }
+            if(in_array($category,['financial','pos'],true)) {
+                require_once __DIR__.'/../models/CheckoutPolicy.php';
+                try {CheckoutPolicy::save($category,$data);ActivityLog::log('Checkout Settings Updated','Updated '.$category.' configuration.');set_flash('success','Checkout settings updated. Existing receipts retain their saved values.');}
+                catch(DomainException $e){set_flash('danger',$e->getMessage());}
+                redirect('?route=admin/settings&tab='.$category);
+            }
+            if(!in_array($category,['general','appearance'],true)){set_flash('danger','Unknown settings category.');redirect('?route=admin/settings');}
+            $allowed=$category==='general'?['store_name','store_address','store_phone','store_email','store_logo','online_ordering_enabled','store_phone_alt','founder_name','founder_title','founder_quote','expansion_milestone']:['primary_color','secondary_color','font_family','theme','dark_mode','sidebar_color','layout_mode'];
+            $data=array_intersect_key($data,array_flip($allowed));
             if(isset($data['online_ordering_enabled']))$data['online_ordering_enabled']=$data['online_ordering_enabled']==='1'?'1':'0';
             // Handle logo upload if present
             if (isset($_FILES['store_logo']) && $_FILES['store_logo']['error'] === UPLOAD_ERR_OK) {

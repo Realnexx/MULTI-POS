@@ -111,14 +111,16 @@ class RecipeInventory
 
     public static function saveRecipe($id, array $ingredients)
     {
+        require_once __DIR__ . '/User.php';
         return self::atomic(function () use ($id, $ingredients) {
             $owner = self::product($id);
-            $branch = self::branch($owner['branch_id']);
+            if ($owner['branch_id'] === null && !User::has_all_branch_access($_SESSION['user']['id'])) throw new DomainException('Only Admin or Superadmin can edit an all-branches recipe.');
+            $branch = $owner['branch_id'] === null ? null : self::branch($owner['branch_id']);
             self::lockProducts(array_merge([$id], array_column($ingredients, 'ingredient_id')));
             $owner = self::product($id);
-            $branch = self::branch($owner['branch_id']);
+            $branch = $owner['branch_id'] === null ? null : self::branch($owner['branch_id']);
             if ($owner['product_type'] !== 'recipe') throw new DomainException('Only recipe products can have ingredients.');
-            if (!$ingredients) throw new DomainException('Add at least one ingredient before saving a burger recipe.');
+            if (!$ingredients) throw new DomainException('Add at least one ingredient before saving a recipe.');
             $seen = [];
             foreach ($ingredients as $row) {
                 $ing = (int) ($row['ingredient_id'] ?? 0);
@@ -163,6 +165,10 @@ class RecipeInventory
         }
         $changed=InventoryQuantity::unit($old['unit_type']) !== InventoryQuantity::unit($unit)
             || ($old['branch_id'] === null ? null : (int)$old['branch_id']) !== $branch;
+        if ($changed) {
+            require_once __DIR__.'/Purchasing.php';
+            Purchasing::protectOpenOrders($id);
+        }
         if ($changed && (self::rows('SELECT id FROM product_batches WHERE product_id = ? LIMIT 1 FOR UPDATE','i',[$id])
             || self::rows('SELECT id FROM product_recipes WHERE ingredient_product_id = ? LIMIT 1 FOR UPDATE','i',[$id]))) {
             throw new DomainException('Stock units and ownership cannot be changed after batches or recipes exist. Create a new item and reconcile explicitly.');
@@ -218,7 +224,7 @@ class RecipeInventory
     public static function recipe($id, $branch, $count)
     {
         $rows = self::rows('SELECT * FROM product_recipes WHERE recipe_product_id = ? ORDER BY ingredient_product_id' . (isset(self::$locked[(int)$id]) ? ' FOR UPDATE' : ''), 'i', [$id]);
-        if (!$rows) throw new DomainException('This burger has no recipe. Add ingredients first.');
+        if (!$rows) throw new DomainException('This product has no recipe. Add ingredients first.');
         $result = [];
         foreach ($rows as $row) {
             $ingredient = (int) $row['ingredient_product_id'];
@@ -300,7 +306,7 @@ class RecipeInventory
         $batches = self::rows($sql . ' ORDER BY created_at, id FOR UPDATE', $types, $params);
         $sum = 0;
         foreach ($batches as $batch) $sum += InventoryQuantity::parse($batch['quantity'], true);
-        if ($sum < $need) throw new DomainException($p['name'] . ': need ' . InventoryQuantity::format($need) . ' ' . $p['unit_type'] . ', available ' . InventoryQuantity::format($sum) . '.');
+        if ($sum < $need) throw new DomainException($p['name'] . ': need ' . number_format($need / InventoryQuantity::SCALE, 2, '.', '') . ' ' . $p['unit_type'] . ', available ' . number_format($sum / InventoryQuantity::SCALE, 2, '.', '') . '.');
         foreach ($batches as $batch) {
             if ($need <= 0) break;
             $available = InventoryQuantity::parse($batch['quantity'], true);
@@ -336,6 +342,9 @@ class RecipeInventory
 
     public static function adjust($id, $user, $action, $quantity, $remarks, $branch, $batch = null, $cost = null, $expiry = null, $price = null, $batchId = null, $key = null)
     {
+        if ($action==='stock_in' && self::product($id)['product_type']==='recipe') {
+            return self::adjustRecipeStock($id,$quantity,$user,$branch,$key ?: '',$remarks,($_POST['confirm_recipe_preparation'] ?? '')==='1',$expiry);
+        }
         return self::atomic(function () use ($id,$user,$action,$quantity,$remarks,$branch,$batch,$cost,$expiry,$price,$batchId,$key) {
             if (!in_array($action,['initial','stock_in','stock_out','waste'],true)) throw new DomainException('Invalid stock operation.');
             $branch = self::branch($branch);
@@ -343,7 +352,7 @@ class RecipeInventory
             $p = self::product($id);
             if ($p['branch_id'] !== null && (int)$p['branch_id'] !== (int)$branch) throw new DomainException('Product belongs to another branch.');
             if ($p['product_type'] === 'recipe' && $action !== 'waste' && $action !== 'stock_out') {
-                throw new DomainException('Use Prepare batch for finished burgers.');
+                throw new DomainException('Use Prepare batch for finished recipe products.');
             }
             $qty = InventoryQuantity::convert(InventoryQuantity::parse($quantity, $action === 'initial'),$p['unit_type'],$p['unit_type']);
             if ($qty === 0) { self::syncTotal($id); return true; }
@@ -352,6 +361,37 @@ class RecipeInventory
             if (in_array($action,['stock_out','waste'],true)) self::consume($id,$qty,$user,$branch,$op['id'],null,$action . ': ' . substr($remarks,0,50),$batchId);
             else self::receive($id,$qty,$user,$branch,$op['id'],$batch,$cost,$expiry,$price);
             self::complete($op['id'],$id,['remarks'=>$remarks]);
+            return true;
+        });
+    }
+
+    public static function adjustRecipeStock($id,$quantity,$user,$branch,$key,$remarks,$confirmed=false,$expiry=null)
+    {
+        require_once __DIR__.'/User.php';
+        if ((int)($_SESSION['user']['id'] ?? 0)!==(int)$user || !User::has_permission($user,'manage_inventory')) throw new DomainException('Inventory management permission is required.');
+        if (!preg_match('/^([1-9][0-9]{0,5})(?:\.0{1,2})?$/D',(string)$quantity) || (int)$quantity>100000) throw new DomainException('Enter a whole recipe stock quantity from 1 to 100000.');
+        if ($expiry && (!preg_match('/^\d{4}-\d{2}-\d{2}$/D',$expiry) || date('Y-m-d',strtotime($expiry))!==$expiry)) throw new DomainException('Enter a valid expiry date.');
+        $count=(int)$quantity;
+        return self::atomic(function () use ($id,$count,$user,$branch,$key,$remarks,$confirmed,$expiry) {
+            $branch=self::branch($branch);
+            if (!$branch) throw new DomainException('Choose a physical branch for the prepared stock.');
+            $op=self::operation('recipe_adjustment',$key,[$id,$count,$remarks,$confirmed,$expiry],$user,$branch);
+            if ($op['result_id']!==null) return true;
+            $needs=self::recipe($id,$branch,$count);
+            self::lockProducts(array_merge([$id],array_keys($needs)));
+            $product=self::product($id);
+            if ($product['product_type']!=='recipe' || !$product['is_sellable']) throw new DomainException('Create a sellable product from this recipe definition before preparing stock.');
+            if ($product['branch_id']!==null && (int)$product['branch_id']!==$branch) throw new DomainException('Product belongs to another branch.');
+            if (($product['recipe_mode'] ?? 'legacy')==='legacy') throw new DomainException('Reconcile this existing recipe in Edit Product before preparing stock.');
+            if ($product['recipe_mode']==='made_to_order') {
+                if (!$confirmed) throw new DomainException('Confirm preparation and the switch to finished-stock sales before adding recipe stock.');
+                if (!User::has_permission($user,'edit_product') || ($product['branch_id']===null && !User::has_all_branch_access($user))) throw new DomainException('A product manager must change this product to finished-stock mode first.');
+                self::setMode($id,'prepared_batch',false,true);
+            }
+            $batch=self::prepare($id,$count,$user,$branch,hash('sha256','manual-preparation:'.$key));
+            if ($expiry) self::query('UPDATE product_batches SET expiry_date=? WHERE id=?','si',[$expiry,$batch]);
+            self::syncTotal($id);
+            self::complete($op['id'],$batch,['product_id'=>$id,'quantity'=>$count,'remarks'=>$remarks,'expiry'=>$expiry]);
             return true;
         });
     }
@@ -412,18 +452,20 @@ class RecipeInventory
         return ['product'=>$p,'quantity'=>(int)$quantity,'price_cents'=>$price,'modifiers'=>$modifiers,'needs'=>$needs];
     }
 
-    public static function checkout($user, $branch, array $items, $discount, $tendered, $payment, $orderType, $key)
+    public static function checkout($user, $branch, array $items, $discount, $tendered, $payment, $orderType, $key, $requireDrawer=false)
     {
-        return self::atomic(function () use ($user,$branch,$items,$discount,$tendered,$payment,$orderType,$key) {
+        return self::atomic(function () use ($user,$branch,$items,$discount,$tendered,$payment,$orderType,$key,$requireDrawer) {
             global $conn;
             $branch = self::branch($branch);
             if (!$items) throw new DomainException('Cart is empty.');
             if (!in_array($orderType,['Dine-in','Take-out','Online'],true)) throw new DomainException('Invalid order type.');
-            if (!in_array($payment,['Cash','GCash','Card','Maya','Bank Transfer','Credit Card','Debit Card'],true)) throw new DomainException('Invalid payment method.');
+            require_once __DIR__.'/CheckoutPolicy.php';CheckoutPolicy::assertMethod($payment);
             $payload = [$items,(string)$discount,(string)$tendered,$payment,$orderType];
             $op = self::operation('sale',$key,$payload,$user,$branch);
             if ($op['result_id'] !== null) return (int)$op['result_id'];
             $quotes = []; $ids = [];
+            require_once __DIR__.'/CashShift.php';
+            $cashShift=CashShift::context($user,$branch,$requireDrawer);
             foreach ($items as $item) {
                 $quote = self::quoteItem((int)$item['product_id'],$item['quantity'],$item['modifiers'] ?? [],$branch);
                 $quotes[] = $quote;
@@ -448,14 +490,18 @@ class RecipeInventory
                     throw new DomainException($p['name'] . ': insufficient stock for this order.');
                 }
             }
-            $discountCents = self::cents($discount);
+            $eligible=0;foreach($quotes as $q)if(!empty($q['product']['is_discountable']))$eligible+=$q['price_cents']*$q['quantity'];
+            $financial=CheckoutPolicy::calculate($subtotal,$eligible,(string)$discount);
+            $discountCents=$financial['discount_cents'];
             $tenderCents = self::cents($tendered);
             if ($discountCents < 0 || $discountCents > $subtotal) throw new DomainException('Invalid discount.');
-            $final = $subtotal-$discountCents;
+            $final=$financial['total_cents'];
             if ($tenderCents < $final) throw new DomainException('Amount tendered is less than the current total.');
             self::query("INSERT INTO sales (cashier_id, branch_id, total_amount, discount_amount, final_amount, amount_tendered, change_amount, payment_method, order_type, status, request_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Completed', ?)",
                 'iissssssss',[$user,$branch,number_format($subtotal/100,2,'.',''),number_format($discountCents/100,2,'.',''),number_format($final/100,2,'.',''),number_format($tenderCents/100,2,'.',''),number_format(($tenderCents-$final)/100,2,'.',''),$payment,$orderType,$key]);
             $sale = $conn->insert_id;
+            CheckoutPolicy::receipt($sale,$financial);
+            CashShift::sale($cashShift,$sale,$payment,number_format($final/100,2,'.',''),$user);
             foreach ($quotes as $quote) {
                 self::query('INSERT INTO sales_items (sale_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)',
                     'iiiss',[$sale,$quote['product']['id'],$quote['quantity'],$quote['product']['price'],number_format($quote['price_cents']*$quote['quantity']/100,2,'.','')]);
@@ -478,6 +524,7 @@ class RecipeInventory
             $sales = self::rows('SELECT * FROM sales WHERE id = ? FOR UPDATE','i',[$saleId]);
             if (!$sales) throw new DomainException('Sale does not exist.');
             $sale=$sales[0]; $branch=self::branch($sale['branch_id']);
+            require_once __DIR__.'/PayMongo.php';PayMongo::assertLocalRefundAllowed($saleId);
             $op=self::operation('reversal',$key,[$saleId,$policy],$user,$branch);
             if ($op['result_id'] !== null) return true;
             if (self::rows('SELECT sale_id FROM inventory_reversals WHERE sale_id = ?','i',[$saleId])) throw new DomainException('Stock for this sale has already been reversed.');
@@ -496,10 +543,14 @@ class RecipeInventory
                 }
                 $finished[(int)$p['id']]=true;
             }
+            require_once __DIR__.'/CashShift.php';
+            CashShift::refund($sale,$user);
             $moves=self::rows('SELECT * FROM inventory_movements WHERE operation_id = ? AND quantity < 0 ORDER BY product_id,batch_id,id','i',[$original[0]['id']]);
             self::lockProducts(array_column($moves,'product_id'));
             foreach ($moves as $move) {
                 if ($policy === 'return_finished' && !isset($finished[(int)$move['product_id']])) continue;
+                $currentProduct=self::product($move['product_id']);
+                if ($currentProduct['branch_id'] !== null && (int)$currentProduct['branch_id'] !== (int)$branch) throw new DomainException('This product has moved to another branch. Reconcile its return with an inventory manager.');
                 $batch=self::rows('SELECT * FROM product_batches WHERE id = ? FOR UPDATE','i',[$move['batch_id']]);
                 if (!$batch || ($batch[0]['expiry_date'] && $batch[0]['expiry_date'] < date('Y-m-d'))) throw new DomainException('Original batch is missing or expired; record waste instead.');
                 $quantity=InventoryQuantity::parse(ltrim($move['quantity'],'-'));

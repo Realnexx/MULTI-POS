@@ -14,7 +14,7 @@ require __DIR__ . '/../partials/shop_open.php';
 <div class="signin-password-field"><label for="password">Password</label><div class="signin-password"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="72" placeholder="Enter your password" required><button type="button" id="togglePassword" aria-controls="password" aria-label="Show password" aria-pressed="false">Show</button></div><a class="signin-forgot" href="<?= url('?route=forgot_password') ?>">Forgot your password?</a></div>
 <button type="submit" class="button button-red" id="submitBtn"><span class="signin-button-label">Sign in</span><span aria-hidden="true">↗</span></button>
 </form>
-<p class="auth-session-note">For your security, you’ll be signed out after 30 minutes of inactivity.</p>
+<p class="auth-session-note">For your security, you’ll be signed out after <?= (int)(AuthSecurity::config()['idle_timeout']/60) ?> minutes of inactivity.</p>
 <p class="signin-register">New around here? <a href="<?= url('?route=register') ?>">Create an account ↗</a></p>
 <div class="signin-footnote"><span aria-hidden="true">✳</span><p>Same place. Same good taste.<br>A little more you.</p></div>
 </div></section></main>

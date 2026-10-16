@@ -24,3 +24,10 @@ node_modules/
 /assets/img/logo_*
 
 /config/mail.local.php
+
+/config/paymongo.key
+
+/config/backup.key
+/config/backups/
+
+/config/security.key

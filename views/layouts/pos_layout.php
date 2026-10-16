@@ -222,6 +222,7 @@
     </style>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= url('assets/css/pos-responsive.css') ?>?v=1">
     <meta name="csrf-token" content="<?= csrf_token() ?>">
     <!-- jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
@@ -242,8 +243,16 @@
     }
     </script>
 <link rel="stylesheet" href="<?= url('assets/css/print-actions.css') ?>">
+<?php if(!empty($_SESSION['pos_navigation'])): ?><meta name="pos-navigation" content="<?= htmlspecialchars($_SESSION['pos_navigation'],ENT_QUOTES,'UTF-8') ?>"><script>
+window.addEventListener('pageshow',event=>{if(event.persisted)location.reload();});
+document.addEventListener('DOMContentLoaded',()=>{
+ const mark=()=>{document.cookie='pos_navigation='+document.querySelector('meta[name="pos-navigation"]').content+'; Path=<?= APP_BASE_PATH ?>; Max-Age=60; SameSite=Strict'+(location.protocol==='https:'?'; Secure':'');};
+ document.addEventListener('click',event=>{const a=event.target.closest('a[href]');if(!a||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||a.target==='_blank')return;const u=new URL(a.href,location.href);if(u.origin===location.origin&&u.searchParams.get('route')==='pos'&&!u.searchParams.has('reset_branch')&&!u.searchParams.has('select_branch'))mark();},true);
+ document.addEventListener('submit',event=>{if(event.target.querySelector('input[name="route"][value="pos"]'))mark();},true);
+});
+</script><?php endif; ?>
 </head>
-<body class="bg-background text-on-background font-body-md h-screen flex flex-col overflow-hidden">
+<body class="pos-page bg-background text-on-background font-body-md h-screen flex flex-col overflow-hidden">
 <?php require_once __DIR__ . '/../partials/toast.php'; ?>
 <?php
 // Always resolve admin status first — needed for both the Switch button and modal data
@@ -299,9 +308,9 @@ if (!isset($branches)) {
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
 <!-- Top Navigation / Header -->
-<header class="h-20 flex items-center justify-between px-margin-desktop bg-surface border-b border-outline-variant border-opacity-35 shrink-0 z-20">
+<header class="pos-topbar h-20 flex items-center justify-between px-margin-desktop bg-surface border-b border-outline-variant border-opacity-35 shrink-0 z-20">
     <div class="flex items-center gap-md">
-<?php if(User::has_permission($_SESSION['user']['id'],'manage_online_orders')): ?>        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a><?php endif; ?>
+<?php require_once __DIR__.'/../../models/OnlineOrder.php'; if(OnlineOrder::can_view($_SESSION['user']['id'])): ?>        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a><?php endif; ?>
         <?php if(User::has_permission($_SESSION['user']['id'],'view_dashboard')): ?><a class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container hover:bg-primary-fixed text-primary font-bold text-xs text-decoration-none transition-all duration-300 border border-outline-variant border-opacity-25 shadow-xs cursor-pointer" href="<?= url('?route=dashboard') ?>">
             <span class="material-symbols-outlined text-[16px] font-bold">arrow_back</span>
             <span>Dashboard</span>
@@ -345,7 +354,7 @@ if (!isset($branches)) {
             </button>
         </div>
 
-        <div class="relative w-60 xl:w-72">
+        <div class="pos-search relative w-60 xl:w-72">
             <form action="<?= url('') ?>" method="GET" class="mb-0">
                 <input type="hidden" name="route" value="pos">
                 <?php if (!empty($_GET['category_id'])): ?>
@@ -353,7 +362,7 @@ if (!isset($branches)) {
                 <?php endif; ?>
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px] opacity-65">search</span>
                 <input class="w-full bg-surface-container-low border border-outline-variant border-opacity-40 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-xs text-on-surface font-body-md shadow-none transition-all duration-300"
-                       placeholder="Search menu..." type="text" name="search" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"/>
+                       aria-label="Search menu" placeholder="Search menu..." type="text" name="search" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"/>
             </form>
         </div>
 
@@ -366,6 +375,7 @@ if (!isset($branches)) {
     </div>
 </header>
 
+<?php require __DIR__.'/../partials/demo_notice.php'; ?>
 <!-- Main Content Canvas -->
 <?= $content ?? '' ?>
 

@@ -2,7 +2,11 @@
 class AuthSecurity {
     public static function config() {
         global $appConfig;
-        return array_merge(require __DIR__.'/../config/auth.php', $appConfig['auth'] ?? []);
+        require_once __DIR__.'/Setting.php';
+        $config=array_merge(require __DIR__.'/../config/auth.php', $appConfig['auth'] ?? []);
+        $minutes=Setting::get('session_timeout');
+        if($minutes!==null)$config['idle_timeout']=max(5,min(480,(int)$minutes))*60;
+        return $config;
     }
     public static function migrate($db) {
         $db->query("CREATE TABLE IF NOT EXISTS auth_rate_limits (bucket CHAR(64) PRIMARY KEY, attempts INT UNSIGNED NOT NULL DEFAULT 0, expires_at DATETIME NOT NULL, INDEX(expires_at)) ENGINE=InnoDB");
@@ -16,6 +20,8 @@ class AuthSecurity {
     public static function password_error($password) {
         if (!is_string($password) || mb_strlen($password, 'UTF-8') < 12) return 'Use at least 12 characters for your password.';
         if (strlen($password) > 72 || strpos($password,"\0") !== false) return 'This password is too long or contains an unsupported character. Try a shorter passphrase.';
+        require_once __DIR__.'/Setting.php';
+        if(Setting::get('strong_passwords','0')==='1' && (!preg_match('/[A-Z]/',$password)||!preg_match('/[a-z]/',$password)||!preg_match('/[0-9]/',$password)||!preg_match('/[^a-zA-Z0-9]/',$password)))return 'Use uppercase and lowercase letters, a number and a symbol, with at least 12 characters.';
         return null;
     }
     // Reserve a request atomically, with fixed windows unaffected by cookie clearing.
@@ -45,6 +51,11 @@ class AuthSecurity {
         $_SESSION['auth']=['started_at'=>time(),'last_activity'=>time(),'version'=>self::version($id)];
         unset($_SESSION['csrf_token']);
     }
+    public static function revoke_sessions($id) {
+        global $conn;
+        $stmt=$conn->prepare('INSERT INTO auth_user_security(user_id,token_version) VALUES (?,2) ON DUPLICATE KEY UPDATE token_version=token_version+1');
+        $stmt->bind_param('i',$id);$stmt->execute();$stmt->close();
+    }
     public static function issue_reset($id) {
         global $conn;$token=bin2hex(random_bytes(32));$hash=hash('sha256',$token);$ttl=(int)self::config()['reset_lifetime'];
         $conn->begin_transaction();
@@ -70,7 +81,7 @@ class AuthSecurity {
             $stmt=$conn->prepare('SELECT user_id FROM auth_password_resets WHERE token_hash=? AND used_at IS NULL AND expires_at>UTC_TIMESTAMP() FOR UPDATE');$stmt->bind_param('s',$hash);$stmt->execute();$row=$stmt->get_result()->fetch_assoc();$stmt->close();
             if(!$row){$conn->rollback();return false;}$id=(int)$row['user_id'];$passwordHash=password_hash($password,PASSWORD_BCRYPT);
             $stmt=$conn->prepare('UPDATE users SET password=? WHERE id=? AND deleted_at IS NULL');$stmt->bind_param('si',$passwordHash,$id);$stmt->execute();$changed=$stmt->affected_rows;$stmt->close();if(!$changed){$conn->rollback();return false;}
-            $stmt=$conn->prepare('INSERT INTO auth_user_security(user_id,token_version) VALUES (?,2) ON DUPLICATE KEY UPDATE token_version=token_version+1');$stmt->bind_param('i',$id);$stmt->execute();$stmt->close();
+            self::revoke_sessions($id);
             $stmt=$conn->prepare('UPDATE auth_password_resets SET used_at=UTC_TIMESTAMP() WHERE user_id=? AND used_at IS NULL');$stmt->bind_param('i',$id);$stmt->execute();$stmt->close();self::clear_limit('login-account','user:'.$id);$conn->commit();return true;
         }catch(Throwable $e){$conn->rollback();throw $e;}
     }

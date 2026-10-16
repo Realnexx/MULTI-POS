@@ -183,3 +183,6 @@ if (!function_exists('get_user_avatar')) {
 
 require_once __DIR__.'/../models/Monitoring.php';
 Monitoring::start();
+
+require_once __DIR__.'/../models/ErrorMonitor.php';
+ErrorMonitor::start();

@@ -1,0 +1,52 @@
+.staff-home { --staff-accent: #b60e3d; color: #252735; padding: 8px 0 24px; }
+.staff-home * { box-sizing: border-box; }
+.staff-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: clamp(24px, 4vw, 48px); border: 1px solid #eee3eb; border-radius: 24px; background: #fff; overflow: hidden; box-shadow: 0 8px 32px #4a153306; }
+.staff-hero-copy { min-width: 0; position: relative; z-index: 1; }
+.staff-eyebrow { display: flex; align-items: center; gap: 9px; margin: 0 0 18px; color: #9b2750; font-size: 11px; font-weight: 750; letter-spacing: 1.8px; text-transform: uppercase; }
+.staff-eyebrow > span { width: 7px; height: 7px; border-radius: 50%; background: #b60e3d; box-shadow: 0 0 0 4px #b60e3d0c; }
+.staff-home h1 { margin: 0 0 12px; font-size: clamp(26px, 3vw, 38px); font-weight: 750; line-height: 1.22; letter-spacing: -1.2px; overflow-wrap: anywhere; color: #252735; }
+.staff-heading-dot { color: var(--staff-accent); }
+.staff-intro { margin: 0 0 26px; font-size: 14px; line-height: 1.6; color: #7c7482; }
+.staff-branch { display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px 10px 12px; background: #ffffffd9; border: 1px solid #eee3eb; border-radius: 12px; max-width: 100%; }
+.staff-branch > .material-symbols-outlined { padding: 8px; border-radius: 9px; background: #f9edf2; color: #a82550; font-size: 22px; }
+.staff-branch > span:last-child { min-width: 0; }
+.staff-branch-label { display: block; margin-bottom: 2px; color: #8b7c87; font-size: 10px; letter-spacing: .5px; }
+.staff-branch strong { display: block; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+.staff-hero-art { flex: 0 0 180px; height: 180px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.staff-art-ring { position: absolute; inset: -26px; border-radius: 50%; border: 1px solid #a35eae12; box-shadow: 0 0 0 24px #a35eae05, 0 0 0 48px #a35eae04; }
+.staff-hero-art > .material-symbols-outlined { z-index: 1; display: grid; place-items: center; width: 96px; height: 96px; border-radius: 28px; transform: rotate(-6deg); background: #52657a; box-shadow: 0 16px 32px #8e245d26, inset 0 1px 0 #ffffff44; color: #fff; font-size: 48px; }
+.staff-art-caption { z-index: 1; color: #957b96; font-size: 11px; font-weight: 600; letter-spacing: .3px; }
+.staff-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 32px 0 16px; }
+.staff-section-heading h2 { margin: 0 0 5px; font-size: 18px; font-weight: 700; color: #252735; }
+.staff-section-heading p { margin: 0; color: #8b8290; font-size: 13px; }
+.staff-section-label { color: #a295a2; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+.staff-page-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.staff-page-card { display: flex; align-items: center; gap: 16px; min-height: 126px; padding: 24px; border: 1px solid #eae6ed; border-radius: 18px; background: #fff; color: #30303c; text-decoration: none; box-shadow: 0 3px 14px #31203303; transition: transform .18s, box-shadow .18s, border-color .18s; }
+.staff-page-card:hover { color: #b60e3d; border-color: #dba6bc; transform: translateY(-3px); box-shadow: 0 10px 26px #7c244010; }
+.staff-page-card:focus-visible { outline: 3px solid #8429c8; outline-offset: 4px; }
+.staff-page-icon { display: grid; place-items: center; width: 52px; height: 52px; flex-shrink: 0; background: #f6f2f8; border-radius: 15px; color: #915b9d; font-size: 25px; }
+.staff-page-copy { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.staff-page-copy strong { font-size: 16px; font-weight: 700; }
+.staff-page-copy > span { font-size: 12px; line-height: 1.6; color: #8b8290; }
+.staff-page-arrow { margin-left: auto; flex-shrink: 0; font-size: 20px; color: #b5a8b7; }
+.staff-page-primary { background: #334b66; border-color: transparent; box-shadow: 0 8px 22px #a71b621c; color: #fff; }
+.staff-page-primary .staff-page-icon { background: #ffffff1f; color: #fff; }
+.staff-page-primary .staff-page-copy > span { color: #ffffffe0; }
+.staff-page-primary .staff-page-arrow { color: #fff; }
+.staff-page-primary:hover { color: #fff; border-color: transparent; box-shadow: 0 12px 28px #a71b6230; }
+.staff-assignment { display: flex; gap: 14px; align-items: flex-start; margin: 24px 0 0; padding: 20px; background: #fff9ee; border: 1px solid #f2dfbd; border-radius: 16px; color: #805e2e; font-size: 13px; line-height: 1.6; }
+.staff-assignment p { margin: 4px 0 0; }
+@media (max-width: 767px) {
+    .staff-hero-art { display: none; }
+    .staff-hero { border-radius: 20px; }
+    .staff-section-heading { margin-top: 26px; }
+    .staff-page-card { padding: 20px; min-height: 112px; }
+}
+@media (max-width: 380px) {
+    .staff-home h1 { font-size: 25px; letter-spacing: -.7px; }
+    .staff-hero { padding: 22px; }
+    .staff-section-label { display: none; }
+    .staff-page-card { gap: 12px; padding: 16px; }
+    .staff-page-icon { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .staff-page-card { transition: none; } .staff-page-card:hover { transform: none; } }

@@ -7,7 +7,7 @@ class Product
     public static function get_all_ingredients()
     {
         require_once __DIR__ . '/User.php';
-        $sql="SELECT id,name,unit_type,cost_price FROM products WHERE (is_ingredient=1 OR product_type='ingredient') AND status='active' AND product_type!='recipe'";
+        $sql="SELECT id,name,unit_type,cost_price,branch_id FROM products WHERE (is_ingredient=1 OR product_type='ingredient') AND status='active' AND product_type!='recipe'";
         if (!User::has_all_branch_access($_SESSION['user']['id'] ?? 0)) {
             return RecipeInventory::rows($sql . ' AND (branch_id IS NULL OR branch_id = ?) ORDER BY name','i',[$_SESSION['user']['branch_id'] ?? null]);
         }
@@ -242,7 +242,11 @@ class Product
     {
         return RecipeInventory::atomic(function () use ($id) {
             $p=RecipeInventory::product($id); RecipeInventory::branch($p['branch_id']);
+            require_once __DIR__.'/StockTransfer.php';
+            if(StockTransfer::ready() && RecipeInventory::rows("SELECT i.id FROM stock_transfer_items i JOIN stock_transfers t ON t.id=i.transfer_id WHERE (i.source_product_id=? OR i.destination_product_id=?) AND t.status IN ('pending_approval','approved','dispatched') LIMIT 1",'ii',[$id,$id])) throw new DomainException('Complete or cancel open stock transfers before archiving this product.');
             RecipeInventory::lockProducts([$id]);
+            require_once __DIR__.'/Purchasing.php';
+            Purchasing::protectOpenOrders($id);
             if (RecipeInventory::rows('SELECT id FROM product_recipes WHERE ingredient_product_id = ? LIMIT 1 FOR UPDATE','i',[$id])
                 || RecipeInventory::rows('SELECT id FROM product_modifiers WHERE ingredient_product_id = ? AND is_active=1 LIMIT 1 FOR UPDATE','i',[$id])) {
                 throw new DomainException('Remove this ingredient from active recipes and extras before archiving it.');

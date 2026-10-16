@@ -12,6 +12,7 @@ const { chromium } = require('C:/Users/MIS-03/.cache/codex-runtimes/codex-primar
             window.requests = [];
             window.fetch = async (url, options) => {
                 requests.push({ url, action: options.body.get('action'), name: options.body.get('name'), token: options.body.get('csrf_token'), header: options.headers['X-Modal-Form'] });
+                await new Promise(resolve => { window.finishSave = resolve; });
                 return { ok: true, text: async () => JSON.stringify({ success: false, message: 'Add ingredients before saving a burger.' }) };
             };
             window.Swal = { fire: () => { throw new Error('Unexpected error dialog'); } };
@@ -24,7 +25,13 @@ const { chromium } = require('C:/Users/MIS-03/.cache/codex-runtimes/codex-primar
         await page.fill('[name=name]', 'Burger');
         await page.setInputFiles('[name=image]', { name: 'burger.png', mimeType: 'image/png', buffer: Buffer.from('selected-image') });
         await page.click('button');
+        assert.equal(await page.locator('button .spinner-border').count(), 1);
+        assert.equal(await page.locator('button').innerText(), 'Saving...');
+        assert.equal(await page.locator('button').isDisabled(), true);
+        await page.evaluate(() => finishSave());
         await page.waitForFunction(() => messages.some(m => m.message.includes('Add ingredients')));
+        assert.equal(await page.locator('button').innerText(), 'Save');
+        assert.equal(await page.locator('button .spinner-border').count(), 0);
         assert.equal(await page.inputValue('[name=name]'), 'Burger');
         assert.equal(await page.locator('.modal.show').count(), 1);
         assert.equal(await page.locator('button').isEnabled(), true);

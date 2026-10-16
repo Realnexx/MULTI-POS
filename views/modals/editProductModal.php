@@ -190,7 +190,7 @@
             <!-- Top Gradient Accent -->
             <div class="edit-modal-accent-bar"></div>
 
-            <form action="<?= url('?route=inventory/products') ?>" method="POST" enctype="multipart/form-data">
+            <form id="editProductForm" data-inline-validation novalidate action="<?= url('?route=inventory/products') ?>" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="product_id" id="edit_product_id">
@@ -364,15 +364,15 @@
                                         <div class="row g-2 mb-3">
                                             <div class="col-4">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.65rem; text-transform: uppercase;">Stock</label>
-                                                <input type="number" name="stock" id="edit_prod_stock" readonly title="Use stock adjustments to change stock" class="form-control text-center fw-800" style="font-size: 0.95rem;" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="stock" id="edit_prod_stock" readonly title="Use stock adjustments to change stock" class="form-control text-center fw-800" style="font-size: 0.95rem;" step="0.01" min="0">
                                             </div>
                                             <div class="col-4">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.65rem; text-transform: uppercase;">Low Alert</label>
-                                                <input type="number" name="low_stock_threshold" id="edit_prod_thresh" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #d97706;" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="low_stock_threshold" id="edit_prod_thresh" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #d97706;" step="0.01" min="0">
                                             </div>
                                             <div class="col-4">
                                                 <label class="form-label fw-700 text-muted mb-1 text-center d-block" style="font-size: 0.65rem; text-transform: uppercase;">Max Cap</label>
-                                                <input type="number" name="max_stock_threshold" id="edit_prod_max_thresh" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #5d87ff;" step="0.0001" min="0">
+                                                <input data-stock-summary type="number" name="max_stock_threshold" id="edit_prod_max_thresh" class="form-control text-center fw-800" style="font-size: 0.95rem; color: #5d87ff;" step="0.01" min="0">
                                             </div>
                                         </div>
                                         <div class="d-flex flex-wrap gap-2">
@@ -455,12 +455,13 @@
                                 <?php if ($is_admin): ?>
                                     <div class="col-md-4">
                                         <label class="form-label fw-700 text-muted mb-1" style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Assigned Branch</label>
-                                        <select name="branch_id" id="edit_prod_branch" class="form-select">
+                                        <select id="edit_prod_branch" class="form-select" disabled>
                                             <option value="">Global (All Branches)</option>
                                             <?php foreach ($branches as $branch): ?>
                                                 <option value="<?= $branch['id'] ?>"><?= htmlspecialchars($branch['name']) ?></option>
                                             <?php endforeach; ?>
                                         </select>
+                                        <div class="form-text">Use Transfer Branch to move this product.</div>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -559,10 +560,11 @@
                                     <option value="made_to_order">Made to order — consume ingredients at checkout</option>
                                     <option value="prepared_batch">Prepared batch — consume ingredients when a batch is prepared</option>
                                 </select>
-                                <p class="small text-muted mt-2 mb-1">Recipe quantities are for one burger. Saving a recipe does not change stock. Add ingredients as Raw Ingredient products first.</p>
-                                <div class="recipe-cost-preview small fw-bold" aria-live="polite">Select ingredients to estimate cost per burger.</div>
+                                <p class="small text-muted mt-2 mb-1">Recipe quantities are for one stock unit, including everything in an offer or bundle. Saving recipe changes does not change existing inventory. Use Prepare batch to create additional finished stock.</p>
+                                <div class="recipe-cost-preview small fw-bold" aria-live="polite">Select ingredients to estimate cost per stock unit.</div>
+                                <?php include __DIR__ . '/../partials/recipe_quantity_preview.php'; ?>
                                 <label class="small d-block my-2"><input type="checkbox" name="recipe_reconciled" value="1" id="recipe_reconciled"> I reviewed existing ingredient and finished stock before changing this mode.</label>
-                                <?php if (User::has_permission($_SESSION['user']['id'], 'manage_inventory')): ?>
+                                <?php if (User::has_permission($_SESSION['user']['id'], 'prepare_recipe_stock')): ?>
                                 <div class="d-flex gap-2 align-items-end mt-3">
                                     <label class="small">Batch quantity<input type="number" class="form-control" id="prepare_recipe_quantity" value="1" min="1" step="1"></label>
                                     <button type="button" class="btn btn-outline-primary" id="prepare_recipe_batch">Prepare batch</button>

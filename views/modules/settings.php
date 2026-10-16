@@ -35,6 +35,8 @@ ob_start();
                         </div>
                     </button>
 
+                    <button class="nav-link <?= $active_tab==='paymongo'?'active':'' ?> d-flex align-items-center gap-3 py-3 px-4 mb-2" data-bs-toggle="pill" data-bs-target="#tab-paymongo" type="button"><div class="nav-icon-wrap"><span class="material-symbols-outlined">account_balance_wallet</span></div><div class="text-start"><div class="nav-label">PayMongo</div><div class="nav-desc text-muted small">Online payments & methods</div></div></button>
+
                     <button class="nav-link <?= $active_tab === 'financial' ? 'active' : '' ?> d-flex align-items-center gap-3 py-3 px-4 mb-2"
                         data-bs-toggle="pill" data-bs-target="#tab-financial" type="button">
                         <div class="nav-icon-wrap"><span class="material-symbols-outlined">payments</span></div>
@@ -71,6 +73,8 @@ ob_start();
                         </div>
                     </button>
 
+                    <button class="nav-link <?= $active_tab==='backup'?'active':'' ?> d-flex align-items-center gap-3 py-3 px-4 mb-2" data-bs-toggle="pill" data-bs-target="#tab-backup" type="button"><div class="nav-icon-wrap"><span class="material-symbols-outlined">backup</span></div><div class="text-start"><div class="nav-label">Database backups</div><div class="nav-desc text-muted small">Schedule, recovery, verification</div></div></button>
+
                     <button class="nav-link <?= $active_tab === 'password' ? 'active' : '' ?> d-flex align-items-center gap-3 py-3 px-4"
                         data-bs-toggle="pill" data-bs-target="#tab-password" type="button">
                         <div class="nav-icon-wrap"><span class="material-symbols-outlined">lock_reset</span></div>
@@ -86,6 +90,8 @@ ob_start();
         <!-- Content Area -->
         <div class="col-xl-9 col-lg-8">
             <div class="tab-content">
+                <?php require __DIR__.'/../partials/paymongo_settings.php'; ?>
+                <?php require __DIR__.'/../partials/backup_settings.php'; ?>
 
                 <!-- GENERAL SETTINGS -->
                 <div class="tab-pane fade <?= $active_tab === 'general' ? 'show active' : '' ?>" id="tab-general">
@@ -198,7 +204,10 @@ ob_start();
                 <!-- FINANCIAL SETTINGS -->
                 <div class="tab-pane fade <?= $active_tab === 'financial' ? 'show active' : '' ?>" id="tab-financial">
                     <form action="<?= url('?route=admin/settings') ?>" method="POST">
-                        <input type="hidden" name="setting_category" value="financial">
+                        <input type="hidden" name="setting_category" value="financial"><input type="hidden" name="settings[financial][tax_mode]" value="exclusive">
+<div class="card p-3 mb-3"><h5>Checkout rules</h5><p class="text-muted small">Applies to new POS sales and online orders. Tax is calculated after discount. Service charge applies to the discounted listed price; tax does not apply to the service charge. Enable only after reviewing your business rules. Currency is PHP for payment compatibility.</p>
+<?php foreach(['tax_enabled'=>'Apply configured tax','service_charge_enabled'=>'Apply service charge','discount_enabled'=>'Allow eligible product discounts'] as $key=>$label): ?><label class="mb-2"><input type="checkbox" name="settings[financial][<?= $key ?>]" value="1" <?= ($all_settings['financial'][$key]??($key==='discount_enabled'?'1':'0'))==='1'?'checked':'' ?>> <?= $label ?></label><?php endforeach; ?>
+<label for="discount-cap">Maximum discount on eligible items (%)</label><input id="discount-cap" class="form-control" type="number" min="0" max="100" step="0.01" name="settings[financial][discount_max_percent]" value="<?= htmlspecialchars($all_settings['financial']['discount_max_percent']??'100',ENT_QUOTES) ?>" required><small class="text-muted">Products marked non-discountable are excluded. The cashier enters an amount; this percentage caps it.</small></div>
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
                         <div class="settings-section-card p-4">
@@ -211,29 +220,7 @@ ob_start();
                                 <div class="col-md-12">
                                     <div class="premium-input-group">
                                         <label class="small fw-semibold text-muted mb-2">Primary Currency</label>
-                                        <select name="settings[financial][currency_combined]" class="form-select premium-field" onchange="updateCurrencyFields(this)">
-                                            <?php
-                                            $currencies = [
-                                                ['code' => 'PHP', 'name' => 'Philippine Peso', 'symbol' => '₱'],
-                                                ['code' => 'USD', 'name' => 'US Dollar', 'symbol' => '$'],
-                                                ['code' => 'EUR', 'name' => 'Euro', 'symbol' => '€'],
-                                                ['code' => 'GBP', 'name' => 'British Pound', 'symbol' => '£'],
-                                                ['code' => 'JPY', 'name' => 'Japanese Yen', 'symbol' => '¥'],
-                                                ['code' => 'SGD', 'name' => 'Singapore Dollar', 'symbol' => 'S$'],
-                                                ['code' => 'AUD', 'name' => 'Australian Dollar', 'symbol' => 'A$'],
-                                                ['code' => 'CAD', 'name' => 'Canadian Dollar', 'symbol' => 'C$']
-                                            ];
-                                            $current_symbol = $all_settings['financial']['currency_symbol'] ?? '₱';
-                                            foreach ($currencies as $curr):
-                                                $selected = ($current_symbol === $curr['symbol']) ? 'selected' : '';
-                                            ?>
-                                                <option value="<?= $curr['symbol'] ?>|<?= $curr['name'] ?>" <?= $selected ?>>
-                                                    <?= $curr['code'] ?> (<?= $curr['symbol'] ?>) - <?= $curr['name'] ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <input type="hidden" name="settings[financial][currency_symbol]" id="hidden_curr_symbol" value="<?= $all_settings['financial']['currency_symbol'] ?? '₱' ?>">
-                                        <input type="hidden" name="settings[financial][currency_name]" id="hidden_curr_name" value="<?= $all_settings['financial']['currency_name'] ?? 'Philippine Peso' ?>">
+                                        <input class="form-control" value="PHP — Philippine Peso" readonly aria-label="Currency"><small class="text-muted">Sales and PayMongo payments use Philippine pesos.</small>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -263,8 +250,8 @@ ob_start();
                                                 <label class="form-check-label fw-bold small" for="taxInclusive">Prices include Tax</label>
                                                 <p class="text-muted small mb-0">Check if your product prices already include the tax amount.</p>
                                             </div>
-                                            <input class="form-switch-input" type="checkbox" name="settings[financial][tax_inclusive]" id="taxInclusive"
-                                                value="1" <?= ($all_settings['financial']['tax_inclusive'] ?? '1') == '1' ? 'checked' : '' ?>>
+                                            <input class="form-switch-input" type="checkbox" name="settings[financial][tax_mode]" id="taxInclusive"
+                                                value="inclusive" <?= ($all_settings['financial']['tax_mode'] ?? 'exclusive') === 'inclusive' ? 'checked' : '' ?>>
                                         </div>
                                     </div>
                                 </div>
@@ -282,7 +269,7 @@ ob_start();
                 <!-- POS SETTINGS -->
                 <div class="tab-pane fade <?= $active_tab === 'pos' ? 'show active' : '' ?>" id="tab-pos">
                     <form action="<?= url('?route=admin/settings') ?>" method="POST">
-                        <input type="hidden" name="setting_category" value="pos">
+                        <input type="hidden" name="setting_category" value="pos"><div class="card p-3 mb-3"><h5>Manual payment methods</h5><p class="text-muted small">Enable methods staff can record at the POS and online-order counter. These record payments received separately; PayMongo remains online only.</p><?php require_once __DIR__.'/../../models/CheckoutPolicy.php';foreach(['Cash','GCash','Card','Maya','Bank Transfer','Credit Card','Debit Card'] as $method): ?><label class="me-3 mb-2"><input type="checkbox" name="settings[pos][manual_payment_methods][]" value="<?= htmlspecialchars($method,ENT_QUOTES) ?>" <?= in_array($method,CheckoutPolicy::methods(),true)?'checked':'' ?>> <?= htmlspecialchars($method) ?></label><?php endforeach; ?></div>
                         <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
 
                         <div class="settings-section-card p-4">
@@ -417,15 +404,15 @@ ob_start();
                                                 <p class="text-muted small mb-0">Requires symbols, numbers, and uppercase for new accounts.</p>
                                             </div>
                                             <input class="form-switch-input" type="checkbox" name="settings[security][strong_passwords]" id="enforceStrongPass"
-                                                value="1" <?= ($all_settings['security']['strong_passwords'] ?? '1') == '1' ? 'checked' : '' ?>>
+                                                value="1" <?= ($all_settings['security']['strong_passwords'] ?? '0') == '1' ? 'checked' : '' ?>>
                                         </div>
                                     </div>
 
                                     <div class="p-3 rounded-4 bg-light bg-opacity-50 border">
                                         <div class="form-check form-switch d-flex align-items-center justify-content-between">
                                             <div>
-                                                <label class="form-check-label fw-bold small" for="twoFactorPrompt">Enable 2FA Prompt</label>
-                                                <p class="text-muted small mb-0">Request secondary verification for administrative roles.</p>
+                                                <label class="form-check-label fw-bold small" for="twoFactorPrompt">Require authenticator verification</label>
+                                                <p class="text-muted small mb-0">Administrative accounts must verify an authenticator code. First sign-in enrolls the device and supplies recovery codes.</p>
                                             </div>
                                             <input class="form-switch-input" type="checkbox" name="settings[security][2fa_enabled]" id="twoFactorPrompt"
                                                 value="1" <?= ($all_settings['security']['2fa_enabled'] ?? '0') == '1' ? 'checked' : '' ?>>
@@ -437,19 +424,7 @@ ob_start();
                                     <hr class="my-2">
                                 </div>
 
-                                <div class="col-md-12">
-                                    <div class="premium-input-group">
-                                        <label class="small fw-semibold text-muted mb-2">Update Admin Secret Key</label>
-                                        <div class="input-group">
-                                            <input type="password" name="settings[security][admin_key]" maxlength="6" class="form-control premium-field"
-                                                placeholder="6-digit Key" value="<?= $all_settings['security']['admin_key'] ?? '' ?>">
-                                            <button class="btn btn-link text-muted border-0 px-3" type="button" onclick="togglePassword(this)" style="text-decoration: none;">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted">Used for critical overrides and terminal access.</small>
-                                    </div>
-                                </div>
+                                <div class="col-12"><label class="form-label" for="security-confirm">Current account password</label><input type="password" id="security-confirm" name="current_password" class="form-control" autocomplete="current-password" required><p class="text-muted small">Required to change access policies or PINs. Leave PIN fields blank to keep the current PIN.</p></div>
 
                                 <div class="col-12">
                                     <hr class="my-2">
@@ -466,11 +441,12 @@ ob_start();
                                                 <div class="form-check form-switch d-flex align-items-center justify-content-between">
                                                     <div>
                                                         <label class="form-check-label fw-bold small" for="requirePosPin">Require PIN for Cashiers</label>
-                                                        <p class="text-muted small mb-0">Ask for 6-digit PIN before launching POS.</p>
+                                                        <p class="text-muted small mb-0">Ask for 4-digit PIN before launching POS.</p>
                                                     </div>
                                                     <input class="form-switch-input" type="checkbox" name="settings[security][require_pos_pin]" id="requirePosPin"
-                                                        value="1" <?= ($all_settings['security']['require_pos_pin'] ?? '0') == '1' ? 'checked' : '' ?>>
+                                                        value="1" <?= ($all_settings['security']['require_pos_pin'] ?? '1') == '1' ? 'checked' : '' ?>>
                                                 </div>
+                                                <div class="mt-3"><label for="stockTransferApproval" class="form-label fw-bold small">Stock transfer approval</label><select id="stockTransferApproval" name="settings[security][stock_transfer_require_approval]" class="form-select"><option value="1" <?= ($all_settings['security']['stock_transfer_require_approval'] ?? '1')==='1' ? 'selected' : '' ?>>Require approval before dispatch</option><option value="0" <?= ($all_settings['security']['stock_transfer_require_approval'] ?? '1')==='0' ? 'selected' : '' ?>>Dispatch without approval</option></select><p class="text-muted small">Applies to new requests. Receiving confirmation is always required.</p></div>
                                                 <p class="text-danger small mt-2 fw-bold mb-0">
                                                     <i class="fa-solid fa-circle-info me-1"></i> Cashiers should have their unique PINs set in "User Management".
                                                 </p>
@@ -478,10 +454,10 @@ ob_start();
                                             <div class="col-md-5">
                                                 <div class="premium-input-group">
                                                     <label class="small fw-semibold text-muted mb-1">Master Override PIN</label>
-                                                    <input type="password" maxlength="6" name="settings[security][master_pos_pin]" class="form-control premium-field text-center fw-bold"
+                                                    <input type="password" maxlength="4" name="settings[security][master_pos_pin]" class="form-control premium-field text-center fw-bold"
                                                         style="letter-spacing: 5px; font-size: 18px;"
-                                                        placeholder="000000" value="<?= $all_settings['security']['master_pos_pin'] ?? '123456' ?>">
-                                                    <small class="text-muted">Master PIN can access any terminal.</small>
+                                                        placeholder="New 4-digit PIN" value="">
+                                                    <small class="text-muted">Override available to settings administrators only.</small>
                                                 </div>
                                             </div>
                                             <div class="col-12">
@@ -512,10 +488,10 @@ ob_start();
                                                                         <td class="border-0"><span class="badge bg-light text-dark fw-normal"><?= htmlspecialchars($cashier['branch_name'] ?? 'Unassigned') ?></span></td>
                                                                         <td class="border-0 font-body-md fw-600 text-dark"><?= htmlspecialchars($cashier['name']) ?></td>
                                                                          <td class="border-0">
-                                                                            <input type="password" maxlength="6" name="user_pins[<?= $cashier['id'] ?>]"
+                                                                            <input type="password" maxlength="4" name="user_pins[<?= $cashier['id'] ?>]"
                                                                                 class="form-control form-control-sm text-center fw-bold premium-field"
                                                                                 style="letter-spacing: 3px;"
-                                                                                placeholder="------" value="<?= htmlspecialchars($cashier['pos_pin'] ?? '') ?>"
+                                                                                placeholder="New PIN" value=""
                                                                                 onfocus="this.type='text'" onblur="this.type='password'">
                                                                         </td>
                                                                     </tr>
@@ -560,9 +536,9 @@ ob_start();
                                         <label class="small fw-semibold text-muted mb-2">System Primary Color</label>
                                         <div class="d-flex gap-3">
                                             <input type="color" name="settings[appearance][primary_color]" class="form-control form-control-color border-0 p-0 rounded-circle overflow-hidden shadow-sm"
-                                                style="width: 48px; height: 48px;" value="<?= $all_settings['appearance']['primary_color'] ?? '#ff4d6d' ?>">
+                                                style="width: 48px; height: 48px;" value="<?= $all_settings['appearance']['primary_color'] ?? '#0891b2' ?>">
                                             <div class="flex-grow-1">
-                                                <input type="text" class="form-control premium-field" value="<?= $all_settings['appearance']['primary_color'] ?? '#ff4d6d' ?>" readonly>
+                                                <input type="text" class="form-control premium-field" value="<?= $all_settings['appearance']['primary_color'] ?? '#0891b2' ?>" readonly>
                                                 <small class="text-muted">Used for buttons, links, and accents.</small>
                                             </div>
                                         </div>
@@ -678,15 +654,15 @@ ob_start();
     }
 
     .settings-nav .nav-link:hover {
-        background: rgba(255, 77, 109, 0.05);
-        border-color: rgba(255, 77, 109, 0.1);
+        background: rgba(8, 145, 178, 0.05);
+        border-color: rgba(8, 145, 178, 0.1);
     }
 
     .settings-nav .nav-link.active {
         background: #ffffff !important;
-        border: 2px solid #ff4d6d !important;
-        color: #ff4d6d !important;
-        box-shadow: 0 10px 30px rgba(255, 77, 109, 0.08);
+        border: 2px solid #0891b2 !important;
+        color: #0891b2 !important;
+        box-shadow: 0 10px 30px rgba(8, 145, 178, 0.08);
     }
 
     .nav-icon-wrap {
@@ -702,7 +678,7 @@ ob_start();
     }
 
     .settings-nav .nav-link.active .nav-icon-wrap {
-        background: #ff4d6d;
+        background: #0891b2;
         color: #fff;
     }
 
@@ -780,8 +756,8 @@ ob_start();
     }
 
     .premium-field:focus {
-        border-color: #ff4d6d;
-        box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.1);
+        border-color: #0891b2;
+        box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1);
         background: #fff;
         outline: none;
     }
@@ -802,14 +778,14 @@ ob_start();
         right: 5px;
         width: 36px;
         height: 36px;
-        background: #ff4d6d;
+        background: #0891b2;
         color: #fff;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 2px 10px rgba(255, 77, 109, 0.3);
+        box-shadow: 0 2px 10px rgba(8, 145, 178, 0.3);
         transition: all 0.2s;
     }
 
@@ -820,17 +796,17 @@ ob_start();
 
     /* Buttons */
     .btn-premium-main {
-        background: linear-gradient(135deg, #ff4d6d, #7209b7);
+        background: #0891b2;
         color: #fff;
         border: none;
         border-radius: 12px;
         transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(255, 77, 109, 0.3);
+        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
     }
 
     .btn-premium-main:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(255, 77, 109, 0.4);
+        box-shadow: 0 8px 25px rgba(8, 145, 178, 0.4);
         color: #fff;
     }
 
@@ -854,7 +830,7 @@ ob_start();
     }
 
     .form-switch-input:checked {
-        background: #ff4d6d;
+        background: #0891b2;
     }
 
     .form-switch-input::before {

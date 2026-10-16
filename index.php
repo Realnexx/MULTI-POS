@@ -61,6 +61,9 @@ switch ($route) {
         $websiteController->cart();
         break;
     case 'cart/checkout': $websiteController->checkout(); break;
+    case 'orders/cancel_payment': $websiteController->cancel_order_payment(); break;
+    case 'orders/pay': $websiteController->pay_order(); break;
+    case 'orders/verify_payment': $websiteController->verify_order_payment(); break;
     case 'orders': $websiteController->orders(); break;
     case 'order_tracking': $websiteController->order_tracking(); break;
     case 'admin/online_orders':
@@ -105,6 +108,9 @@ switch ($route) {
     // Admin Dashboard & Management Routes
     case 'admin/start':
         $context = User::access_context($_SESSION['user']['id']);
+        if (($context['global'] || $context['branch_id']) && User::has_permission($_SESSION['user']['id'], 'view_dashboard')) {
+            redirect('?route=dashboard');
+        }
         require __DIR__ . '/views/modules/staff_start.php';
         break;
     case 'dashboard':
@@ -172,6 +178,10 @@ switch ($route) {
     case 'pos':
         $posController->index();
         break;
+    case 'pos/shifts':
+        require_once __DIR__.'/controllers/CashShiftController.php';
+        (new CashShiftController())->page();
+        break;
     case 'pos/history':
         $posController->history();
         break;
@@ -189,6 +199,18 @@ switch ($route) {
         break;
 
     // Inventory Management Routes
+    case 'inventory/suppliers':
+    case 'inventory/purchases':
+    case 'inventory/purchase_reports':
+        require_once __DIR__.'/controllers/PurchasingController.php';
+        (new PurchasingController())->page($route);
+        break;
+    case 'inventory/recipes':
+        $inventoryController->recipes();
+        break;
+    case 'inventory/transfers':
+        $inventoryController->transfers();
+        break;
     case 'inventory/products':
         $inventoryController->products();
         break;
@@ -208,6 +230,12 @@ switch ($route) {
     // AJAX Endpoints Dispatch
     case 'ajax/pos_cart':
         require __DIR__ . '/ajax/pos_cart.php';
+        break;
+    case 'ajax/cash_shift_audit':
+        require __DIR__.'/ajax/cash_shift_audit.php';
+        break;
+    case 'ajax/pos_drawer':
+        require __DIR__.'/ajax/pos_drawer.php';
         break;
     case 'ajax/inventory_action':
         require __DIR__ . '/ajax/inventory_action.php';

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/../config/db.php';
 
 function require_login() {
+    require_once __DIR__.'/session.php';enforce_session_timeout();
     if (empty($_SESSION['user'])) {
         set_flash('danger', 'Please log in to access this page.');
         redirect('?route=login');
