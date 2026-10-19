@@ -632,7 +632,7 @@ class AdminController {
                 '<code class="small text-secondary bg-light px-2 py-1 rounded">' . htmlspecialchars($l['ip_address']) . '</code>',
                 // Timestamp
                 '<div class="text-dark fw-medium small">' . date('M d, Y', strtotime($l['created_at'])) . '</div>
-                 <div class="text-muted smaller" style="font-size: 10px;">' . date('h:i:s A', strtotime($l['created_at'])) . '</div>'
+                 <div class="text-muted smaller" style="font-size: 10px;">' . date('h:i:s A', strtotime($l['created_at'])) . ' PHT</div>'
             ];
         }
 

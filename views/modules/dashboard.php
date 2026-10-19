@@ -791,7 +791,7 @@ ob_start();
                 <div class="aurora-card-header">
                     <div>
                         <div class="aurora-card-title">System Activity</div>
-                        <div class="aurora-card-subtitle">Recent actions &amp; events</div>
+                        <div class="aurora-card-subtitle">Recent actions &amp; events · Philippine time (UTC+8)</div>
                     </div>
                     <?php if(User::has_permission($_SESSION['user']['id'],'view_activity_logs')): ?><a href="<?= url('?route=admin/activity_logs') ?>"
                         class="text-primary fw-semibold text-decoration-none" style="font-size:0.8rem;">View All</a><?php endif; ?>
@@ -829,7 +829,7 @@ ob_start();
                                             <span class="dash-tl-time">by
                                                 <?= htmlspecialchars($act['user_name'] ?? 'System') ?></span>
                                         </div>
-                                        <div class="dash-tl-time ms-2"><?= date('h:i A', strtotime($act['created_at'])) ?></div>
+                                        <div class="dash-tl-time ms-2"><?= date('M d, Y', strtotime($act['created_at'])) . '<br>' . date('h:i:s A', strtotime($act['created_at'])) . ' PHT' ?></div>
                                     </li>
                                 <?php endforeach; ?>
                             <?php endif; ?>

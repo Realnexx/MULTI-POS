@@ -146,7 +146,8 @@ ob_start();
     <div class="d-flex align-items-center justify-content-between mb-4" data-aos="fade-down" data-aos-duration="600">
         <div>
             <h4 class="fw-bold outfit-font text-dark mb-1">System Activity Logs</h4>
-            <p class="text-muted small mb-0">Complete audit trail of administrative and user-level events.</p>
+            <p class="small text-muted mb-2">Event times shown in Philippine time (UTC+8).</p>
+<p class="text-muted small mb-0">Complete audit trail of administrative and user-level events.</p>
         </div>
         <div class="d-flex gap-2 d-print-none">
             <button type="button" onclick="printAudit()" class="btn btn-outline-primary rounded-pill px-4 fw-semibold d-flex align-items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-sm">

@@ -200,7 +200,7 @@ $date_to = $_GET['date_to'] ?? 'Now';
                     <td><span class="badge-action"><?= htmlspecialchars($log['action'] ?? '') ?></span></td>
                     <td class="text-muted"><?= htmlspecialchars($log['description'] ?? '') ?></td>
                     <td><code><?= htmlspecialchars($log['ip_address'] ?? '0.0.0.0') ?></code></td>
-                    <td class="fw-medium"><?= date('M d, Y h:i A', strtotime($log['created_at'])) ?></td>
+                    <td class="fw-medium"><?= date('M d, Y h:i:s A', strtotime($log['created_at'])) . ' PHT' ?></td>
                 </tr>
                 <?php endforeach; ?>
                 <?php if (empty($logs)): ?>

@@ -282,8 +282,9 @@ class User {
     public static function log_activity($user_id, $action, $description = null) {
         global $conn;
         $ip = $_SERVER['REMOTE_ADDR'] ?? null;
-        $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action, description, ip_address) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isss", $user_id, $action, $description, $ip);
+        $stmt = $conn->prepare("INSERT INTO activity_logs (user_id, action, description, ip_address, created_at) VALUES (?, ?, ?, ?, ?)");
+        $event_time=(new DateTimeImmutable('now',new DateTimeZone('Asia/Manila')))->format('Y-m-d H:i:s');
+        $stmt->bind_param("issss", $user_id, $action, $description, $ip,$event_time);
         $result = $stmt->execute();
         $stmt->close();
         return $result;
