@@ -47,3 +47,19 @@
 .staff-sidebar .sidebar-nav .sidebar-link.active .hide-menu {color:#007d99!important;filter:none!important;}
 .staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link:hover,
 .staff-sidebar .sidebar-nav .sidebar-item>.sidebar-link.active:hover {background:#cef1fa!important;color:#007d99!important;}
+
+/* One shared color for the selected label, icon, chevron and marker. */
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link,
+.staff-sidebar .sidebar-nav .sidebar-link.active,
+.staff-sidebar .sidebar-nav .sidebar-link[aria-current=page]{color:#007d99!important;background:#e0f7fc!important}
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link :is(iconify-icon,i,svg,span),
+.staff-sidebar .sidebar-nav .sidebar-link.active :is(iconify-icon,i,svg,span){color:inherit!important}
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link::before,
+.staff-sidebar .sidebar-nav .sidebar-link.active::before{display:none!important}
+.staff-sidebar .sidebar-nav .sidebar-link.active::after,
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link::after{border-color:currentColor!important;color:inherit!important}
+.staff-sidebar .sidebar-nav .sidebar-link.active .icon-small,
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link .icon-small{background:currentColor!important;border-color:currentColor!important}
+.staff-sidebar .sidebar-nav .sidebar-item.selected>.sidebar-link:hover,
+.staff-sidebar .sidebar-nav .sidebar-link.active:hover{background:#cef1fa!important;color:#007d99!important}
+.staff-sidebar .sidebar-link:focus-visible{outline-color:#0891b2}

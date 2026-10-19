@@ -3,8 +3,8 @@
 <?php require __DIR__.'/site_favicon.php'; ?>
 <meta name="referrer" content="no-referrer">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= $escape(($page_title ?? 'Burgers & good times') . ' · ' . $brand) ?></title>
-<meta name="description" content="<?= $escape($page_description ?? 'Explore our menu, find your branch, and make today a burger day.') ?>">
+<title><?= $escape(($page_title ?? 'POS & inventory') . ' · ' . $brand) ?></title>
+<meta name="description" content="<?= $escape($page_description ?? 'Explore our products and branches, powered by a flexible POS and inventory system.') ?>">
 <meta name="csrf-token" content="<?= $escape(csrf_token()) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">

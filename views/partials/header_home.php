@@ -13,9 +13,9 @@ $inactive_mobile_class = 'flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-
 <header class="bg-surface dark:bg-on-background shadow-sm sticky top-0 z-50 transition-all duration-300">
     <nav class="flex justify-between items-center w-full px-margin-desktop py-base max-w-full mx-auto relative">
         <!-- Left: Brand Logo -->
-        <?php $brand_display_name = !empty($store_settings['store_name']) ? ucwords($store_settings['store_name']) . ' Burger' : 'Kairo Burger Co.'; ?>
+        <?php $brand_display_name = !empty($store_settings['store_name']) ? ucwords($store_settings['store_name']) : 'Kairo POS'; ?>
         <a href="<?= url('?route=home') ?>" class="font-headline-md text-headline-md font-extrabold text-primary dark:text-primary-fixed-dim flex items-center gap-2 text-decoration-none z-10 tracking-tight group">
-            <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-burger text-xl"></i></span>
+            <span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform"><i class="fa-solid fa-box text-xl"></i></span>
             <span class="inline font-bold text-xl md:text-2xl"><?= htmlspecialchars($brand_display_name) ?></span>
         </a>
 

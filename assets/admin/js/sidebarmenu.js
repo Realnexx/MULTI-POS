@@ -1,87 +1,43 @@
-/*
-Template Name: Admin Template
-Author: Wrappixel
-
-File: js
-*/
-// ==============================================================
-// Auto select left navbar
-// ==============================================================
+// Match navigation by application route, ignoring filters and editor parameters.
 $(function () {
-  "use strict";
-  var url = window.location + "";
-  var path = url.replace(
-    window.location.protocol + "//" + window.location.host + "/",
-    ""
-  );
-  var element = $("ul#sidebarnav a").filter(function () {
-    return this.href === url || this.href === path; // || url.href.indexOf(this.href) === 0;
+  'use strict';
+  const nav=document.getElementById('sidebarnav');if(!nav)return;
+  const current=new URL(window.location.href);const route=current.searchParams.get('route')||'dashboard';
+  let match=null,best=-1;
+  nav.querySelectorAll('a.sidebar-link').forEach(link=>{
+    link.classList.remove('active');link.removeAttribute('aria-current');
+    const href=link.getAttribute('href')||'';if(!href||href.startsWith('javascript:')||href==='#')return;
+    const target=new URL(href,window.location.href);const candidate=target.searchParams.get('route');
+    if(target.origin!==current.origin||!candidate)return;
+    if((route===candidate||route.startsWith(candidate+'/'))&&candidate.length>best){match=link;best=candidate.length;}
   });
-
-  function findMatchingElement() {
-    var currentUrl = window.location.href;
-    var anchors = document.querySelectorAll("#sidebarnav a");
-    for (var i = 0; i < anchors.length; i++) {
-      if (anchors[i].href === currentUrl) {
-        return anchors[i];
-      }
-    }
-
-    return null; // Return null if no matching element is found
+  nav.querySelectorAll('li.selected').forEach(li=>li.classList.remove('selected'));
+  if(match){
+    match.classList.add('active');match.setAttribute('aria-current','page');match.closest('li').classList.add('selected');
+    let parent=match.parentElement.parentElement;
+    while(parent&&parent!==nav){if(parent.matches('ul.first-level')){parent.classList.add('in');parent.setAttribute('aria-expanded','true');const group=parent.parentElement;group.classList.add('selected');const toggle=group.querySelector(':scope > a');if(toggle){toggle.classList.add('active');toggle.setAttribute('aria-expanded','true');}}parent=parent.parentElement;}
   }
-  var elements = findMatchingElement();
-
-  // Do something with the matching element
-  if(elements){
-    elements.classList.add("active");
+  const scroller=nav.closest('.scroll-sidebar');
+  if(scroller){
+    const key='pos-sidebar-scroll:'+current.pathname;
+    const remember=()=>{try{sessionStorage.setItem(key,String(scroller.scrollTop));}catch(error){}};
+    const restore=()=>{
+      try{const saved=sessionStorage.getItem(key);if(saved!==null&&Number.isFinite(Number(saved)))scroller.scrollTop=Math.max(0,Number(saved));}catch(error){}
+      if(match){
+        const viewport=scroller.getBoundingClientRect(),active=match.getBoundingClientRect();
+        const padding=12;
+        if(active.top<viewport.top+padding)scroller.scrollTop-=viewport.top+padding-active.top;
+        else if(active.bottom>viewport.bottom-padding)scroller.scrollTop+=active.bottom-viewport.bottom+padding;
+      }
+      remember();
+    };
+    requestAnimationFrame(()=>{restore();scroller.addEventListener('scroll',remember,{passive:true});});
+    nav.addEventListener('click',remember,true);
+    window.addEventListener('pagehide',remember);
+    window.addEventListener('pageshow',event=>{if(event.persisted)restore();});
   }
-
-  document
-    .querySelectorAll("ul#sidebarnav ul li a.active")
-    .forEach(function (link) {
-      link.closest("ul").classList.add("in");
-      link.closest("ul").parentElement.classList.add("selected");
-    });
-
-  document.querySelectorAll("#sidebarnav li").forEach(function (li) {
-    const isActive = li.classList.contains("selected");
-    if (isActive) {
-      const anchor = li.querySelector("a");
-      if (anchor) {
-        anchor.classList.add("active");
-      }
-    }
-  });
-
-  document.querySelectorAll("#sidebarnav a").forEach(function (link) {
-    link.addEventListener("click", function (e) {
-      const isActive = this.classList.contains("active");
-      const parentUl = this.closest("ul");
-      if (!isActive) {
-        // hide any open menus and remove all other classes
-        parentUl.querySelectorAll("ul").forEach(function (submenu) {
-          submenu.classList.remove("in");
-        });
-        parentUl.querySelectorAll("a").forEach(function (navLink) {
-          navLink.classList.remove("active");
-        });
-
-        // open our new menu and add the open class
-        const submenu = this.nextElementSibling;
-        if (submenu) {
-          submenu.classList.add("in");
-        }
-
-        this.classList.add("active");
-      } else {
-        this.classList.remove("active");
-        parentUl.classList.remove("active");
-        const submenu = this.nextElementSibling;
-        if (submenu) {
-          submenu.classList.remove("in");
-        }
-      }
-    });
-  });
-
+  nav.querySelectorAll('a.has-arrow').forEach(toggle=>toggle.addEventListener('click',function(event){
+    const submenu=this.nextElementSibling;if(!submenu||!submenu.matches('ul'))return;event.preventDefault();
+    const expanded=!submenu.classList.contains('in');submenu.classList.toggle('in',expanded);submenu.setAttribute('aria-expanded',String(expanded));this.setAttribute('aria-expanded',String(expanded));
+  }));
 });

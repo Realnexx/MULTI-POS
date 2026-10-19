@@ -52,13 +52,18 @@ class PermissionSeeder {
    $added=$conn->affected_rows;$conn->commit();return ['dashboard_role_grants_added'=>$added];
   }catch(Throwable $e){$conn->rollback();throw $e;}
  }
+ public static function syncWebsiteActions($conn){
+  $conn->multi_query(file_get_contents(__DIR__.'/../tools/migrations/20261019-pricing-demo-permissions.sql'));
+  do{if($result=$conn->store_result())$result->free();}while($conn->more_results()&&$conn->next_result());
+ }
  public static function run($conn) {
+  self::syncWebsiteActions($conn);
   self::syncInventoryActions($conn);
   $catalog=require __DIR__.'/../config/permissions.php';
   $conn->begin_transaction();
   try {
    foreach($catalog as $name=>$info) {
-    if($info[1]==='Online Orders')continue;
+    if(in_array($info[1],['Online Orders','Pricing Tiers','Demo Requests'],true))continue;
     $stmt=$conn->prepare('SELECT id FROM permissions WHERE name=?');$stmt->bind_param('s',$name);$stmt->execute();$found=$stmt->get_result()->fetch_assoc();$stmt->close();
     if(!$found) { $stmt=$conn->prepare('INSERT INTO permissions(name,description,module) VALUES (?,?,?)');$stmt->bind_param('sss',$name,$info[0],$info[1]);$stmt->execute();$stmt->close(); }
    }
@@ -73,7 +78,7 @@ class PermissionSeeder {
    }
    foreach($roles as $role) {
     $rid=(int)$role['id'];$name=strtolower(trim($role['name']));$wanted=[];
-    if($name==='admin') $wanted=array_keys(array_filter($catalog,static function($entry){return $entry[1]!=='Online Orders';}));
+    if($name==='admin') $wanted=array_keys(array_filter($catalog,static function($entry){return !in_array($entry[1],['Online Orders','Pricing Tiers','Demo Requests'],true);}));
     elseif($name==='cashier') $wanted=['access_pos','view_dashboard'];
     elseif($name==='manager') {
      $has=$conn->query('SELECT COUNT(*) n FROM role_permissions WHERE role_id='.$rid)->fetch_assoc()['n'];

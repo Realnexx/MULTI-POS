@@ -10,6 +10,8 @@ class Website {
         foreach ($results as $row) {
             $content[$row['section_key']] = $row['content_value'];
         }
+        // Replace the old seeded demo address with the configured business contact.
+        if(($content['contact_email']??'')==='orders@kairoburgers.com'){require_once __DIR__.'/Setting.php';$content['contact_email']=Setting::get('store_email','');}
         return $content;
     }
 

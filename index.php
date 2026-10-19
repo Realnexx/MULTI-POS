@@ -51,6 +51,11 @@ switch ($route) {
     case 'about':
         $websiteController->about();
         break;
+    case 'pricing': $websiteController->pricing(); break;
+    case 'admin/pricing': $adminController->pricing(); break;
+    case 'request_demo': $websiteController->request_demo(); break;
+    case 'admin/demo_requests/data': $adminController->demoRequestsData(); break;
+    case 'admin/demo_requests': $adminController->demoRequests(); break;
     case 'contact':
         $websiteController->contact();
         break;

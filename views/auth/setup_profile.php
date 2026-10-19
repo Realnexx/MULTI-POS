@@ -1,5 +1,5 @@
 <?php
-$title = "Setup Your Profile | Stacey Halu Halu - Sweet Efficiency";
+$title = "Setup Your Profile | POS & Inventory";
 
 $current_avatar = $_SESSION['user']['avatar_url'] ?? '';
 if (empty($current_avatar) && isset($_SESSION['user']['id'])) {
@@ -242,7 +242,7 @@ if ($branches_query) {
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
                                 <div class="flex flex-col gap-xs">
                                     <label class="font-label-md text-label-md text-on-surface font-bold">First Name</label>
-                                    <input class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20" name="firstname" placeholder="Stacey" required type="text"/>
+                                    <input class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20" name="firstname" placeholder="First name" required type="text"/>
                                 </div>
                                 <div class="flex flex-col gap-xs">
                                     <label class="font-label-md text-label-md text-on-surface font-bold flex justify-between">
@@ -268,7 +268,7 @@ if ($branches_query) {
 
                             <div class="flex flex-col gap-xs">
                                 <label class="font-label-md text-label-md text-on-surface font-bold">Email Address</label>
-                                <input class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20" name="email" placeholder="stacey@example.com" required type="email"/>
+                                <input class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20" name="email" placeholder="you@example.com" required type="email"/>
                             </div>
 
                             <!-- Styled visible Birthday Date Field -->
@@ -283,7 +283,7 @@ if ($branches_query) {
 
                             <div class="flex flex-col gap-xs">
                                 <label class="font-label-md text-label-md text-on-surface font-bold">Bio</label>
-                                <textarea class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20 resize-none" name="bio" placeholder="Tell us about your sweet tooth..." rows="2"></textarea>
+                                <textarea class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20 resize-none" name="bio" placeholder="Tell us about yourself..." rows="2"></textarea>
                             </div>
                         </div>
                         <div class="mt-lg flex justify-end">
@@ -400,7 +400,7 @@ if ($branches_query) {
                             <hr class="border-outline-variant my-lg"/>
                             
                             <div class="flex flex-col gap-xs">
-                                <label class="font-label-md text-label-md text-on-surface font-bold">Closest Stacey Halu Halu Store (Auto-Selected)</label>
+                                <label class="font-label-md text-label-md text-on-surface font-bold">Closest branch (Auto-Selected)</label>
                                 <div class="relative">
                                     <select class="w-full bg-surface-container-low border-none rounded-lg p-sm focus:ring-2 focus:ring-primary/20 appearance-none font-bold animate-pulse" name="store" id="store_select">
                                         <?php if (!empty($db_branches)): ?>

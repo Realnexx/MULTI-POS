@@ -263,6 +263,7 @@ class InventoryController
                         $is_discountable
                     );
                     if ($prod_id) {
+                        require_once __DIR__.'/../models/PublicCatalog.php';PublicCatalog::save($prod_id);
                         ActivityLog::log('Product Created', "Created product '{$name}' (ID: {$prod_id})");
 
                         RecipeInventory::setMode($prod_id, $recipe_mode, true);
@@ -413,6 +414,7 @@ class InventoryController
                     $is_discountable
                 );
 
+                require_once __DIR__.'/../models/PublicCatalog.php';PublicCatalog::save($id);
                 RecipeInventory::setMode($id, $_POST['recipe_mode'] ?? RecipeInventory::product($id)['recipe_mode'], false, !empty($_POST['recipe_reconciled']));
                 // Handle Variants from main form (optional but good for consistency)
                 if (!empty($_POST['variants'])) {

@@ -1,5 +1,5 @@
 <?php
-$title = htmlspecialchars($title ?? 'Notification | Stacey Halu Halu');
+$title = htmlspecialchars($title ?? 'Notification | POS & Inventory');
 ?>
 <!DOCTYPE html>
 <html class="light" lang="en">

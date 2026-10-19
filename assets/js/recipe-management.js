@@ -23,15 +23,18 @@
     }
     function unitOptions(select, base, current) {
         base = canonical(base || 'pc'); current = canonical(current || base);
-        const units = ['g','kg'].includes(base) ? ['g','kg'] : ['ml','l'].includes(base) ? ['ml','l'] : [base];
-        if (!units.includes(current)) units.unshift(current);
-        select.replaceChildren(...units.map(unit => new Option(unit,unit,false,unit===current)));
+        const options = [["pc", "Piece (pc)"], ["pcs", "Pieces (pcs)"], ["kg", "Kilogram (kg)"], ["g", "Gram (g)"], ["l", "Liter (l)"], ["ml", "Milliliter (ml)"], ["bot", "Bottle (bot)"], ["pck", "Pack (pck)"], ["bndl", "Bundle (bndl)"], ["sck", "Sack (sck)"], ["cse", "Case (cse)"], ["rl", "Roll (rl)"], ["dz", "Dozen (dz)"], ["m", "Meter (m)"], ["cm", "Centimeter (cm)"], ["in", "Inch (in)"], ["yd", "Yard (yd)"], ["set", "Set"], ["box", "Box"], ["pr", "Pair (pr)"], ["try", "Tray (try)"], ["gal", "Gallon (gal)"], ["tb", "Tub (tb)"], ["jr", "Jar (jr)"], ["cn", "Can (cn)"], ["can", "Can"], ["pl", "Pail (pl)"], ["cp", "Cup (cp)"], ["gls", "Glass (gls)"], ["srv", "Serving (srv)"], ["hr", "Hour (hr)"], ["day", "Day (day)"], ["tab", "Tablet (tab)"], ["cap", "Capsule (cap)"]];
+        const units = new Map(options);
+        data.ingredients.forEach(item=>{const value=canonical(item.unit_type||'pc');if(!units.has(value))units.set(value,value);});
+        if(!units.has(current))units.set(current,current);
+        select.replaceChildren(...Array.from(units,([value,label])=>new Option(label,value,false,value===current)));
+
     }
     function update() {
         const count = Number(countInput.value);
         preview.replaceChildren();
         if (!Number.isInteger(count) || count < 1 || count > 100000) { preview.textContent='Enter a whole number of units from 1 to 100,000.'; return; }
-        const totals = new Map(); let cost = 0;
+        const totals = new Map(); let cost = 0; let incompatible = false;
         rows.querySelectorAll('.definition-row').forEach(row => {
             const ingredient = data.ingredients.find(item => Number(item.id)===Number(row.querySelector('.definition-ingredient').value));
             const quantity = Number(row.querySelector('.definition-quantity').value);
@@ -39,13 +42,15 @@
             if (!ingredient || !(quantity>0)) return;
             const key=ingredient.id+':'+unit, previous=totals.get(key);
             totals.set(key,{name:ingredient.name,quantity:quantity*count+(previous?previous.quantity:0),unit});
+            const base=canonical(ingredient.unit_type);
+            if(unit!==base && !(['g','kg'].includes(unit)&&['g','kg'].includes(base)) && !(['ml','l'].includes(unit)&&['ml','l'].includes(base))){incompatible=true;return;}
             cost += quantity*(factors[unit]||1)/(factors[canonical(ingredient.unit_type)]||1)*Number(ingredient.cost_price||0)*count;
         });
         const list=document.createElement('ul'); list.className='mb-2 ps-3';
         totals.forEach(item => { const line=document.createElement('li'); line.textContent=item.name+': '+item.quantity.toLocaleString(undefined,{maximumFractionDigits:4})+' '+item.unit; list.append(line); });
         if (totals.size) {
             preview.append(list);
-            const summary=document.createElement('strong'); summary.textContent='Estimated ingredient cost for '+count.toLocaleString()+' units: ₱'+cost.toFixed(2); preview.append(summary);
+            const summary=document.createElement('strong'); summary.textContent=incompatible?'Choose compatible units for the selected ingredients before saving.': 'Estimated ingredient cost for '+count.toLocaleString()+' units: ₱'+cost.toFixed(2); preview.append(summary);
         } else preview.textContent='Choose ingredients and quantities to calculate the requirements.';
     }
     function addRow(value={}) {

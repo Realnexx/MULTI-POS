@@ -177,6 +177,8 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
         </li>
         <?php endif; ?>
 
+        <?php if (User::has_permission($user_id,'view_pricing_tiers')): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/pricing') ?>"><iconify-icon icon="solar:tag-price-linear" class="fs-6"></iconify-icon><span class="hide-menu">Pricing Tiers</span></a></li><?php endif; ?>
+        <?php if (User::has_permission($user_id,'view_demo_requests')): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/demo_requests') ?>"><iconify-icon icon="solar:clipboard-list-linear" class="fs-6"></iconify-icon><span class="hide-menu">Demo Requests</span></a></li><?php endif; ?>
         <?php if ($can_manage_website): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/cms') ?>"><iconify-icon icon="solar:global-linear" class="fs-6"></iconify-icon><span class="hide-menu">Website Content</span></a></li><?php endif; ?>
         <!-- ADMINISTRATION & HR -->
         <?php if ($can_manage_users || $can_manage_roles || $can_view_logs): ?>

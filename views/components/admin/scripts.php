@@ -1,7 +1,7 @@
 <!-- Reusable Admin Scripts Component (AuroraTabs Modernize Theme) -->
 <!-- NOTE: jQuery is loaded in <head> via links.php to support inline view scripts -->
 <script src="<?= url('assets/admin/libs/bootstrap/dist/js/bootstrap.bundle.min.js') ?>"></script>
-<script src="<?= url('assets/admin/js/sidebarmenu.js') ?>"></script>
+<script src="<?= url('assets/admin/js/sidebarmenu.js') ?>?v=<?= filemtime(__DIR__.'/../../../assets/admin/js/sidebarmenu.js') ?>"></script>
 <script src="<?= url('assets/admin/js/app.min.js') ?>"></script>
 <script src="<?= url('assets/admin/libs/apexcharts/dist/apexcharts.min.js') ?>"></script>
 <script src="<?= url('assets/admin/libs/simplebar/dist/simplebar.js') ?>"></script>

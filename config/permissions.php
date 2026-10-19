@@ -1,6 +1,12 @@
 <?php
 // Canonical permission names used by page routes, action endpoints and the seeder.
 return [
+ 'view_pricing_tiers'=>['View Pricing Tiers','Pricing Tiers'],
+ 'add_pricing_tiers'=>['Add Pricing Tiers','Pricing Tiers'],
+ 'edit_pricing_tiers'=>['Edit Pricing Tiers, Features and Publication Status','Pricing Tiers'],
+ 'view_demo_requests'=>['View Demo Requests, Details and Contact Information','Demo Requests'],
+ 'update_demo_request_status'=>['Update Demo Request Status','Demo Requests'],
+
  'manage_cashier_schedules'=>['Configure Branch Cashier Schedules and Grace Periods','Cashier Shifts'],
  'lock_cash_drawer'=>['Lock and Reauthenticate Own POS Drawer','Cashier Shifts'],
  'view_own_shifts'=>['View Own Cashier Shifts and Closing Summaries','Cashier Shifts'],

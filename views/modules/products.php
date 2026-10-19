@@ -1734,7 +1734,7 @@ ob_start();
                                             data-branch="${row.branch_id || ''}"
                                             data-type="${row.product_type || 'simple'}"
                                             data-track-stock="${row.track_stock}"
-                                            data-sellable="${row.is_sellable}"
+                                            data-sellable="${row.is_sellable}" data-website="${row.show_on_website}"
                                             data-ingredient="${row.is_ingredient}"
                                             data-inventory-type="${row.inventory_type || 'stocked'}"
                                             data-unit-type="${row.unit_type || 'pc'}"
@@ -2284,6 +2284,7 @@ ob_start();
 
                 modal.find('#edit_track_stock').prop('checked', data.trackStock == 1);
                 modal.find('#edit_is_sellable').prop('checked', data.sellable == 1);
+                modal.find('#edit_show_on_website').prop('checked', data.website == 1);
                 modal.find('#edit_is_discountable').prop('checked', data.discountable == 1);
                 modal.find('#edit_is_ingredient').prop('checked', data.ingredient == 1);
                 modal.find('#edit_inventory_type').val(data.inventoryType || 'stocked');

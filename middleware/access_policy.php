@@ -7,7 +7,7 @@ function access_page_rules() {
  'dashboard'=>'view_dashboard', 'admin/users'=>'manage_users','admin/users/data'=>'manage_users','admin/users/single'=>'manage_users',
  'admin/roles'=>'manage_roles','admin/roles/data'=>['manage_roles','manage_users'],'admin/permissions/data'=>'manage_roles',
  'admin/expenses'=>'manage_expenses','admin/expenses/data'=>'manage_expenses','admin/expenses/print'=>'manage_expenses','admin/expenses/summary_print'=>'manage_expenses',
- 'admin/cms'=>'access_website_admin','admin/reports'=>'view_reports','admin/reports/print'=>'view_reports',
+ 'admin/pricing'=>'view_pricing_tiers','admin/demo_requests/data'=>'view_demo_requests','admin/demo_requests'=>'view_demo_requests','admin/cms'=>'access_website_admin','admin/reports'=>'view_reports','admin/reports/print'=>'view_reports',
  'admin/branches'=>'manage_branches','admin/branches/report'=>'manage_branches','admin/settings'=>'manage_settings',
  'admin/activity_logs'=>'view_activity_logs','admin/activity_logs/data'=>'view_activity_logs','admin/activity_logs/print'=>'view_activity_logs',
  'pos'=>'access_pos','pos/history'=>'access_pos','pos/history/data'=>'access_pos','pos/history/stats'=>'access_pos','pos/receipt'=>'access_pos','pos/history/update_status'=>'refund_sales',

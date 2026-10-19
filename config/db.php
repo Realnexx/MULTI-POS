@@ -125,18 +125,10 @@ if (!function_exists('sanitize')) {
 if (!function_exists('get_product_image')) {
     function get_product_image($image_url, $product_id = 0)
     {
-        // Fallback premium gourmet burger images for culinary presentation
-        $burger_images = [
-            "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1625813506062-0aeb1d7a094b?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1586816001966-79b736744398?auto=format&fit=crop&w=1000&q=80",
-            "https://images.unsplash.com/photo-1576107232684-1279f3908594?auto=format&fit=crop&w=1000&q=80"
-        ];
+        $placeholder=url('assets/img/product-placeholder.svg');
 
         if (empty($image_url)) {
-            return $burger_images[abs((int) $product_id) % count($burger_images)];
+            return $placeholder;
         }
 
         if (strpos($image_url, 'http://') === 0 || strpos($image_url, 'https://') === 0) {
@@ -148,7 +140,7 @@ if (!function_exists('get_product_image')) {
             return url($image_url);
         }
 
-        return $burger_images[abs((int) $product_id) % count($burger_images)];
+        return $placeholder;
     }
 }
 

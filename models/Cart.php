@@ -28,6 +28,7 @@ class Cart {
     }
     private static function write_quantity($id,$qty,$session,$user) {
         $qty=self::quantity($qty,true);$product=RecipeInventory::product($id);
+        require_once __DIR__.'/PublicCatalog.php';if($qty&&!PublicCatalog::visible($product))throw new DomainException('This product is not available on the website.');
         $available=self::available($product,$_SESSION['online_branch_id'] ?? null);
         if($qty>$available)throw new DomainException($product['name'].': not enough stock at the selected branch.');
         self::remove($id,$session,$user);
@@ -45,7 +46,7 @@ class Cart {
     public static function get_items($session,$user=null,$branch=null) {
         [$where,$type,$params]=self::owner($session,$user);
         $rows=RecipeInventory::rows('SELECT p.*,c.qty,cat.name category_name FROM (SELECT product_id,SUM(qty) qty FROM cart WHERE '.$where.' GROUP BY product_id) c JOIN products p ON p.id=c.product_id LEFT JOIN categories cat ON cat.id=p.category_id ORDER BY p.id',$type,$params);
-        $items=[];foreach($rows as $row){$row['stock']=self::available($row,$branch ?? ($_SESSION['online_branch_id'] ?? null));$items[$row['id']]=$row;}return $items;
+        require_once __DIR__.'/PublicCatalog.php';$items=[];foreach($rows as $row){if(!PublicCatalog::visible($row))continue;$row['stock']=self::available($row,$branch ?? ($_SESSION['online_branch_id'] ?? null));$items[$row['id']]=$row;}return $items;
     }
     public static function migrate($session,$user) {
         return RecipeInventory::atomic(function()use($session,$user){

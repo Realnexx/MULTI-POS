@@ -10,6 +10,35 @@ require_once __DIR__ . '/../models/Setting.php';
 require_once __DIR__ . '/../models/ActivityLog.php';
 
 class AdminController {
+    public function pricing(){
+        require_permission('view_pricing_tiers');enforce_csrf();require_once __DIR__.'/../models/Pricing.php';
+        $pricingMode=is_string($_GET['mode']??null)?$_GET['mode']:'view';$pricingError='';$editingTier=null;
+        if($_SERVER['REQUEST_METHOD']==='POST'){
+            $action=$_POST['action']??'';
+            if(!in_array($action,['add','edit'],true))access_denied('Unknown pricing action.',400);
+            require_permission($action==='add'?'add_pricing_tiers':'edit_pricing_tiers');
+            try{Pricing::saveTier($action,$_POST['tier_id']??'',$_POST['tier']??[]);ActivityLog::log('Pricing Updated',$action==='add'?'Added a pricing tier.':'Updated a pricing tier.');set_flash('success','Pricing tier saved.');redirect('?route=admin/pricing');}
+            catch(DomainException $e){$pricingError=$e->getMessage();$pricingMode=$action==='add'?'add':'edit';$editingTier=array_merge(is_array($_POST['tier']??null)?$_POST['tier']:[],['id'=>$_POST['tier_id']??'']);}
+        }
+        if($pricingMode==='add')require_permission('add_pricing_tiers');
+        if($pricingMode==='edit')require_permission('edit_pricing_tiers');
+        $tiers=Pricing::all();
+        if(!in_array($pricingMode,['view','add','edit'],true))$pricingMode='view';
+        if($pricingMode==='edit'&&$editingTier===null){foreach($tiers as $tier)if($tier['id']===($_GET['id']??''))$editingTier=$tier;if(!$editingTier){set_flash('danger','Pricing tier not found.');redirect('?route=admin/pricing');}}
+        require __DIR__.'/../views/modules/pricing.php';
+    }
+    public function demoRequestsData(){require_permission('view_demo_requests');require_once __DIR__.'/../models/DemoRequest.php';header('Content-Type: application/json');header('Cache-Control: no-store, private');echo json_encode(DemoRequest::dataTable($_GET));}
+    public function demoRequests() {
+        require_permission('view_demo_requests');enforce_csrf();
+        require_once __DIR__.'/../models/DemoRequest.php';
+        if($_SERVER['REQUEST_METHOD']==='POST') {
+            require_permission('update_demo_request_status');
+            try {DemoRequest::updateStatus($_POST['id']??0,$_POST['status']??'');ActivityLog::log('Demo Request Updated','Updated request #'.(int)($_POST['id']??0));set_flash('success','Request status updated.');}
+            catch(DomainException $e){set_flash('danger',$e->getMessage());}
+            redirect('?route=admin/demo_requests');
+        }
+        $summary=DemoRequest::counts();require __DIR__.'/../views/modules/demo_requests.php';
+    }
     public function dashboard() {
         require_permission('view_dashboard');
         require_once __DIR__ . '/../models/Branch.php';

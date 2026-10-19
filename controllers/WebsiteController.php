@@ -8,13 +8,15 @@ require_once __DIR__ . '/../models/AuthSecurity.php';
 require_once __DIR__ . '/../models/Branch.php';
 require_once __DIR__ . '/../middleware/auth.php';
 
+require_once __DIR__.'/../models/PublicCatalog.php';
 class WebsiteController {
     public function home() {
         global $conn;
         $content = Website::get_content();
-        $featured = Product::get_featured_products();
-        $best_sellers = Product::get_best_sellers();
-        $categories = Product::get_all_categories();
+        $catalog=PublicCatalog::products();
+        $featured=array_values(array_filter($catalog,function($p){return !empty($p['is_featured']);}));
+        $best_sellers=array_values(array_filter($catalog,function($p){return !empty($p['is_best_seller']);}));
+        $categories = PublicCatalog::categories();
 
         // Fetch store settings (currency, store name, etc.)
         $store_settings = [];
@@ -30,17 +32,20 @@ class WebsiteController {
         $branches = $branches_res ? $branches_res->fetch_all(MYSQLI_ASSOC) : [];
 
         // Use the catalog instead of a hard-coded category ID.
-        $burgers = Product::get_all_products();
+        $catalog_products = $catalog;
 
         require __DIR__ . '/../views/website/home.php';
     }
 
+    public function pricing(){require_once __DIR__.'/../models/Pricing.php';$tiers=Pricing::published();require __DIR__.'/../views/website/pricing.php';}
     public function products() {
+        redirect('?route=pricing');
+
         $category_id = isset($_GET['category_id']) ? intval($_GET['category_id']) : null;
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
 
-        $categories = Product::get_all_categories();
-        $products = Product::get_all_products($category_id, $search);
+        $categories = PublicCatalog::categories();
+        $products = PublicCatalog::products($category_id, $search);
 
         require __DIR__ . '/../views/website/products.php';
     }
@@ -51,13 +56,13 @@ class WebsiteController {
             : (isset($_GET['id']) ? intval($_GET['id']) : 0);
         $product = Product::find_by_id($id);
 
-        if (!$product) {
+        if (!PublicCatalog::visible($product)) {
             set_flash('danger', 'Product not found.');
             redirect('?route=products');
         }
 
         $product['stock'] = Cart::available($product, $_SESSION['online_branch_id'] ?? null);
-        $related_products = Product::get_related_products($product['category_id'], $product['id'], 3);
+        $related_products=array_slice(array_values(array_filter(PublicCatalog::products($product['category_id']),function($p)use($id){return (int)$p['id']!==$id;})),0,3);
 
         require __DIR__ . '/../views/website/product_detail.php';
     }
@@ -65,6 +70,27 @@ class WebsiteController {
     public function about() {
         $content = Website::get_content();
         require __DIR__ . '/../views/website/about.php';
+    }
+
+    public function request_demo() {
+        require_once __DIR__.'/../models/DemoRequest.php';enforce_csrf();
+        header('Cache-Control: no-store, private');
+        require_once __DIR__.'/../models/Pricing.php';
+        $selectedTier=Pricing::find(is_string($_GET['tier']??null)?$_GET['tier']:'');
+        $demoError='';$old=[];$demoSuccess=!empty($_SESSION['demo_request_success']);unset($_SESSION['demo_request_success']);
+        if(empty($_SESSION['demo_request_key']))$_SESSION['demo_request_key']=bin2hex(random_bytes(32));
+        if($_SERVER['REQUEST_METHOD']==='POST') {
+            $old=array_filter($_POST,'is_string');
+            try {
+                $key=$_POST['request_key']??'';
+                if(!is_string($key)||!hash_equals($_SESSION['demo_request_key'],$key))throw new DomainException('Your form expired. Please submit it again.');
+                if(AuthSecurity::consume('demo-request-ip',AuthSecurity::ip(),5,3600))throw new DomainException('Too many requests. Please try again in an hour.');
+                DemoRequest::submit($_POST,$key);unset($_SESSION['demo_request_key']);$_SESSION['demo_request_success']=true;
+                redirect('?route=request_demo');
+            }catch(DomainException $e){http_response_code(422);$demoError=$e->getMessage();}
+            catch(Throwable $e){http_response_code(503);error_log('Demo request storage failed: '.get_class($e));$demoError='Your request could not be saved. Please try again later.';}
+        }
+        require __DIR__.'/../views/website/request_demo.php';
     }
 
     public function contact() {

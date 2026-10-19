@@ -204,7 +204,7 @@ try {
         }
     }
     // Versioned assets must exist in the isolated rendered-page workspace.
-    foreach (['assets/css/admin-sidebar.css','assets/css/branch-management.css','assets/js/branch-manager-picker.js','assets/js/branch-overview.js'] as $asset) {
+    foreach (['assets/admin/js/sidebarmenu.js','assets/js/demo-requests-admin.js','assets/css/demo-requests-admin.css','assets/css/admin-sidebar.css','assets/css/branch-management.css','assets/js/branch-manager-picker.js','assets/js/branch-overview.js'] as $asset) {
         if(!is_dir(dirname($workspace.'/'.$asset)))mkdir(dirname($workspace.'/'.$asset),0755,true);
         copy($root.'/'.$asset,$workspace.'/'.$asset);
     }
@@ -237,6 +237,10 @@ try {
         RecipeInventory::query('UPDATE products SET recipe_mode = ? WHERE id = ?','si',[$mode,$id]);
         return $id;
     }
+    if(($argv[1]??'')==='--website-permissions-only'){require $root.'/tools/tests/website-permission-cases.php';echo "All {$checks} website permission checks passed.\n";return;}
+    if(($argv[1]??'')==='--pricing-only'){require $root.'/tools/tests/pricing-cases.php';echo "All {$checks} pricing checks passed.\n";return;}
+    if(($argv[1]??'')==='--demo-requests-only'){require $root.'/tools/tests/demo-request-cases.php';echo "All {$checks} demo request checks passed. Source data was not modified.\n";return;}
+    if(($argv[1]??'')==='--catalog-only'){require $root.'/tools/tests/public-catalog-cases.php';echo "All {$checks} public catalog checks passed.\n";return;}
     if(($argv[1]??'')==='--demo-only'){require $root.'/tools/tests/demo-account-cases.php';echo "All {$checks} demo account checks passed. Source data was not modified.\n";return;}
     if(($argv[1]??'')==='--settings-only'){require $root.'/tools/tests/system-settings-cases.php';echo "All {$checks} system settings checks passed. Source data was not modified.\n";return;}
     if(($argv[1]??'')==='--paymongo-only'){
