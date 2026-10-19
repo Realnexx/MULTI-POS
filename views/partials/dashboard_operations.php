@@ -1,6 +1,7 @@
 <?php if (!empty($operations)): ?>
-<link rel="stylesheet" href="<?= url('assets/css/dashboard-operations.css') ?>?v=1">
+<link rel="stylesheet" href="<?= url('assets/css/dashboard-operations.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/dashboard-operations.css') ?>">
 <section class="dashboard-operations" aria-label="Sales and operations overview">
+    <?php if(($operations_section??'all')==='all'||$operations_section==='summary'): ?>
     <div class="do-summaries">
         <?php foreach (['today'=>["Today's sales", 'Today'], 'week'=>['Weekly sales', 'Monday to today'], 'month'=>['Monthly sales', 'Month to date']] as $key=>$label): $summary=$operations['summaries'][$key]; ?>
         <article class="do-metric"><p><?= $label[0] ?></p><strong>₱<?= number_format($summary['total'],2) ?></strong><span><?= number_format($summary['transactions']) ?> transactions · <?= $label[1] ?></span></article>
@@ -8,6 +9,8 @@
         <article class="do-metric"><p>Estimated gross profit</p><strong>₱<?= number_format($operations['gross_profit'],2) ?></strong><span><?= $display_date ?> · Sales less estimated item costs</span></article>
     </div>
     <p class="do-note">Completed sales only. Weeks start on Monday. Gross profit uses recorded stock costs where available and current product costs otherwise; it excludes operating expenses.</p>
+    <?php endif; ?>
+    <?php if(($operations_section??'all')==='all'||$operations_section==='comparisons'): ?>
     <div class="do-panels">
         <?php foreach(['branches'=>'Branch performance','payments'=>'Payment methods'] as $key=>$heading): ?>
         <article class="do-panel">
@@ -20,7 +23,8 @@
         </article>
         <?php endforeach; ?>
     </div>
-    <?php if($operations['can_view_shifts']): ?>
+    <?php endif; ?>
+    <?php if((($operations_section??'all')==='all'||$operations_section==='attention')&&$operations['can_view_shifts']): ?>
     <article class="do-panel do-shifts">
         <div class="do-panel-heading"><div><h3>Cashier shifts requiring attention</h3><p>Pending reviews, cash discrepancies and shifts left open overnight · Your permitted shifts</p></div><a href="<?= url('?route=pos/shifts') ?>">View shifts →</a></div>
         <?php if(!$operations['shifts_ready']): ?><p class="do-note">Shift tracking is not set up yet.</p>

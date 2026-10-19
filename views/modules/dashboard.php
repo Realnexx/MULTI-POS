@@ -531,102 +531,6 @@ ob_start();
         </div>
     </div>
 
-    <?php require __DIR__.'/../partials/dashboard_operations.php'; ?>
-
-    <!-- ============ KPI CARDS ROW ============ -->
-    <div class="row g-aurora mb-4">
-
-        <!-- Revenue Today -->
-        <div class="col-6 col-lg-3">
-            <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:#5d87ff;"></div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="kpi-icon-wrap" style="background:rgba(93,135,255,0.12);">
-                            <iconify-icon icon="solar:wallet-money-bold-duotone"
-                                style="color:#5d87ff;font-size:1.5rem;"></iconify-icon>
-                        </div>
-                        <span class="kpi-trend neutral"><i class="ti ti-trending-up"></i> <?= $display_date ?></span>
-                    </div>
-                    <div class="kpi-value text-dark mb-1">₱<?= number_format($stats['sales_today'], 2) ?></div>
-                    <div class="kpi-label">Selected-period sales</div>
-                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
-                        Avg <strong class="text-dark">₱<?= number_format($stats['avg_order_value'], 2) ?></strong> /
-                        ticket
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Orders Today -->
-        <div class="col-6 col-lg-3">
-            <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:#13deb9;"></div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="kpi-icon-wrap" style="background:rgba(19,222,185,0.12);">
-                            <iconify-icon icon="solar:bag-5-bold-duotone"
-                                style="color:#13deb9;font-size:1.5rem;"></iconify-icon>
-                        </div>
-                        <span class="kpi-trend up"><i class="ti ti-check"></i> Done</span>
-                    </div>
-                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['orders_today']) ?></div>
-                    <div class="kpi-label">Selected-period transactions</div>
-                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
-                        <span class="text-success fw-bold"><?= $completed_orders ?></span> completed &middot; <span
-                            class="text-warning fw-bold"><?= $pending_orders ?></span> pending
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Total Products -->
-        <div class="col-6 col-lg-3">
-            <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:#ffae1f;"></div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="kpi-icon-wrap" style="background:rgba(255,174,31,0.12);">
-                            <iconify-icon icon="solar:box-bold-duotone"
-                                style="color:#ffae1f;font-size:1.5rem;"></iconify-icon>
-                        </div>
-                        <span class="kpi-trend neutral"><i class="ti ti-package"></i> SKUs</span>
-                    </div>
-                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['total_products'] ?? 0) ?></div>
-                    <div class="kpi-label">Active Products</div>
-                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
-                        <span
-                            class="text-danger fw-bold"><?= (int) ($stats['low_stock_count'] ?? count($low_stock)) ?></span>
-                        below reorder point
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Team Members -->
-        <div class="col-6 col-lg-3">
-            <div class="kpi-card card p-0">
-                <div class="kpi-glow" style="background:#fa5454;"></div>
-                <div class="card-body p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <div class="kpi-icon-wrap" style="background:rgba(250,84,84,0.10);">
-                            <iconify-icon icon="solar:users-group-rounded-bold-duotone"
-                                style="color:#fa5454;font-size:1.5rem;"></iconify-icon>
-                        </div>
-                        <span class="kpi-trend neutral"><i class="ti ti-users"></i> Staff</span>
-                    </div>
-                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['total_users'] ?? 0) ?></div>
-                    <div class="kpi-label">Team Members</div>
-                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
-                        Across <strong class="text-dark"><?= count($all_branches) ?: 1 ?></strong>
-                        branch<?= count($all_branches) !== 1 ? 'es' : '' ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
     <!-- ============ FILTER CONTROLS (Clean Solid Style, No Glassmorphism) ============ -->
     <div class="filter-card p-4 mb-4">
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -689,6 +593,105 @@ ob_start();
         </form>
     </div>
 
+    <?php $operations_section='summary';require __DIR__.'/../partials/dashboard_operations.php'; ?>
+    <?php $operations_section='attention';require __DIR__.'/../partials/dashboard_operations.php'; ?>
+    <!-- ============ TOP PRODUCTS + LOW STOCK ============ -->
+    <div class="row g-aurora mb-2">
+
+        <!-- Low Stock Alerts -->
+        <div class="col-lg-6">
+            <div class="aurora-card h-100">
+                <div class="aurora-card-header">
+                    <div>
+                        <div class="aurora-card-title">⚠️ Low Stock Alerts</div>
+                        <div class="aurora-card-subtitle">Items below reorder threshold</div>
+                    </div>
+                    <span class="kpi-trend <?= count($low_stock) > 0 ? 'down' : 'up' ?>">
+                        <?= count($low_stock) ?> Alert<?= count($low_stock) !== 1 ? 's' : '' ?>
+                    </span>
+                </div>
+                <div class="aurora-card-body">
+                    <?php if (empty($low_stock)): ?>
+                        <div class="text-center py-5" style="font-size:0.82rem;color:#9eaac7;">
+                            <iconify-icon icon="solar:shield-check-bold-duotone"
+                                style="font-size:2.5rem;display:block;margin-bottom:10px;color:#13deb9;"></iconify-icon>
+                            All products have sufficient stock!
+                        </div>
+                    <?php else: ?>
+                        <div class="d-flex flex-column" style="gap:10px;">
+                            <?php foreach (array_slice($low_stock, 0, 4) as $item): ?>
+                                <div class="stock-alert-card">
+                                    <div
+                                        style="width:38px;height:38px;background:rgba(250,84,84,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <iconify-icon icon="solar:danger-bold-duotone"
+                                            style="color:#fa5454;font-size:1.2rem;"></iconify-icon>
+                                    </div>
+                                    <div class="flex-fill">
+                                        <div style="font-weight:700;font-size:0.85rem;color:#2a3547;">
+                                            <?= htmlspecialchars($item['name']) ?>
+                                        </div>
+                                        <div style="font-size:0.74rem;color:#fa5454;font-weight:600;">
+                                            <?= (int) $item['stock'] ?> left &middot; min
+                                            <?= (int) ($item['low_stock_threshold'] ?? 10) ?>
+                                        </div>
+                                    </div>
+                                    <?php if(User::has_permission($_SESSION['user']['id'],'view_product')): ?><a href="<?= url('?route=inventory/products') ?>" class="btn btn-sm rounded-pill px-3"
+                                        style="background:#fa545415;color:#fa5454;font-size:0.75rem;font-weight:700;border:none;">
+                                        Restock
+                                    </a><?php endif; ?>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <!-- Top Selling Products -->
+        <div class="col-lg-6">
+            <div class="aurora-card h-100">
+                <div class="aurora-card-header">
+                    <div>
+                        <div class="aurora-card-title">🏆 Top Selling Items</div>
+                        <div class="aurora-card-subtitle">Ranked by sales volume this period</div>
+                    </div>
+                    <?php if(User::has_permission($_SESSION['user']['id'],'view_product')): ?><a href="<?= url('?route=inventory/products') ?>"
+                        class="text-primary fw-semibold text-decoration-none" style="font-size:0.8rem;">Manage</a><?php endif; ?>
+                </div>
+                <div class="aurora-card-body">
+                    <?php if (empty($top_selling)): ?>
+                        <div class="text-center py-4 text-muted" style="font-size:0.82rem;">No product sales recorded yet.
+                        </div>
+                    <?php else: ?>
+                        <div class="d-flex flex-column" style="gap:10px;">
+                            <?php foreach ($top_selling as $idx => $prod):
+                                $badges = ['gold', 'silver', 'bronze'];
+                                $badge = $badges[$idx] ?? 'other';
+                                $rank_labels = ['🥇', '🥈', '🥉'];
+                                ?>
+                                <div class="rank-card">
+                                    <div class="rank-badge <?= $badge ?>"><?= $rank_labels[$idx] ?? ($idx + 1) ?></div>
+                                    <div class="flex-fill">
+                                        <div style="font-weight:700;font-size:0.85rem;color:#2a3547;">
+                                            <?= htmlspecialchars($prod['name']) ?>
+                                        </div>
+                                        <div style="font-size:0.74rem;color:#9eaac7;"><?= (int) ($prod['total_qty'] ?? 0) ?>
+                                            orders completed</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div style="font-weight:800;font-size:0.9rem;color:#13deb9;">
+                                            ₱<?= number_format($prod['total_revenue'] ?? 0, 2) ?></div>
+                                        <div style="font-size:0.7rem;color:#b0b7c3;">revenue</div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
     <!-- ============ CHART ROW ============ -->
     <div class="row g-aurora mb-4">
 
@@ -778,6 +781,7 @@ ob_start();
         </div>
     </div>
 
+    <?php $operations_section='comparisons';require __DIR__.'/../partials/dashboard_operations.php'; ?>
     <!-- ============ ACTIVITY + TRANSACTIONS ============ -->
     <div class="row g-aurora mb-4">
 
@@ -925,103 +929,101 @@ ob_start();
 
     </div>
 
-    <!-- ============ TOP PRODUCTS + LOW STOCK ============ -->
-    <div class="row g-aurora mb-2">
+    <div class="dashboard-context-heading"><h3>Workspace overview</h3><p>Product and team totals alongside today’s transaction snapshot.</p></div>
+    <!-- ============ KPI CARDS ROW ============ -->
+    <div class="row g-aurora mb-4">
 
-        <!-- Top Selling Products -->
-        <div class="col-lg-6">
-            <div class="aurora-card h-100">
-                <div class="aurora-card-header">
-                    <div>
-                        <div class="aurora-card-title">🏆 Top Selling Items</div>
-                        <div class="aurora-card-subtitle">Ranked by sales volume this period</div>
+        <!-- Revenue Today -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card card p-0">
+                <div class="kpi-glow" style="background:#5d87ff;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="kpi-icon-wrap" style="background:rgba(93,135,255,0.12);">
+                            <iconify-icon icon="solar:wallet-money-bold-duotone"
+                                style="color:#5d87ff;font-size:1.5rem;"></iconify-icon>
+                        </div>
+                        <span class="kpi-trend neutral"><i class="ti ti-trending-up"></i> <?= $display_date ?></span>
                     </div>
-                    <?php if(User::has_permission($_SESSION['user']['id'],'view_product')): ?><a href="<?= url('?route=inventory/products') ?>"
-                        class="text-primary fw-semibold text-decoration-none" style="font-size:0.8rem;">Manage</a><?php endif; ?>
-                </div>
-                <div class="aurora-card-body">
-                    <?php if (empty($top_selling)): ?>
-                        <div class="text-center py-4 text-muted" style="font-size:0.82rem;">No product sales recorded yet.
-                        </div>
-                    <?php else: ?>
-                        <div class="d-flex flex-column" style="gap:10px;">
-                            <?php foreach ($top_selling as $idx => $prod):
-                                $badges = ['gold', 'silver', 'bronze'];
-                                $badge = $badges[$idx] ?? 'other';
-                                $rank_labels = ['🥇', '🥈', '🥉'];
-                                ?>
-                                <div class="rank-card">
-                                    <div class="rank-badge <?= $badge ?>"><?= $rank_labels[$idx] ?? ($idx + 1) ?></div>
-                                    <div class="flex-fill">
-                                        <div style="font-weight:700;font-size:0.85rem;color:#2a3547;">
-                                            <?= htmlspecialchars($prod['name']) ?>
-                                        </div>
-                                        <div style="font-size:0.74rem;color:#9eaac7;"><?= (int) ($prod['total_qty'] ?? 0) ?>
-                                            orders completed</div>
-                                    </div>
-                                    <div class="text-end">
-                                        <div style="font-weight:800;font-size:0.9rem;color:#13deb9;">
-                                            ₱<?= number_format($prod['total_revenue'] ?? 0, 2) ?></div>
-                                        <div style="font-size:0.7rem;color:#b0b7c3;">revenue</div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
+                    <div class="kpi-value text-dark mb-1">₱<?= number_format($stats['sales_today'], 2) ?></div>
+                    <div class="kpi-label">Selected-period sales</div>
+                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
+                        Avg <strong class="text-dark">₱<?= number_format($stats['avg_order_value'], 2) ?></strong> /
+                        ticket
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Low Stock Alerts -->
-        <div class="col-lg-6">
-            <div class="aurora-card h-100">
-                <div class="aurora-card-header">
-                    <div>
-                        <div class="aurora-card-title">⚠️ Low Stock Alerts</div>
-                        <div class="aurora-card-subtitle">Items below reorder threshold</div>
+        <!-- Orders Today -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card card p-0">
+                <div class="kpi-glow" style="background:#13deb9;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="kpi-icon-wrap" style="background:rgba(19,222,185,0.12);">
+                            <iconify-icon icon="solar:bag-5-bold-duotone"
+                                style="color:#13deb9;font-size:1.5rem;"></iconify-icon>
+                        </div>
+                        <span class="kpi-trend up"><i class="ti ti-check"></i> Done</span>
                     </div>
-                    <span class="kpi-trend <?= count($low_stock) > 0 ? 'down' : 'up' ?>">
-                        <?= count($low_stock) ?> Alert<?= count($low_stock) !== 1 ? 's' : '' ?>
-                    </span>
+                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['orders_today']) ?></div>
+                    <div class="kpi-label">Selected-period transactions</div>
+                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
+                        <span class="text-success fw-bold"><?= $completed_orders ?></span> completed &middot; <span
+                            class="text-warning fw-bold"><?= $pending_orders ?></span> pending
+                    </div>
                 </div>
-                <div class="aurora-card-body">
-                    <?php if (empty($low_stock)): ?>
-                        <div class="text-center py-5" style="font-size:0.82rem;color:#9eaac7;">
-                            <iconify-icon icon="solar:shield-check-bold-duotone"
-                                style="font-size:2.5rem;display:block;margin-bottom:10px;color:#13deb9;"></iconify-icon>
-                            All products have sufficient stock!
+            </div>
+        </div>
+
+        <!-- Total Products -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card card p-0">
+                <div class="kpi-glow" style="background:#ffae1f;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="kpi-icon-wrap" style="background:rgba(255,174,31,0.12);">
+                            <iconify-icon icon="solar:box-bold-duotone"
+                                style="color:#ffae1f;font-size:1.5rem;"></iconify-icon>
                         </div>
-                    <?php else: ?>
-                        <div class="d-flex flex-column" style="gap:10px;">
-                            <?php foreach (array_slice($low_stock, 0, 4) as $item): ?>
-                                <div class="stock-alert-card">
-                                    <div
-                                        style="width:38px;height:38px;background:rgba(250,84,84,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <iconify-icon icon="solar:danger-bold-duotone"
-                                            style="color:#fa5454;font-size:1.2rem;"></iconify-icon>
-                                    </div>
-                                    <div class="flex-fill">
-                                        <div style="font-weight:700;font-size:0.85rem;color:#2a3547;">
-                                            <?= htmlspecialchars($item['name']) ?>
-                                        </div>
-                                        <div style="font-size:0.74rem;color:#fa5454;font-weight:600;">
-                                            <?= (int) $item['stock'] ?> left &middot; min
-                                            <?= (int) ($item['low_stock_threshold'] ?? 10) ?>
-                                        </div>
-                                    </div>
-                                    <?php if(User::has_permission($_SESSION['user']['id'],'view_product')): ?><a href="<?= url('?route=inventory/products') ?>" class="btn btn-sm rounded-pill px-3"
-                                        style="background:#fa545415;color:#fa5454;font-size:0.75rem;font-weight:700;border:none;">
-                                        Restock
-                                    </a><?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
+                        <span class="kpi-trend neutral"><i class="ti ti-package"></i> SKUs</span>
+                    </div>
+                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['total_products'] ?? 0) ?></div>
+                    <div class="kpi-label">Active Products</div>
+                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
+                        <span
+                            class="text-danger fw-bold"><?= (int) ($stats['low_stock_count'] ?? count($low_stock)) ?></span>
+                        below reorder point
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members -->
+        <div class="col-6 col-lg-3">
+            <div class="kpi-card card p-0">
+                <div class="kpi-glow" style="background:#fa5454;"></div>
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="kpi-icon-wrap" style="background:rgba(250,84,84,0.10);">
+                            <iconify-icon icon="solar:users-group-rounded-bold-duotone"
+                                style="color:#fa5454;font-size:1.5rem;"></iconify-icon>
                         </div>
-                    <?php endif; ?>
+                        <span class="kpi-trend neutral"><i class="ti ti-users"></i> Staff</span>
+                    </div>
+                    <div class="kpi-value text-dark mb-1"><?= number_format($stats['total_users'] ?? 0) ?></div>
+                    <div class="kpi-label">Team Members</div>
+                    <div class="mt-2 pt-2 border-top" style="font-size:0.75rem;color:#9eaac7;">
+                        Across <strong class="text-dark"><?= count($all_branches) ?: 1 ?></strong>
+                        branch<?= count($all_branches) !== 1 ? 'es' : '' ?>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
+
 
 </div>
 
