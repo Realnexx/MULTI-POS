@@ -228,8 +228,15 @@
             });
             const text = await response.text();
             try { result = JSON.parse(text); } catch (_) {
+                const destination = new URL(response.url || action.href);
+                if (response.redirected && destination.searchParams.get('route') === 'login') {
+                    throw new Error('Your session has expired. Sign in again, then retry saving.');
+                }
+                if (response.status === 413) throw new Error('The server rejected the upload size. Try a smaller photo or ask your host to increase its upload limit.');
+                if (response.status === 403) throw new Error('The server denied this save request (HTTP 403). Refresh your session and check your account permissions.');
+                if (response.status >= 500) throw new Error('The server could not process this update (HTTP ' + response.status + '). Ask the administrator to check the hosting PHP error log.');
                 throw new Error(text && text.length < 500 && !text.includes('<')
-                    ? text : 'Unable to save. Please check your connection or refresh and try again.');
+                    ? text : 'The server returned an unexpected response (HTTP ' + response.status + '). The update could not be confirmed. Check the hosting error log and deployed form files.');
             }
             if (!response.ok || result.success !== true) throw new Error(result.message || 'Unable to save. Please check the entered values.');
             navigating=true;
