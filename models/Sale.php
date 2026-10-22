@@ -20,11 +20,11 @@ class Sale
         return RecipeInventory::rows($sql.' ORDER BY s.id DESC LIMIT 100',$types,$params);
     }
 
-    public static function create_sale($cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items = [], $order_type = 'Dine-in', $requireDrawer=false)
+    public static function create_sale($cashier_id, $branch_id, $total_amount, $discount_amount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items = [], $order_type = 'Dine-in', $requireDrawer=false,array $promoContext=[])
     {
         try {
             return RecipeInventory::checkout($cashier_id,$branch_id,$items,$discount_amount,$amount_tendered,$payment_method,$order_type,
-                $_POST['request_key'] ?? ($_SESSION['pos_checkout_key'] ?? ''),$requireDrawer);
+                $_POST['request_key'] ?? ($_SESSION['pos_checkout_key'] ?? ''),$requireDrawer,$promoContext);
         } catch (Throwable $error) {
             error_log('Checkout failed: ' . $error->getMessage());
             $_SESSION['checkout_error'] = $error instanceof DomainException || $error instanceof InvalidArgumentException
@@ -96,6 +96,8 @@ class Sale
             }
             $stmt_mods->close();
 
+            require_once __DIR__.'/CheckoutPolicy.php';$bundleSnapshot=CheckoutPolicy::forSale($sale_id)['bundle_contents']??[];
+            foreach($items as &$line)$line['bundle_components']=$bundleSnapshot[$line['product_id']]??[];unset($line);
             $sale['items'] = $items;
         }
 
@@ -232,11 +234,12 @@ class Sale
         return $conn->query($fallback_query)->fetch_all(MYSQLI_ASSOC);
     }
 
-    public static function get_filtered_sales($filters = [], $page = 1, $limit = 10, $order_by = 's.id', $order_dir = 'DESC')
+    private static function historyWhere($filters)
     {
         global $conn;
-
         $where_clauses = ["1=1"];
+        // Staff cannot change their history scope through forged location filters.
+        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) unset($filters['locations']);
         if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
             $context = User::access_context($_SESSION['user']['id']);
             $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
@@ -300,10 +303,17 @@ class Sale
             $location_list = array_map(function ($l) use ($conn) {
                 return "'" . $conn->real_escape_string($l) . "'";
             }, $filters['locations']);
-            $where_clauses[] = "u.branch IN (" . implode(",", $location_list) . ")";
+            $where_clauses[] = "s.branch_id IN (SELECT id FROM branches WHERE name IN (" . implode(",", $location_list) . "))";
         }
 
-        $where_str = implode(" AND ", $where_clauses);
+        return implode(" AND ", $where_clauses);
+    }
+
+    public static function get_filtered_sales($filters = [], $page = 1, $limit = 10, $order_by = 's.id', $order_dir = 'DESC')
+    {
+        global $conn;
+
+        $where_str = self::historyWhere($filters);
         $offset = intval(($page - 1) * $limit);
         $limit_val = intval($limit);
 
@@ -336,73 +346,7 @@ class Sale
     {
         global $conn;
 
-        $where_clauses = ["1=1"];
-        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
-            $context = User::access_context($_SESSION['user']['id']);
-            $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
-        } elseif (!empty($filters['branch_id'])) {
-            $where_clauses[] = 's.branch_id = ' . (int)$filters['branch_id'];
-        }
-
-        // Search term
-        if (!empty($filters['search'])) {
-            $s = $conn->real_escape_string($filters['search']);
-            $id_search = preg_replace('/[^0-9]/', '', $s);
-            if (!empty($id_search)) {
-                $where_clauses[] = "(s.id = " . intval($id_search) . " OR u.name LIKE '%$s%')";
-            } else {
-                $where_clauses[] = "u.name LIKE '%$s%'";
-            }
-        }
-
-        // Date range
-        if (!empty($filters['date_from'])) {
-            $df = $conn->real_escape_string($filters['date_from']);
-            $where_clauses[] = "DATE(s.created_at) >= '$df'";
-        }
-        if (!empty($filters['date_to'])) {
-            $dt = $conn->real_escape_string($filters['date_to']);
-            $where_clauses[] = "DATE(s.created_at) <= '$dt'";
-        }
-
-        // Payment Status
-        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'All') {
-            $status = $filters['payment_status'];
-            if ($status === 'Paid') {
-                $where_clauses[] = "s.status = 'Completed'";
-            } else {
-                $st = $conn->real_escape_string($status);
-                $where_clauses[] = "s.status = '$st'";
-            }
-        }
-
-        // Sales Channel (order_type)
-        if (!empty($filters['channels'])) {
-            $mapped_channels = [];
-            foreach ($filters['channels'] as $c) {
-                if ($c === 'POS Terminal') {
-                    $mapped_channels[] = "'Dine-in'";
-                    $mapped_channels[] = "'Take-out'";
-                } elseif ($c === 'Online Store') {
-                    $mapped_channels[] = "'Online'";
-                } else {
-                    $mapped_channels[] = "'" . $conn->real_escape_string($c) . "'";
-                }
-            }
-            if (!empty($mapped_channels)) {
-                $where_clauses[] = "s.order_type IN (" . implode(",", $mapped_channels) . ")";
-            }
-        }
-
-        // Store Location (branch)
-        if (!empty($filters['locations'])) {
-            $location_list = array_map(function ($l) use ($conn) {
-                return "'" . $conn->real_escape_string($l) . "'";
-            }, $filters['locations']);
-            $where_clauses[] = "u.branch IN (" . implode(",", $location_list) . ")";
-        }
-
-        $where_str = implode(" AND ", $where_clauses);
+        $where_str = self::historyWhere($filters);
 
         $query = "SELECT COUNT(*) as count 
                   FROM sales s 
@@ -439,25 +383,13 @@ class Sale
     public static function get_top_branches_by_sales($limit = 10, $branch_id = null, $start_date = null, $end_date = null)
     {
         global $conn;
-        $sql = "SELECT b.id, b.name, 
-                       COALESCE(COUNT(s.id), 0) as total_orders, 
-                       COALESCE(SUM(s.final_amount), 0) as total_revenue
-                FROM branches b
-                LEFT JOIN sales s ON s.branch_id = b.id
-                WHERE b.status = 'Active'";
-
-        if ($branch_id !== null) $sql .= " AND b.id = " . (int) $branch_id;
-
-        if ($start_date) {
-            $sd = $conn->real_escape_string($start_date);
-            $sql .= " AND (s.created_at IS NULL OR DATE(s.created_at) >= '$sd')";
-        }
-        if ($end_date) {
-            $ed = $conn->real_escape_string($end_date);
-            $sql .= " AND (s.created_at IS NULL OR DATE(s.created_at) <= '$ed')";
-        }
-
-        $sql .= " GROUP BY b.id ORDER BY total_revenue DESC LIMIT " . intval($limit);
+        $join = "s.branch_id = b.id AND s.status = 'Completed'";
+        if ($start_date) $join .= " AND DATE(s.created_at) >= '" . $conn->real_escape_string($start_date) . "'";
+        if ($end_date) $join .= " AND DATE(s.created_at) <= '" . $conn->real_escape_string($end_date) . "'";
+        $sql = "SELECT b.id, b.name, COUNT(s.id) as total_orders, COALESCE(SUM(s.final_amount),0) as total_revenue
+                FROM branches b LEFT JOIN sales s ON $join WHERE b.status = 'Active'";
+        if ($branch_id !== null) $sql .= " AND b.id = " . (int)$branch_id;
+        $sql .= " GROUP BY b.id ORDER BY total_revenue DESC, b.id ASC LIMIT " . max(1,(int)$limit);
         $result = $conn->query($sql);
         return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
     }
@@ -504,62 +436,7 @@ class Sale
     {
         global $conn;
 
-        $where_clauses = ["1=1"];
-        if (!empty($_SESSION['user']['id']) && !User::has_all_branch_access($_SESSION['user']['id'])) {
-            $context = User::access_context($_SESSION['user']['id']);
-            $where_clauses[] = 's.branch_id = ' . (int)($context['branch_id'] ?? 0);
-        } elseif (!empty($filters['branch_id'])) {
-            $where_clauses[] = 's.branch_id = ' . (int)$filters['branch_id'];
-        }
-
-        // Date range
-        if (!empty($filters['date_from'])) {
-            $df = $conn->real_escape_string($filters['date_from']);
-            $where_clauses[] = "DATE(s.created_at) >= '$df'";
-        }
-        if (!empty($filters['date_to'])) {
-            $dt = $conn->real_escape_string($filters['date_to']);
-            $where_clauses[] = "DATE(s.created_at) <= '$dt'";
-        }
-
-        // Payment Status
-        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'All') {
-            $status = $filters['payment_status'];
-            if ($status === 'Paid') {
-                $where_clauses[] = "s.status = 'Completed'";
-            } else {
-                $st = $conn->real_escape_string($status);
-                $where_clauses[] = "s.status = '$st'";
-            }
-        }
-
-        // Sales Channel (order_type)
-        if (!empty($filters['channels'])) {
-            $mapped_channels = [];
-            foreach ($filters['channels'] as $c) {
-                if ($c === 'POS Terminal') {
-                    $mapped_channels[] = "'Dine-in'";
-                    $mapped_channels[] = "'Take-out'";
-                } elseif ($c === 'Online Store') {
-                    $mapped_channels[] = "'Online'";
-                } else {
-                    $mapped_channels[] = "'" . $conn->real_escape_string($c) . "'";
-                }
-            }
-            if (!empty($mapped_channels)) {
-                $where_clauses[] = "s.order_type IN (" . implode(",", $mapped_channels) . ")";
-            }
-        }
-
-        // Store Location (branch name via user's branch column — matches get_filtered_sales behaviour)
-        if (!empty($filters['locations'])) {
-            $location_list = array_map(function ($l) use ($conn) {
-                return "'" . $conn->real_escape_string($l) . "'";
-            }, $filters['locations']);
-            $where_clauses[] = "u.branch IN (" . implode(",", $location_list) . ")";
-        }
-
-        $where_str = implode(" AND ", $where_clauses);
+        $where_str = self::historyWhere($filters);
 
         $query = "SELECT
                     SUM(CASE WHEN s.status = 'Completed' THEN s.final_amount ELSE 0 END) as revenue,
@@ -718,7 +595,7 @@ class Sale
             // Status-only refunds never return prepared food to usable inventory.
             if ($status==='Refunded') { require_once __DIR__.'/CashShift.php'; CashShift::refund($rows[0],(int)($_SESSION['user']['id'] ?? 0)); }
             RecipeInventory::query('UPDATE sales SET status = ? WHERE id = ?','si',[$status,$sale_id]);
-            if($status==='Refunded'){require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($sale_id,(int)($_SESSION['user']['id'] ?? 0));}
+            if($status==='Refunded'){require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($sale_id,(int)($_SESSION['user']['id'] ?? 0));require_once __DIR__.'/Promotion.php';Promotion::refund($sale_id);}
             return true;
         });
     }

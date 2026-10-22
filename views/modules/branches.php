@@ -10,10 +10,10 @@ ob_start();
         <div class="branches-actions"><a class="btn btn-light" href="<?= url('?route=admin/branches/report') ?>" target="_blank" rel="noopener">Export Audit</a><button class="btn btn-primary" onclick="openCreateModal()">+ Add Branch</button></div>
     </header>
     <div class="branches-stats">
-        <div><span>Total Branches</span><strong id="stat-total-branches">--</strong></div>
-        <div><span>Active Regions</span><strong id="stat-active-regions">--</strong></div>
-        <div><span>Top Performing</span><strong id="stat-top-performing">--</strong></div>
-        <div><span>Maintenance / Offline</span><strong id="stat-offline-branches">--</strong></div>
+        <div><i class="material-symbols-outlined branch-stat-icon" aria-hidden="true">storefront</i><span>Total Branches</span><strong id="stat-total-branches">--</strong></div>
+        <div><i class="material-symbols-outlined branch-stat-icon" aria-hidden="true">public</i><span>Active Regions</span><strong id="stat-active-regions">--</strong></div>
+        <div><i class="material-symbols-outlined branch-stat-icon" aria-hidden="true">emoji_events</i><span>Top Performing</span><strong id="stat-top-performing">--</strong></div>
+        <div><i class="material-symbols-outlined branch-stat-icon" aria-hidden="true">engineering</i><span>Maintenance / Offline</span><strong id="stat-offline-branches">--</strong></div>
     </div>
     <section class="branches-registry">
         <div class="branches-toolbar"><h4>Location Registry</h4><input type="search" id="branchSearch" class="form-control" aria-label="Search branches" placeholder="Search branches..."></div>

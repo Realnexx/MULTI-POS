@@ -2,10 +2,13 @@
 $title = "Users";
 ob_start();
 ?>
+<?php $userFieldError=$_SESSION['user_field_error']??null;unset($_SESSION['user_field_error']); ?>
+<script>window.userFormPolicy={strong:<?= Setting::get('strong_passwords','0')==='1'?'true':'false' ?>,error:<?= json_encode($userFieldError,JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>};</script>
+<script defer src="<?= url('assets/js/users-validation.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/users-validation.js') ?>"></script>
 <section class="access-workspace users-workspace">
 
 <div class="px-0">
-    <header class="access-heading"><div class="access-title"><span class="material-symbols-outlined">group</span><div><h1>Users</h1><p>Manage staff accounts, roles and access.</p></div></div><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">+ Add User</button></header>
+    <header class="access-heading"><div class="access-title"><span class="material-symbols-outlined">group</span><div><h1>Users</h1><p>Manage staff accounts, roles and access.</p></div></div><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal"><span class="material-symbols-outlined" aria-hidden="true">person_add</span> Add user</button></header>
 
     <!-- Quick Stats Summary -->
     <div class="row g-3 mb-4" id="stats-cards-container">
@@ -30,7 +33,7 @@ ob_start();
     <div class="card border-0 rounded-4 shadow-sm bg-white">
         <div class="card-header bg-white border-0 py-3 px-4">
             <div class="d-flex align-items-center justify-content-between">
-                <h5 class="mb-0 fw-bold text-dark">Staff Accounts</h5>
+                <div><h5 class="mb-1 fw-bold text-dark">Staff directory</h5><p class="small text-muted mb-0">Find team members and manage their account access.</p></div>
                 <div id="table-search-container"></div>
             </div>
         </div>
@@ -312,7 +315,7 @@ ob_start();
 </style>
 
 <!-- Enhanced View User Modal -->
-<div class="modal fade premium-modal" id="viewUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade premium-modal" id="viewUserModal" tabindex="-1" aria-label="User profile" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content overflow-hidden">
             <div class="modal-body p-0">
@@ -425,9 +428,9 @@ ob_start();
                 </div>
             </div>
             <div class="modal-footer border-0 pb-5 px-5">
-                <div class="d-flex gap-3 w-100">
-                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold flex-grow-1" data-bs-dismiss="modal">Close Profile</button>
-                    <button type="button" id="btn-edit-from-view" class="btn btn-primary rounded-pill px-4 fw-bold flex-grow-1" style="background: #5d87ff; border: none;">Edit Account</button>
+                <div class="d-flex gap-2 users-profile-actions">
+                    <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal"><span class="material-symbols-outlined" aria-hidden="true">close</span> Close</button>
+                    <button type="button" id="btn-edit-from-view" class="btn btn-primary rounded-pill px-4 fw-bold" style="background: #5d87ff; border: none;"><span class="material-symbols-outlined" aria-hidden="true">edit</span> Edit account</button>
                 </div>
             </div>
         </div>
@@ -435,11 +438,11 @@ ob_start();
 </div>
 
 <!-- Create User Modal -->
-<div class="modal fade premium-modal" id="createUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade premium-modal" id="createUserModal" tabindex="-1" aria-label="Add user" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-bold text-dark">Add User</h5>
+                <div class="users-modal-heading"><span class="material-symbols-outlined" aria-hidden="true">person_add</span><div><h5 class="modal-title fw-bold text-dark">Add user</h5><p>Create a staff account and assign its roles.</p></div></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="<?= url('?route=admin/users') ?>" method="POST" enctype="multipart/form-data">
@@ -459,7 +462,7 @@ ob_start();
                             </label>
                             <input type="file" name="image" id="create_image" class="d-none" accept="image/*" onchange="previewImage(this, 'create-image-preview')">
                         </div>
-                        <p class="text-muted small mt-2">Upload Profile Photo</p>
+                        <p class="text-muted small mt-2">JPG, PNG, GIF or WebP · Up to 10 MB</p>
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
@@ -510,9 +513,9 @@ ob_start();
 </div>
 
 <!-- Edit User Modal -->
-<div class="modal fade premium-modal" id="editUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade premium-modal" id="editUserModal" tabindex="-1" aria-label="Edit user" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 28px; min-width: 450px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 28px; min-width: 0;">
             <div class="modal-header border-0 p-4 pb-0">
                 <div class="d-flex align-items-center gap-3">
                     <div class="rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
@@ -531,8 +534,8 @@ ob_start();
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="user_id" id="edit_user_id">
 
-                <div class="modal-body py-4">
-                    <div class="text-center mb-4">
+                <div class="modal-body py-4 users-edit-grid">
+                    <div class="users-edit-photo">
                         <div class="position-relative d-inline-block">
                             <div id="edit-image-preview" class="rounded-circle border d-flex align-items-center justify-content-center bg-light shadow-sm" 
                                  style="width: 100px; height: 100px; overflow: hidden; background-size: cover; background-position: center;">
@@ -544,43 +547,43 @@ ob_start();
                             </label>
                             <input type="file" name="image" id="edit_image" class="d-none" accept="image/*" onchange="previewImage(this, 'edit-image-preview')">
                         </div>
-                        <p class="text-muted small mt-2">Change Profile Photo</p>
+                        <div><strong>Profile photo</strong><p>JPG, PNG, GIF or WebP · Up to 10 MB.</p><label for="edit_image" class="users-photo-link">Change photo</label></div>
                     </div>
-                    <div class="mb-4">
+                    <section class="users-edit-section users-edit-name">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
                             <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">person_edit</span>
                             Member Name Details
                         </label>
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <input type="text" name="firstname" id="edit_firstname" class="form-control border-0 bg-light shadow-none py-2" 
+                                <label class="users-name-label" for="edit_firstname">First name</label><input type="text" name="firstname" id="edit_firstname" class="form-control border-0 bg-light shadow-none py-2" 
                                        required placeholder="First Name" style="border-radius: 10px; font-size: 13px;">
                             </div>
                             <div class="col-md-6">
-                                <input type="text" name="middlename" id="edit_middlename" class="form-control border-0 bg-light shadow-none py-2" 
+                                <label class="users-name-label" for="edit_middlename">Middle name (optional)</label><input type="text" name="middlename" id="edit_middlename" class="form-control border-0 bg-light shadow-none py-2" 
                                        placeholder="Middle Name" style="border-radius: 10px; font-size: 13px;">
                             </div>
                             <div class="col-md-8">
-                                <input type="text" name="lastname" id="edit_lastname" class="form-control border-0 bg-light shadow-none py-2" 
+                                <label class="users-name-label" for="edit_lastname">Last name</label><input type="text" name="lastname" id="edit_lastname" class="form-control border-0 bg-light shadow-none py-2" 
                                        required placeholder="Last Name" style="border-radius: 10px; font-size: 13px;">
                             </div>
                             <div class="col-md-4">
-                                <input type="text" name="extname" id="edit_extname" class="form-control border-0 bg-light shadow-none py-2" 
+                                <label class="users-name-label" for="edit_extname">Suffix (optional)</label><input type="text" name="extname" id="edit_extname" class="form-control border-0 bg-light shadow-none py-2" 
                                        placeholder="Ext." style="border-radius: 10px; font-size: 13px;">
                             </div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="mb-4">
+                    <section class="users-edit-section users-edit-email">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
                             <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">alternate_email</span>
                             Email Address
                         </label>
                         <input type="email" name="email" id="edit_email" class="form-control form-control-lg border-0 bg-light shadow-none" 
                                required placeholder="name@example.com" style="font-size: 15px; padding: 14px 20px; border-radius: 12px;">
-                    </div>
+                    </section>
 
-                    <div class="mb-4">
+                    <section class="users-edit-section">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
                             <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">lock_reset</span>
                             Security Password
@@ -588,21 +591,21 @@ ob_start();
                         <input type="password" name="password" class="form-control form-control-lg border-0 bg-light shadow-none" 
                                placeholder="********" style="font-size: 15px; padding: 14px 20px; border-radius: 12px;">
                         <p class="text-muted mt-2 mb-0" style="font-size: 11px;">Leave this field empty if you don't wish to update the current password.</p>
-                    </div>
+                    </section>
 
-                    <div class="mb-4">
+                    <section class="users-edit-section">
                         <label class="form-label fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
                             <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">dialpad</span>
                             POS Terminal PIN
                         </label>
-                        <input type="text" name="pos_pin" id="edit_pos_pin"
+                        <input type="password" inputmode="numeric" autocomplete="new-password" name="pos_pin" id="edit_pos_pin"
                                class="form-control form-control-lg border-0 bg-light shadow-none"
                                maxlength="4" pattern="\d{4}"
                                placeholder="****" style="font-size: 15px; padding: 14px 20px; border-radius: 12px; letter-spacing: 8px; font-weight: 700;">
                         <p class="text-muted mt-2 mb-0" style="font-size: 11px;">4-digit PIN used to access the POS terminal. Leave empty to keep current.</p>
-                    </div>
+                    </section>
                         
-                    <div class="mt-5 mb-2">
+                    <section class="users-edit-section users-edit-roles">
                         <label class="form-label fw-bold text-dark small mb-3 d-flex align-items-center gap-2">
                             <span class="material-symbols-outlined" style="font-size: 18px; color: #5d87ff;">verified_user</span>
                             System Permissions & Roles
@@ -610,9 +613,9 @@ ob_start();
                         <div id="edit-user-roles-container" class="d-flex flex-wrap gap-2">
                             <!-- Roles loaded via AJAX -->
                         </div>
-                    </div>
+                    </section>
                 </div>
-                <div class="modal-footer border-0 p-4 pt-0 justify-content-center gap-2">
+                <div class="modal-footer border-0 p-4 pt-0 justify-content-end gap-2">
                     <button type="button" class="btn btn-light rounded-pill px-4 fw-bold d-flex align-items-center gap-2" 
                             data-bs-dismiss="modal" style="font-size: 13px; border-radius: 12px !important; padding: 10px 24px;">
                         <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
@@ -630,7 +633,7 @@ ob_start();
 </div>
 
 <!-- Remove Member Modal -->
-<div class="modal fade premium-modal" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade premium-modal" id="deleteUserModal" tabindex="-1" aria-label="Remove user" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content shadow-lg border-0 overflow-hidden">
             <div class="modal-body p-4 text-center">
@@ -684,6 +687,7 @@ ob_start();
                                 ${userImg}
                                 <div>
                                     <div class="fw-bold text-dark">${escapeHtml(data)}</div>
+                                    <span class="user-branch-badge ${row.branch_id ? '' : 'unassigned'}"><span class="material-symbols-outlined" aria-hidden="true">storefront</span>${escapeHtml(row.assigned_branch_name || (row.branch_id ? 'Branch #' + row.branch_id : 'No branch assigned'))}</span>
                                     <div class="text-muted" style="font-size: 11px;">#USER-${row.id.toString().padStart(4, '0')}</div>
                                 </div>
                             </div>`;
@@ -739,8 +743,13 @@ ob_start();
                     }
                 }
             ],
+            createdRow: function(row) {
+                ['User','Email','Roles','Date added','Actions'].forEach(function(label,index) {
+                    if(row.cells[index])row.cells[index].setAttribute('data-label',label);
+                });
+            },
             autoWidth: false,
-            dom: '<"users-table-scroll"tr><"users-table-footer"lip>',
+            dom: '<"users-table-body"tr><"users-table-footer"lip>',
             language: {
                 processing: '<div class="spinner-border text-primary spinner-border-sm" role="status"></div>',
                 emptyTable: '<div class="opacity-25 my-4"><span class="material-symbols-outlined" style="font-size: 48px;">person_search</span></div><p class="text-muted">No team members found.</p>'
@@ -750,7 +759,7 @@ ob_start();
                 const searchHtml = `
                     <div class="position-relative">
                         <span class="material-symbols-outlined position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style="font-size: 18px;">search</span>
-                        <input type="text" id="userSearch" class="form-control rounded-pill ps-5 border-light bg-light small"
+                        <input type="text" id="userSearch" aria-label="Search staff accounts" class="form-control rounded-pill ps-5 border-light bg-light small"
                             placeholder="Search users..." style="width: 250px;">
                     </div>`;
                 $('#table-search-container').html(searchHtml);
@@ -847,6 +856,9 @@ ob_start();
             editContainer.empty();
 
             roles.forEach(r => {
+                const isSuperadmin = r.is_superadmin || String(r.name || '').toLowerCase().replace(/[\s_-]/g, '') === 'superadmin';
+                if (isSuperadmin && !<?= json_encode(User::is_superadmin($_SESSION['user']['id'])) ?>) return;
+                if (r.can_assign === false) return;
                 const createHtml = `<div class="custom-check-pill"><input type="radio" name="roles[]" value="${r.id}" id="role_create_${r.id}"><label for="role_create_${r.id}">${escapeHtml(r.name)}</label></div>`;
                 const editHtml = `<div class="custom-check-pill"><input type="radio" class="edit-role-checkbox" name="roles[]" value="${r.id}" data-role-name="${escapeHtml(r.name)}" id="role_edit_${r.id}"><label for="role_edit_${r.id}">${escapeHtml(r.name)}</label></div>`;
                 createContainer.append(createHtml);
@@ -989,6 +1001,7 @@ ob_start();
 </script>
 
 <link rel="stylesheet" href="<?= url('assets/css/access-management.css') ?>">
+<link rel="stylesheet" href="<?= url('assets/css/users-workspace.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/users-workspace.css') ?>">
 </section>
 <?php
 $content = ob_get_clean();

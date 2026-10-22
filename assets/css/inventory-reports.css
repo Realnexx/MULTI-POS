@@ -114,3 +114,106 @@
 .inventory-reports .report-print-link:focus-visible,.inventory-reports .report-tab .nav-link:focus-visible {outline:3px solid #b2c4ff;outline-offset:3px;}
 .inventory-reports .report-tab .nav-link.active:hover {background:#244fd0;color:#fff;border-color:#244fd0;}
 .inventory-reports .report-tab .nav-link.active .material-symbols-outlined {color:inherit!important;}
+
+/* Mobile report cards retain the original rows and DataTables controls. */
+@media (max-width:767.98px) {
+  .inventory-reports .report-table.table-hover tbody tr:hover > * { background:transparent; --bs-table-accent-bg:transparent; }
+  .inventory-reports .report-table-scroll { overflow:visible; padding:12px; }
+  .inventory-reports .report-table,
+  .inventory-reports .report-table tbody { display:block; width:100% !important; min-width:0 !important; }
+  .inventory-reports .report-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+  .inventory-reports .report-table tbody tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; border:1px solid var(--reports-line); border-radius:14px; padding:14px; margin-bottom:12px; background:#fff; }
+  .inventory-reports .report-table tbody td { display:block; min-width:0; width:auto !important; padding:0 !important; border:0; text-align:left !important; white-space:normal !important; overflow-wrap:anywhere; box-shadow:none; background:transparent; }
+  .inventory-reports .report-table tbody td::before { content:attr(data-label); display:block; font-size:.65rem; font-weight:600; color:#62758b; margin-bottom:4px; }
+  .inventory-reports .report-table tbody td:first-child { grid-column:1/-1; }
+  .inventory-reports .report-table .report-empty-card { display:block; text-align:center; }
+  .inventory-reports .report-empty-card td::before { display:none; }
+  .inventory-reports .report-summary-cards tbody tr { grid-template-columns:minmax(0,1fr) auto; }
+  .inventory-reports .report-summary-cards tbody td:first-child { grid-column:auto; }
+  .inventory-reports .report-summary-cards td::before { display:none; }
+  .inventory-reports .dataTables_wrapper .row { margin:0; gap:8px; }
+  .inventory-reports .dataTables_wrapper .row > * { padding:0; min-width:0; }
+  .inventory-reports .dataTables_wrapper .pagination { flex-wrap:wrap; gap:4px; justify-content:center !important; }
+  .inventory-reports .dataTables_wrapper .page-link { min-width:40px; min-height:40px; display:flex; align-items:center; justify-content:center; }
+  .inventory-reports .dataTables_info { white-space:normal; }
+  .inventory-reports .report-tab { flex-wrap:wrap; }
+  .inventory-reports .report-tab .nav-link { min-height:44px; }
+  .inventory-reports .reports-stat-row > * { min-width:0; }
+}
+@media (max-width:359.98px) {
+  .inventory-reports .report-table tbody tr { grid-template-columns:1fr; }
+  .inventory-reports .report-summary-cards tbody tr { grid-template-columns:1fr; }
+}
+
+.reports-mobile-filterbar { display:none; }
+.reports-rank-badge { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; border-radius:12px; font-weight:750; white-space:nowrap; }
+.reports-rank-badge .material-symbols-outlined { font-size:25px; }
+.reports-rank-gold { color:#986000; background:#fff6dc; }
+.reports-rank-silver { color:#52657a; background:#edf2f7; }
+.reports-rank-bronze { color:#9a542a; background:#fff0e6; }
+.reports-rank-standard { color:#007c94; background:#eaf8fb; }
+.reports-filters-modal .modal-content { border-radius:22px; border:0; overflow:hidden; max-height:92dvh; }
+.reports-filters-modal .modal-title { display:flex; align-items:center; gap:8px; font-size:1.1rem; }
+.reports-filters-modal .modal-body { overflow-y:auto; overscroll-behavior:contain; }
+.reports-filters-modal .modal-header,.reports-filters-modal .modal-footer { flex-shrink:0; }
+.reports-filters-modal .modal-footer { padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+.reports-filters-modal .modal-footer .btn { display:inline-flex; align-items:center; gap:6px; min-height:44px; }
+.reports-filters-modal .reports-filter-inner { display:flex; flex-direction:column; align-items:stretch; gap:18px; }
+.reports-filters-modal .reports-filters { margin:0; }
+.reports-filters-modal .reports-filter-icon,.reports-filters-modal .reports-apply { display:none; }
+.reports-filters-modal select,.reports-filters-modal input { min-height:44px; width:100% !important; }
+.reports-filters-modal .reports-presets { flex-wrap:wrap; }
+.reports-filters-modal .reports-presets a { padding:10px; background:#eff5fa; border-radius:10px; color:#24556b; }
+.reports-filters-modal .reports-date-range { display:flex; align-items:center; gap:8px; }
+.reports-filters-modal .reports-date-range input { min-width:0; flex:1; width:0 !important; }
+@media(max-width:767.98px) {
+  .reports-mobile-filterbar { display:flex; align-items:center; gap:12px; margin-bottom:16px; font-size:.75rem; color:#62758b; }
+  .reports-filter-trigger { display:inline-flex; align-items:center; gap:8px; background:#eaf8fb; color:#007c94; border:1px solid #bae4ec; min-height:44px; border-radius:12px; font-weight:700; }
+  .reports-filters-modal .modal-dialog { position:absolute; inset:auto 0 0; margin:0 !important; width:100%; max-width:none; min-height:0; }
+  .reports-filters-modal .modal-content { border-radius:22px 22px 0 0; }
+  .reports-filters-modal.fade .modal-dialog { transform:translateY(100%); }
+  .reports-filters-modal.show .modal-dialog { transform:translateY(0); }
+  .inventory-reports .report-table .reports-branch-rank { grid-template-columns:auto minmax(0,1fr); align-items:center; background:linear-gradient(145deg,#fff,#f5fbfc); }
+  .inventory-reports .reports-branch-rank td:first-child { grid-column:auto; }
+  .inventory-reports .reports-branch-rank td:first-child::before { display:none; }
+  .inventory-reports .reports-branch-rank td:nth-child(2) { font-size:.95rem; }
+}
+@media(prefers-reduced-motion:reduce) { .reports-filters-modal.fade .modal-dialog { transition:none; } }
+
+.inventory-reports .revenue-statement { max-width:960px; margin:auto; padding:12px 18px; color:#233b50; }
+.statement-heading { display:flex; flex-direction:column; gap:5px; padding-bottom:20px; }
+.statement-heading>span { font-weight:750; font-size:1.05rem; }
+.statement-heading small,.statement-note { color:#62758b; font-size:.75rem; }
+.statement-line { display:grid; grid-template-columns:minmax(0,1fr) minmax(120px,auto); gap:20px; align-items:baseline; padding:12px 0; font-size:.85rem; }
+.statement-line>:last-child { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.statement-section { text-transform:uppercase; font-size:.67rem; font-weight:700; letter-spacing:.08em; color:#62758b; border-bottom:1px solid #dce6ed; }
+.statement-deduction>:first-child { padding-left:24px; color:#62758b; }
+.statement-subtotal { margin-left:24px; border-top:1px solid #aabdc9; font-weight:700; }
+.statement-total { margin-top:8px; border-top:1px solid #7995a6; font-weight:750; color:#006e83; }
+.statement-total strong { border-bottom:3px double #7995a6; padding-bottom:8px; }
+.statement-note { margin:6px 0 22px; line-height:1.5; }
+.statement-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; border-top:1px solid #e1eaf0; padding-top:18px; }
+.statement-metrics>div { display:flex; flex-direction:column; gap:6px; }
+.statement-metrics span { font-size:.73rem; color:#62758b; }
+.statement-metrics strong { font-size:.95rem; }
+@media(max-width:575.98px) {
+ .inventory-reports .revenue-statement { padding:4px; }
+ .statement-line { grid-template-columns:minmax(0,1fr) auto; gap:12px; font-size:.79rem; }
+ .statement-deduction>:first-child { padding-left:14px; }
+ .statement-subtotal { margin-left:14px; }
+ .statement-heading small { line-height:1.5; }
+}
+
+/* Accounting hierarchy: deductions nest below sales; balances step inward. */
+.statement-line:not(.statement-section):not(.statement-total)>:first-child { padding-left:16px; }
+.statement-line.statement-deduction>:first-child { padding-left:48px; }
+.statement-line.statement-subtotal>:first-child { padding-left:16px; }
+.statement-subtotal { margin-left:16px; }
+.statement-total>:first-child { padding-left:32px; }
+@media(max-width:575.98px) {
+ .statement-line:not(.statement-section):not(.statement-total)>:first-child { padding-left:8px; }
+ .statement-line.statement-deduction>:first-child { padding-left:28px; }
+ .statement-line.statement-subtotal>:first-child { padding-left:8px; }
+ .statement-total>:first-child { padding-left:16px; }
+ .statement-subtotal { margin-left:8px; }
+}

@@ -151,11 +151,20 @@ class WebsiteController {
         $this->cart_write();try {Cart::update((int)AuthSecurity::input('product_id'),AuthSecurity::input('qty'),session_id(),$_SESSION['user']['id'] ?? null);$_SESSION['online_checkout_key']=bin2hex(random_bytes(32));$this->cart_result('Cart updated.');}catch(DomainException $e){$this->cart_result($e->getMessage(),false);}
     }
     public function cart_remove() {$this->cart_write();Cart::remove((int)AuthSecurity::input('product_id'),session_id(),$_SESSION['user']['id'] ?? null);$_SESSION['online_checkout_key']=bin2hex(random_bytes(32));$this->cart_result('Item removed.');}
+    public function cart_promotion() {
+        require_login();$this->cart_write();require_once __DIR__.'/../models/Promotion.php';
+        $code=AuthSecurity::input('promo_code');
+        try{if(AuthSecurity::consume('promo-code',(string)$_SESSION['user']['id'],20,60))throw new DomainException('Please wait before trying another code.');
+            $branch=(int)($_SESSION['online_branch_id']??0);if(!$branch)throw new DomainException('Choose a pickup branch first.');
+            Promotion::financial(Promotion::cartQuotes(Cart::get_items(session_id(),(int)$_SESSION['user']['id'],$branch)),$branch,'online',(int)$_SESSION['user']['id'],$code);
+            $_SESSION['online_promo_code']=strtoupper(trim($code));$_SESSION['online_checkout_key']=bin2hex(random_bytes(32));set_flash('success',$code===''?'Promo code removed.':'Promo code applied.');
+        }catch(DomainException $e){set_flash('danger',$e->getMessage());}redirect('?route=cart');
+    }
     public function checkout() {
         require_login();$this->cart_write();
         $key=AuthSecurity::input('request_key');if(empty($_SESSION['online_checkout_key'])||!hash_equals($_SESSION['online_checkout_key'],$key))access_denied('Your cart changed. Reload it before ordering.',409);
         $wait=AuthSecurity::consume('online-checkout', (string)$_SESSION['user']['id'],10,3600);if($wait){set_flash('danger','Too many order attempts. Please try again later.');redirect('?route=cart');}
-        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'),AuthSecurity::input('cart_quote'));$_SESSION['cart']=[];
+        try {$order=OnlineOrder::place((int)$_SESSION['user']['id'],session_id(),(int)AuthSecurity::input('branch_id'),AuthSecurity::input('name'),AuthSecurity::input('email'),AuthSecurity::input('phone'),$key,AuthSecurity::input('expected_total'),AuthSecurity::input('cart_quote'),$_SESSION['online_promo_code']??'');unset($_SESSION['online_promo_code']);$_SESSION['cart']=[];
             if(AuthSecurity::input('payment_method')==='paymongo') {
                 require_once __DIR__.'/../models/PayMongo.php';
                 try {$checkout=PayMongo::checkout($order['tracking_number'],(int)$_SESSION['user']['id']);header('Location: '.$checkout,true,303);exit;}

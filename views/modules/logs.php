@@ -3,9 +3,9 @@ require_once __DIR__ . '/../../models/Product.php';
 require_once __DIR__ . '/../../models/Branch.php';
 require_once __DIR__ . '/../../models/Sale.php';
 require_once __DIR__ . '/../../models/Expense.php';
-$logs = $logs ?? Product::get_inventory_logs() ?: [];
-$products = $products ?? Product::get_all_products() ?: [];
-$branches = $branches ?? Branch::get_all_active() ?: [];
+$logs = $logs ?? [];
+$products = $products ?? [];
+$branches = $branches ?? Branch::for_current_user();
 $sale_stats = $sale_stats ?? ['revenue' => 0, 'discounts' => 0, 'count' => 0];
 $sale_stats_today = $sale_stats_today ?? ['revenue' => 0, 'orders' => 0];
 $top_selling = $top_selling ?? [];
@@ -20,7 +20,7 @@ $title = "Reports & Analytics";
 ob_start();
 ?>
 
-<link rel="stylesheet" href="<?= url('assets/css/inventory-reports.css') ?>">
+<link rel="stylesheet" href="<?= url('assets/css/inventory-reports.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/inventory-reports.css') ?>">
 <section class="inventory-reports" aria-labelledby="reports-page-title">
 <header class="reports-heading">
     <div class="reports-heading-icon" aria-hidden="true"><span class="material-symbols-outlined">monitoring</span></div>
@@ -33,6 +33,11 @@ ob_start();
     </div>
 </header>
 
+<div class="reports-mobile-filterbar">
+    <button type="button" class="btn reports-filter-trigger" data-bs-toggle="modal" data-bs-target="#reportsFiltersModal"><span class="material-symbols-outlined" aria-hidden="true">tune</span> Filters</button>
+    <span>Branch and date range</span>
+</div>
+<div id="reportsFilterDesktopSlot"></div>
 <!-- Filter Bar -->
 <form method="GET" class="reports-filters" id="reportFilterForm">
     <input type="hidden" name="route" value="inventory/logs">
@@ -41,7 +46,9 @@ ob_start();
         <span class="material-symbols-outlined reports-filter-icon" aria-hidden="true">filter_alt</span>
 
         <select aria-label="Filter by branch" name="branch_id" class="form-select border-0 bg-light bg-opacity-50 shadow-none" style="width: auto; font-size: 0.78rem; padding: 6px 28px 6px 12px;">
-            <option value="">All Branches</option>
+            <?php if (User::has_all_branch_access((int)($_SESSION['user']['id'] ?? 0))): ?>
+                <option value="">All Branches</option>
+            <?php endif; ?>
             <?php foreach ($branches as $b): ?>
                 <option value="<?= $b['id'] ?>" <?= ($filter_branch_id ?? null) == $b['id'] ? 'selected' : '' ?>><?= htmlspecialchars($b['name']) ?></option>
             <?php endforeach; ?>
@@ -142,28 +149,28 @@ ob_start();
     <div class="row g-2 mb-3 reports-stat-row">
         <div class="col-6 col-xl-3">
             <div class="stat-card p-3 bg-white">
-                <div class="text-muted small text-uppercase fw-bold mb-1">Today's Revenue</div>
+                <div class="text-muted small text-uppercase fw-bold mb-1"><span class="material-symbols-outlined me-2" aria-hidden="true">payments</span>Today's Revenue</div>
                 <h3 class="fw-bold text-dark mb-0 outfit-font">₱<?= number_format($sale_stats_today['revenue'] ?? 0, 2) ?></h3>
                 <div class="mt-2"><span class="badge bg-success-subtle text-success rounded-pill fs-8"><?= $sale_stats_today['orders'] ?? 0 ?> orders</span></div>
             </div>
         </div>
         <div class="col-6 col-xl-3">
             <div class="stat-card p-3 bg-white">
-                <div class="text-muted small text-uppercase fw-bold mb-1">Total Revenue</div>
+                <div class="text-muted small text-uppercase fw-bold mb-1"><span class="material-symbols-outlined me-2" aria-hidden="true">monitoring</span>Total Revenue</div>
                 <h3 class="fw-bold text-dark mb-0 outfit-font">₱<?= number_format($sale_stats['revenue'] ?? 0, 2) ?></h3>
                 <div class="mt-2"><span class="badge bg-primary-subtle text-primary rounded-pill fs-8"><?= $sale_stats['count'] ?? 0 ?> transactions</span></div>
             </div>
         </div>
         <div class="col-6 col-xl-3">
             <div class="stat-card p-3 bg-white">
-                <div class="text-muted small text-uppercase fw-bold mb-1">Inventory Valuation</div>
+                <div class="text-muted small text-uppercase fw-bold mb-1"><span class="material-symbols-outlined me-2" aria-hidden="true">inventory_2</span>Inventory Valuation</div>
                 <h3 class="fw-bold text-dark mb-0 outfit-font">₱<?= number_format($inventory_stats['total_valuation'], 2) ?></h3>
                 <div class="mt-2"><span class="badge bg-warning-subtle text-warning rounded-pill fs-8"><?= $inventory_stats['low_stock_count'] ?> low stock</span></div>
             </div>
         </div>
         <div class="col-6 col-xl-3">
             <div class="stat-card p-3 bg-white">
-                <div class="text-muted small text-uppercase fw-bold mb-1">Expenses (Month)</div>
+                <div class="text-muted small text-uppercase fw-bold mb-1"><span class="material-symbols-outlined me-2" aria-hidden="true">receipt_long</span>Expenses (Selected Period)</div>
                 <h3 class="fw-bold text-dark mb-0 outfit-font">₱<?= number_format($expense_stats['total_this_month'], 2) ?></h3>
                 <div class="mt-2"><span class="badge bg-danger-subtle text-danger rounded-pill fs-8">Top: <?= htmlspecialchars($expense_stats['highest_category']) ?></span></div>
             </div>
@@ -228,9 +235,10 @@ ob_start();
         <div class="col-12">
             <div class="card border-0 rounded-4 shadow-sm border border-light">
                 <div class="card-header bg-transparent border-bottom px-4 py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><span class="material-symbols-outlined me-1" style="font-size: 16px; color: #5d87ff;">leaderboard</span> Top Performing Branches</h6>
+                    <h6 class="fw-bold text-dark mb-0"><span class="material-symbols-outlined me-1" style="font-size: 16px; color: #5d87ff;">leaderboard</span> <?= $filter_branch_id !== null ? 'Branch Sales Rank' : 'Top Performing Branches' ?></h6>
                 </div>
                 <div class="card-body p-0">
+                    <p class="small text-muted px-4 pt-3 mb-2">Ranked by completed sales revenue after discounts in the selected date range, across all active branches. Equal revenue shares a rank.</p>
                     <div class="report-table-scroll"><table class="table table-hover mb-0 report-table">
                         <thead><tr><th class="ps-4">Rank</th><th>Branch</th><th class="text-center">Orders</th><th class="text-end pe-4">Revenue</th></tr></thead>
                         <tbody>
@@ -246,13 +254,10 @@ ob_start();
                                     $is_top3 = $i < 3;
                                     $bg = $is_top3 ? 'bg-light' : '';
                                     ?>
-                                    <tr class="<?= $bg ?>">
+                                    <tr class="reports-branch-rank <?= $bg ?>">
                                         <td class="ps-4" style="width: 60px;">
-                                            <?php if ($is_top3): ?>
-                                                <span class="material-symbols-outlined" style="font-size: 22px; color: <?= $rank_colors[$i] ?>;"><?= $rank_icons[$i] ?></span>
-                                            <?php else: ?>
-                                                <span class="text-muted fw-bold"><?= $i + 1 ?></span>
-                                            <?php endif; ?>
+                                            <?php $branchRank = (int)($tb['rank'] ?? $i + 1); $rankTone = $branchRank === 1 ? 'gold' : ($branchRank === 2 ? 'silver' : ($branchRank === 3 ? 'bronze' : 'standard')); ?>
+                                            <span class="reports-rank-badge reports-rank-<?= $rankTone ?>"><span class="material-symbols-outlined" aria-hidden="true"><?= $branchRank === 1 ? 'emoji_events' : ($branchRank <= 3 ? 'military_tech' : 'leaderboard') ?></span><span>#<?= $branchRank ?></span></span>
                                         </td>
                                         <td class="fw-semibold text-dark"><?= htmlspecialchars($tb['name'] ?? 'Unassigned') ?></td>
                                         <td class="text-center fw-bold"><?= (int) ($tb['total_orders'] ?? 0) ?></td>
@@ -268,6 +273,13 @@ ob_start();
     </div>
 </div>
 
+<style>
+#dashboard .stat-card { border:1px solid #e1eaf0; border-radius:18px; box-shadow:0 5px 20px rgba(25,62,82,.045); height:100%; }
+#dashboard .stat-card::before,#dashboard .stat-card::after { display:none; }
+#dashboard .stat-card>.text-uppercase { display:flex; align-items:center; font-size:.72rem; }
+#dashboard .stat-card .material-symbols-outlined { color:#008aa5; background:#eaf8fb; padding:8px; border-radius:12px; font-size:22px; }
+#dashboard .stat-card h3 { overflow-wrap:anywhere; }
+</style>
 <!-- ===================== SALES REPORT TAB ===================== -->
 <div class="tab-pane fade" id="sales" role="tabpanel">
     <div class="reports-print-toolbar"><a class="btn btn-sm btn-light report-print-link" data-report-tab="sales" href="<?= url('?route=inventory/logs/print&tab=sales' . (!empty($filter_branch_id) ? '&branch_id=' . (int)$filter_branch_id : '') . '&date_from=' . rawurlencode($filter_date_from ?? '') . '&date_to=' . rawurlencode($filter_date_to ?? '')) ?>" target="_blank" rel="noopener"><span class="material-symbols-outlined" aria-hidden="true">print</span> Print Sales</a></div>
@@ -495,23 +507,18 @@ ob_start();
             <h6 class="fw-bold text-dark mb-0"><span class="material-symbols-outlined me-1" style="font-size: 16px; color: #5d87ff;">analytics</span> Revenue Summary</h6>
         </div>
         <div class="card-body p-4">
-            <div class="report-table-scroll"><table class="table table-bordered report-table mb-0">
-                <tbody>
-                    <tr><td class="fw-bold text-dark ps-4">Total Transactions</td><td class="text-end pe-4 fw-bold"><?= $sale_stats['count'] ?? 0 ?></td></tr>
-                    <tr><td class="fw-bold text-dark ps-4">Gross Revenue</td><td class="text-end pe-4 fw-bold">₱<?= number_format(($sale_stats['revenue'] ?? 0) + ($sale_stats['discounts'] ?? 0), 2) ?></td></tr>
-                    <tr><td class="fw-bold text-dark ps-4">Total Discounts Given</td><td class="text-end pe-4 fw-bold text-danger">- ₱<?= number_format($sale_stats['discounts'] ?? 0, 2) ?></td></tr>
-                    <tr><td class="fw-bold text-dark ps-4">Net Revenue</td><td class="text-end pe-4 fw-bold" style="color: #059669;">₱<?= number_format($net_revenue, 2) ?></td></tr>
-                    <tr><td class="fw-bold text-dark ps-4">Average Order Value</td><td class="text-end pe-4 fw-bold" style="color: #5d87ff;">₱<?= number_format($avg, 2) ?></td></tr>
-                    <tr><td class="fw-bold text-dark ps-4">Expenses (This Month)</td><td class="text-end pe-4 fw-bold text-danger">- ₱<?= number_format($expense_stats['total_this_month'] ?? 0, 2) ?></td></tr>
-                    <?php $net_profit = $net_revenue - ($expense_stats['total_this_month'] ?? 0); ?>
-                    <tr class="table-light">
-                        <td class="fw-bold ps-4" style="font-size: 0.85rem;">NET PROFIT (Estimated)</td>
-                        <td class="text-end pe-4 fw-black" style="font-size: 0.9rem; color: <?= $net_profit >= 0 ? '#059669' : '#dc2626' ?>;">
-                            <?= $net_profit >= 0 ? '+' : '-' ?> ₱<?= number_format(abs($net_profit), 2) ?>
-                        </td>
-                    </tr>
-                </tbody>
-            </table></div>
+            <div class="revenue-statement" aria-label="Revenue statement">
+                <div class="statement-heading"><span>Revenue statement</span><small>Selected reporting period · Philippine peso (PHP)</small></div>
+                <div class="statement-line statement-section"><span>Sales revenue</span><span>Amount</span></div>
+                <div class="statement-line"><span>Gross sales</span><strong>₱<?= number_format(($sale_stats['revenue'] ?? 0) + ($sale_stats['discounts'] ?? 0), 2) ?></strong></div>
+                <div class="statement-line statement-deduction"><span>Less: Sales discounts</span><span>(₱<?= number_format($sale_stats['discounts'] ?? 0, 2) ?>)</span></div>
+                <div class="statement-line statement-subtotal"><span>Net sales revenue</span><strong>₱<?= number_format($net_revenue, 2) ?></strong></div>
+                <div class="statement-line statement-deduction"><span>Less: Recorded expenses</span><span>(₱<?= number_format($expense_stats['total_this_month'] ?? 0, 2) ?>)</span></div>
+                <?php $net_profit = $net_revenue - ($expense_stats['total_this_month'] ?? 0); ?>
+                <div class="statement-line statement-total"><span>Revenue less expenses</span><strong><?= $net_profit < 0 ? '(₱' : '₱' ?><?= number_format(abs($net_profit), 2) ?><?= $net_profit < 0 ? ')' : '' ?></strong></div>
+                <p class="statement-note">This balance excludes cost of goods sold and unrecorded costs; it is not net profit.</p>
+                <div class="statement-metrics"><div><span>Completed transactions</span><strong><?= number_format($sale_stats['count'] ?? 0) ?></strong></div><div><span>Average order value</span><strong>₱<?= number_format($avg, 2) ?></strong></div></div>
+            </div>
         </div>
     </div>
 </div>
@@ -522,6 +529,7 @@ ob_start();
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    function escapeLog(value) { return $('<div>').text(value == null ? '' : value).html(); }
     const branchId = <?= json_encode($filter_branch_id) ?>;
     const dateFrom = <?= json_encode($filter_date_from) ?>;
     const dateTo = <?= json_encode($filter_date_to) ?>;
@@ -539,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Activate the correct tab from URL param
-    const activeTab = <?= json_encode($_GET['tab'] ?? 'dashboard') ?>;
+    const activeTab = <?= json_encode(in_array($_GET['tab'] ?? '', ['dashboard','sales','inventory','expenses','revenue'], true) ? $_GET['tab'] : 'dashboard', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
     const tabBtn = document.querySelector('#reportTabs .nav-link[data-bs-target="#' + activeTab + '"]');
     if (tabBtn) {
         bootstrap.Tab.getOrCreateInstance(tabBtn).show();
@@ -592,13 +600,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'cashier_name',
                     render: function (data) {
-                        return '<span class="fw-semibold text-dark">' + (data || 'System') + '</span>';
+                        return '<span class="fw-semibold text-dark">' + escapeLog((data || 'System')) + '</span>';
                     }
                 },
                 {
                     data: 'products',
                     render: function (data) {
-                        return data ? '<span class="text-dark small">' + data + '</span>' : '<span class="text-muted small">-</span>';
+                        return data ? '<span class="text-dark small">' + escapeLog(data) + '</span>' : '<span class="text-muted small">-</span>';
                     }
                 },
                 {
@@ -629,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'payment_method',
                     render: function (data) {
-                        return '<span class="badge bg-light text-dark border rounded-pill fs-8">' + (data || 'N/A') + '</span>';
+                        return '<span class="badge bg-light text-dark border rounded-pill fs-8">' + escapeLog((data || 'N/A')) + '</span>';
                     }
                 },
                 {
@@ -715,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'product_name',
                     render: function (data) {
-                        return '<span class="ps-4 fw-semibold text-dark">' + (data || 'Deleted') + '</span>';
+                        return '<span class="ps-4 fw-semibold text-dark">' + escapeLog((data || 'Deleted')) + '</span>';
                     }
                 },
                 {
@@ -740,13 +748,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'user_name',
                     render: function (data) {
-                        return '<span class="text-muted">' + (data || 'System') + '</span>';
+                        return '<span class="text-muted">' + escapeLog((data || 'System')) + '</span>';
                     }
                 },
                 {
                     data: 'remarks',
                     render: function (data) {
-                        return '<span class="text-muted small">' + (data || '') + '</span>';
+                        return '<span class="text-muted small">' + escapeLog((data || '')) + '</span>';
                     }
                 },
                 {
@@ -832,13 +840,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 {
                     data: 'category',
                     render: function (data) {
-                        return '<span class="badge bg-light text-dark border rounded-pill fs-8">' + data + '</span>';
+                        return '<span class="badge bg-light text-dark border rounded-pill fs-8">' + escapeLog(data) + '</span>';
                     }
                 },
                 {
                     data: 'description',
                     render: function (data) {
-                        return '<span class="text-dark small">' + (data || '') + '</span>';
+                        return '<span class="text-dark small">' + escapeLog((data || '')) + '</span>';
                     }
                 },
                 {
@@ -889,6 +897,14 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
+<div class="modal fade reports-filters-modal" id="reportsFiltersModal" tabindex="-1" aria-labelledby="reportsFiltersTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="reportsFiltersTitle"><span class="material-symbols-outlined" aria-hidden="true">tune</span> Report filters</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close filters"></button></div>
+    <div class="modal-body" id="reportsFilterMobileSlot"></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" form="reportFilterForm" class="btn btn-primary"><span class="material-symbols-outlined" aria-hidden="true">check</span> Apply filters</button></div>
+  </div></div>
+</div>
+<script defer src="<?= url('assets/js/inventory-report-cards.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-report-cards.js') ?>"></script>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

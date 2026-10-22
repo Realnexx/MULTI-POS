@@ -75,7 +75,7 @@ class User {
         global $conn;
         $order_dir = strtoupper((string)$order_dir) === 'ASC' ? 'ASC' : 'DESC';
         
-        $sql = "SELECT u.*, GROUP_CONCAT(r.name SEPARATOR ', ') as roles 
+        $sql = "SELECT u.*, (SELECT b.name FROM branches b WHERE b.id=u.branch_id) as assigned_branch_name, GROUP_CONCAT(r.name SEPARATOR ', ') as roles 
                 FROM users u 
                 LEFT JOIN user_roles ur ON u.id = ur.user_id 
                 LEFT JOIN roles r ON ur.role_id = r.id 
@@ -324,6 +324,21 @@ class User {
         return $result;
     }
 
+    public static function is_product_branch_admin($userId) {
+        foreach(self::get_user_roles($userId) as $role){
+            $name=strtolower(preg_replace('/[ _-]+/','',$role['name']));
+            if(in_array($name,['admin','superadmin'],true))return true;
+        }
+        return false;
+    }
+    public static function can_change_product_branch($userId) {
+        if(!self::has_permission($userId,'edit_product'))return false;
+        foreach(self::get_user_roles($userId) as $role){
+            $name=strtolower(preg_replace('/[ _-]+/','',$role['name']));
+            if(in_array($name,['admin','superadmin'],true))return true;
+        }
+        return false;
+    }
     public static function is_superadmin($user_id) {
         global $conn;
         $stmt=$conn->prepare("SELECT 1 FROM users u JOIN user_roles ur ON ur.user_id=u.id JOIN roles r ON r.id=ur.role_id WHERE u.id=? AND u.deleted_at IS NULL AND LOWER(REPLACE(REPLACE(REPLACE(r.name,' ',''),'_',''),'-',''))='superadmin' LIMIT 1");

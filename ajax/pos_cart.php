@@ -4,7 +4,8 @@ require_once __DIR__ . '/../models/User.php';
 require_once __DIR__ . '/../models/Product.php';
 require_once __DIR__ . '/../models/Sale.php';
 require_once __DIR__ . '/../models/ActivityLog.php';
-require_once __DIR__.'/../models/CheckoutPolicy.php';
+require_once __DIR__.'/../models/Promotion.php';
+require_once __DIR__.'/../models/AuthSecurity.php';
 require_once __DIR__.'/../models/CheckoutPolicy.php';
 
 header('Content-Type: application/json');
@@ -125,6 +126,7 @@ switch ($action) {
                     'subtotal' => $price + $modifier_extra,
                     'max_stock' => $max_stock,
                     'image_url' => $image_url,
+                    'bundle_components'=>$quote['bundle_components']??[],
                     'modifiers' => $modifiers
                 ];
             }
@@ -166,13 +168,30 @@ switch ($action) {
         break;
 
     case 'clear':
+        unset($_SESSION['pos_promo_code'],$_SESSION['pos_promo_customer'],$_SESSION['pos_discount_approval']);
         $_SESSION['pos_cart'] = [];
         $_SESSION['pos_discount'] = 0.00;
         break;
 
+    case 'get_promotions':
+        $branch=RecipeInventory::branch($_SESSION['pos_branch_id']??null);$email=trim(is_string($_POST['customer_email']??null)?$_POST['customer_email']:'');$account=$email===''?null:User::find_by_email($email);$customer=$account&&!User::access_context($account['id'])['staff']?(int)$account['id']:null;
+        echo json_encode(['success'=>true,'offers'=>Promotion::available(Promotion::posQuotes($_SESSION['pos_cart'],$branch),$branch,'pos',$customer)]);exit;
+    case 'set_promotion':
+        if(AuthSecurity::consume('pos-promo-code',(string)$_SESSION['user']['id'],30,60))throw new DomainException('Please wait before trying another promo code.');
+        $branch=RecipeInventory::branch($_SESSION['pos_branch_id']??null);$code=$_POST['promo_code']??'';
+        $email=trim(is_string($_POST['customer_email']??'')?($_POST['customer_email']??''):'');$account=$email===''?null:User::find_by_email($email);$customer=$account?(int)$account['id']:null;
+        if($email!==''&&(!$account||User::access_context($customer)['staff']))throw new DomainException('Enter the email of a registered customer account.');
+        Promotion::financial(Promotion::posQuotes($_SESSION['pos_cart'],$branch),$branch,'pos',$customer,$code);
+        $_SESSION['pos_promo_code']=strtoupper(trim($code));$_SESSION['pos_promo_customer']=$customer;$_SESSION['pos_discount']=0;unset($_SESSION['pos_discount_approval']);break;
+    case 'request_discount_approval':
+        if(AuthSecurity::consume('discount-approval',(string)$_SESSION['user']['id'],15,3600))throw new DomainException('Too many approval requests. Please try again later.');
+        $branch=RecipeInventory::branch($_SESSION['pos_branch_id']??null);
+        $_SESSION['pos_discount_approval']=Promotion::requestApproval((int)$_SESSION['user']['id'],$branch,Promotion::posQuotes($_SESSION['pos_cart'],$branch),$_POST['discount']??'0',$_POST['reason']??'');
+        echo json_encode(['success'=>true,'approval_id'=>$_SESSION['pos_discount_approval'],'message'=>'Approval requested. A supervisor can review it under Promos & Discounts. Once approved, apply your manual discount again.']);exit;
     case 'set_discount':
         $discount = (float)($_POST['discount'] ?? 0);
-        CheckoutPolicy::cart($_SESSION['pos_cart'],$_POST['discount']??'0');
+        Promotion::financial(Promotion::posQuotes($_SESSION['pos_cart'],RecipeInventory::branch($_SESSION['pos_branch_id']??null)),RecipeInventory::branch($_SESSION['pos_branch_id']??null),'pos',null,'',$_POST['discount']??'0',false,(int)$_SESSION['user']['id'],$_SESSION['pos_discount_approval']??null);
+        unset($_SESSION['pos_promo_code']);
         $_SESSION['pos_discount'] = $discount;
         break;
 
@@ -236,11 +255,12 @@ switch ($action) {
             ];
         }
 
-        $sale_id = Sale::create_sale($cashier_id, $branch_id, $subtotal, $discount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items, $order_type,CashShift::posIntegrated());
+        $sale_id = Sale::create_sale($cashier_id, $branch_id, $subtotal, $discount, $final_amount, $amount_tendered, $change_amount, $payment_method, $items, $order_type,CashShift::posIntegrated(),['code'=>$_SESSION['pos_promo_code']??'','customer_id'=>$_SESSION['pos_promo_customer']??null,'approval_id'=>$_SESSION['pos_discount_approval']??null,'expected_total'=>$_SESSION['pos_expected_total']??null]);
 
         if ($sale_id) {
             $actual=RecipeInventory::rows('SELECT final_amount FROM sales WHERE id = ?','i',[$sale_id])[0];
             $final_amount=(float)$actual['final_amount'];
+            unset($_SESSION['pos_promo_code'],$_SESSION['pos_promo_customer'],$_SESSION['pos_discount_approval']);
             $_SESSION['pos_cart'] = [];
             $_SESSION['pos_discount'] = 0.00;
             $_SESSION['pos_order_type'] = 'Dine-in';
@@ -288,10 +308,25 @@ switch ($action) {
 // Calculate current summary
 $subtotal = array_sum(array_column($_SESSION['pos_cart'], 'subtotal'));
 $discount = $_SESSION['pos_discount'];
-try{$financial=CheckoutPolicy::cart($_SESSION['pos_cart'],(string)$discount);$total=$financial['total_cents']/100;}catch(DomainException $e){echo json_encode(['success'=>false,'message'=>$e->getMessage()]);exit;}
+try{$financial=Promotion::financial(Promotion::posQuotes($_SESSION['pos_cart'],RecipeInventory::branch($_SESSION['pos_branch_id']??null)),RecipeInventory::branch($_SESSION['pos_branch_id']??null),'pos',$_SESSION['pos_promo_customer']??null,$_SESSION['pos_promo_code']??'',(string)$discount,false,(int)$_SESSION['user']['id'],$_SESSION['pos_discount_approval']??null);$discount=$financial['discount_cents']/100;$_SESSION['pos_expected_total']=$financial['total_cents'];$total=$financial['total_cents']/100;}catch(DomainException $e){
+    // Cart edits must still render when they invalidate a selected offer or approval.
+    if(in_array($action,['add','update_qty','remove'],true)){
+        try{
+            $branch=RecipeInventory::branch($_SESSION['pos_branch_id']??null);
+            $financial=Promotion::financial(Promotion::posQuotes($_SESSION['pos_cart'],$branch),$branch,'pos',$_SESSION['pos_promo_customer']??null,'','0',false,(int)$_SESSION['user']['id'],null);
+            unset($_SESSION['pos_promo_code'],$_SESSION['pos_discount_approval']);
+            $_SESSION['pos_discount']=0.00;$discount=0;$total=$financial['total_cents']/100;$_SESSION['pos_expected_total']=$financial['total_cents'];
+            $discountNotice='The previous discount no longer applies to this cart and was removed. Select another offer if needed.';
+        }catch(DomainException $invalidCart){echo json_encode(['success'=>false,'message'=>$invalidCart->getMessage()]);exit;}
+    }else{echo json_encode(['success'=>false,'message'=>$e->getMessage()]);exit;}
+}
 
 // Backfill image_url for any items missing it (e.g. from existing sessions)
 foreach ($_SESSION['pos_cart'] as $id => $item) {
+    if(RecipeInventory::product($item['product_id']??$id)['product_type']==='combo'){
+        $bundleQuote=RecipeInventory::quoteItem($item['product_id']??$id,$item['quantity'],$item['modifiers']??[],RecipeInventory::branch($_SESSION['pos_branch_id']??null));
+        $_SESSION['pos_cart'][$id]['bundle_components']=$bundleQuote['bundle_components'];
+    }
     if (empty($item['image_url'])) {
         $product = Product::find_by_id($item['product_id'] ?? $id);
         $_SESSION['pos_cart'][$id]['image_url'] = $product ? get_product_image($product['image_url'], $product['id']) : '';
@@ -305,5 +340,9 @@ echo json_encode([
     'subtotal' => $subtotal,
     'discount' => $discount,
     'total' => $total,
+    'discount_notice'=>$discountNotice??null,
+    'manual_discount'=>(float)$_SESSION['pos_discount'],
+    'promo_code'=>$_SESSION['pos_promo_code']??'',
+    'promotion'=>$financial['promotion']??null,
     'financial' => $financial
 ]);

@@ -310,7 +310,7 @@ $end_date = $end_date ?? null;
                                             <span class="text-danger fw-bold">OUTFLOW</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="text-center fw-bold"><?= ($log['action'] === 'stock_out' ? '-' : '+') . $log['quantity'] ?></td>
+                                    <td class="text-center fw-bold"><?= ($log['action'] === 'stock_out' ? '-' : '+') . number_format(abs((float)$log['quantity']), 0) ?></td>
                                     <td class="text-muted small"><?= htmlspecialchars($log['remarks']) ?></td>
                                     <td class="text-end text-muted"><?= date('M d, y | h:i A', strtotime($log['created_at'])) ?></td>
                                 </tr>

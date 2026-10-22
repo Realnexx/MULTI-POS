@@ -394,6 +394,16 @@ ob_start();
     font-weight: 600;
     white-space: nowrap;
   }
+
+.rpt-kpi-glow { display:none; }
+.rpt-kpi-card { border:1px solid #e1eaf0; background:linear-gradient(145deg,#fff,#f8fbfd); box-shadow:0 5px 20px rgba(25,62,82,.045); border-radius:18px; }
+.rpt-tab-btn { min-height:44px; }
+.rpt-tab-btn.active { background:#008aa5; color:#fff; box-shadow:0 3px 9px rgba(0,138,165,.22); }
+.rpt-tab-btn.active iconify-icon { color:#fff; }
+.rpt-tab-btn.active::after { content:'\2713'; font-weight:800; }
+.rpt-tab-btn:focus-visible { outline:3px solid #64cfe0; outline-offset:3px; }
+@media(max-width:575px) { .rpt-tabs-bar { display:flex; width:100%; } .rpt-tab-btn { flex:1; justify-content:center; padding:8px; } }
+@media(prefers-reduced-motion:reduce) { .rpt-kpi-card,.rpt-tab-btn { transition:none; } }
 </style>
 
 <div class="rpt-wrapper pb-3">
@@ -463,7 +473,7 @@ ob_start();
             </div>
             <span style="background:#e6fbf7;color:#0fb68c;border-radius:50px;padding:3px 12px;font-size:0.72rem;font-weight:700;">Validated</span>
           </div>
-          <div class="rpt-kpi-label mb-1">Transactions</div>
+          <div class="rpt-kpi-label mb-1">Completed transactions</div>
           <div class="rpt-kpi-value" id="stat-count">0</div>
         </div>
       </div>
@@ -637,12 +647,15 @@ ob_start();
       window.open(url, '_blank');
     };
 
+    function escapeReport(value) { return $('<div>').text(value == null ? '' : value).html().replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+    var statsRequest;
     // Stats fetch
     function fetchStats() {
       var branchId = $('#branchFilter').val() || 'all';
       var start = $('#startDate').val();
       var end = $('#endDate').val();
-      $.getJSON('ajax/report_action.php', { action: 'get_summary_stats', branch_id: branchId, start_date: start, end_date: end }, function (data) {
+      if (statsRequest) statsRequest.abort();
+      statsRequest = $.getJSON('ajax/report_action.php', { action: 'get_summary_stats', branch_id: branchId, start_date: start, end_date: end }, function (data) {
         $('#stat-revenue').text('₱' + parseFloat(data.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }));
         $('#stat-discounts').text('₱' + parseFloat(data.discounts || 0).toLocaleString(undefined, { minimumFractionDigits: 2 }));
         $('#stat-count').text(parseInt(data.count || 0).toLocaleString());
@@ -673,13 +686,13 @@ ob_start();
         {
           data: 'cashier_name',
           render: function (d) {
-            return '<span class="text-truncate d-inline-block fw-semibold text-dark" style="max-width:115px;" title="' + $('<div>').text(d).html() + '">' + d + '</span>';
+            return '<span class="text-truncate d-inline-block fw-semibold text-dark" style="max-width:115px;" title="' + escapeReport(d) + '">' + escapeReport(d) + '</span>';
           }
         },
         {
           data: 'products',
           render: function (d) {
-            return d ? '<span class="text-truncate d-inline-block text-muted" style="max-width:100%;font-size:0.77rem;" title="' + $('<div>').text(d).html() + '">' + d + '</span>' : '<span class="text-muted fst-italic">—</span>';
+            return d ? '<span class="text-truncate d-inline-block text-muted" style="max-width:100%;font-size:0.77rem;" title="' + escapeReport(d) + '">' + escapeReport(d) + '</span>' : '<span class="text-muted fst-italic">—</span>';
           }
         },
         {
@@ -706,14 +719,14 @@ ob_start();
         {
           data: 'payment_method',
           render: function (d) {
-            return '<span class="rpt-pay-badge">' + d + '</span>';
+            return '<span class="rpt-pay-badge">' + escapeReport(d) + '</span>';
           }
         },
         {
           data: 'status',
           render: function (d) {
-            var cls = d === 'Refunded' ? 'warning' : (d === 'Cancelled' ? 'danger' : 'success');
-            return '<span class="rpt-pill ' + cls + '">' + d + '</span>';
+            var cls = d === 'Refunded' ? 'warning' : (d === 'Cancelled' ? 'danger' : (d === 'Completed' ? 'success' : 'warning'));
+            return '<span class="rpt-pill ' + cls + '">' + escapeReport(d) + '</span>';
           }
         },
         {
@@ -752,8 +765,8 @@ ob_start();
         }
       },
       columns: [
-        { data: 'id', render: function (d) { return '<span class="rpt-id-badge">ID-' + d + '</span>'; } },
-        { data: 'product_name', render: function (d) { return '<span style="font-weight:700;color:#2a3547;">' + d + '</span>'; } },
+        { data: 'id', render: function (d) { return '<span class="rpt-id-badge">ID-' + escapeReport(d) + '</span>'; } },
+        { data: 'product_name', render: function (d) { return '<span style="font-weight:700;color:#2a3547;">' + escapeReport(d) + '</span>'; } },
         { data: 'user_name', className: 'text-muted' },
         {
           data: 'action', render: function (d) {
@@ -766,10 +779,10 @@ ob_start();
         {
           data: null, className: 'text-center', render: function (d) {
             var isIn = (d.action === 'stock_in' || d.action === 'initial');
-            return '<strong style="color:' + (isIn ? '#13deb9' : '#fa5454') + '">' + (isIn ? '+' : '-') + d.quantity + '</strong>';
+            return '<strong style="color:' + (isIn ? '#13deb9' : '#fa5454') + '">' + (isIn ? '+' : '-') + Math.abs(Number(d.quantity || 0)).toLocaleString(undefined, { maximumFractionDigits: 0 }) + '</strong>';
           }
         },
-        { data: 'remarks', className: 'text-muted', render: function (d) { return d ? '<span style="font-size:0.78rem;">' + d + '</span>' : '<span class="text-muted fst-italic">—</span>'; } },
+        { data: 'remarks', className: 'text-muted', render: function (d) { return d ? '<span style="font-size:0.78rem;">' + escapeReport(d) + '</span>' : '<span class="text-muted fst-italic">—</span>'; } },
         {
           data: 'created_at', className: 'text-end', render: function (d) {
             var dt = new Date(d);
@@ -834,6 +847,9 @@ ob_start();
   });
 </script>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+<script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script defer src="<?= url('assets/js/dashboard-motion.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/dashboard-motion.js') ?>"></script>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

@@ -121,6 +121,8 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
             <span class="hide-menu">Stock &amp; Inventory</span>
           </a>
         </li>
+        <?php endif; ?>
+        <?php if(User::has_permission($user_id,'view_recipes')): ?>
         <li class="sidebar-item <?= $route === 'inventory/recipes' ? 'selected' : '' ?>">
           <a class="sidebar-link primary-hover-bg <?= $route === 'inventory/recipes' ? 'active' : '' ?>" href="<?= url('?route=inventory/recipes') ?>" aria-expanded="false">
             <iconify-icon icon="solar:clipboard-list-line-duotone" class="fs-6"></iconify-icon>
@@ -154,7 +156,7 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
         <li class="sidebar-item <?= $route === 'inventory/logs' ? 'selected' : '' ?>">
           <a class="sidebar-link primary-hover-bg <?= $route === 'inventory/logs' ? 'active' : '' ?>" href="<?= url('?route=inventory/logs') ?>" aria-expanded="false">
             <iconify-icon icon="solar:document-text-line-duotone" class="fs-6"></iconify-icon>
-            <span class="hide-menu">Inventory Logs</span>
+            <span class="hide-menu">Reports</span>
           </a>
         </li>
         <?php endif; ?>
@@ -177,6 +179,7 @@ $can_manage_website = User::has_permission($user_id, 'access_website_admin');
         </li>
         <?php endif; ?>
 
+        <?php if ((User::has_permission($user_id,'view_promotions')||User::has_permission($user_id,'approve_discount_overrides')||User::has_permission($user_id,'view_promotion_reports'))): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/promotions') ?>"><iconify-icon icon="solar:ticket-sale-linear" class="fs-6"></iconify-icon><span class="hide-menu">Promos &amp; Discounts</span></a></li><?php endif; ?>
         <?php if (User::has_permission($user_id,'view_pricing_tiers')): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/pricing') ?>"><iconify-icon icon="solar:tag-price-linear" class="fs-6"></iconify-icon><span class="hide-menu">Pricing Tiers</span></a></li><?php endif; ?>
         <?php if (User::has_permission($user_id,'view_demo_requests')): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/demo_requests') ?>"><iconify-icon icon="solar:clipboard-list-linear" class="fs-6"></iconify-icon><span class="hide-menu">Demo Requests</span></a></li><?php endif; ?>
         <?php if ($can_manage_website): ?><li class="sidebar-item"><a class="sidebar-link" href="<?= url('?route=admin/cms') ?>"><iconify-icon icon="solar:global-linear" class="fs-6"></iconify-icon><span class="hide-menu">Website Content</span></a></li><?php endif; ?>

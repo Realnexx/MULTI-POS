@@ -67,3 +67,31 @@
 #tw-expenses .expense-print-button:hover,#tw-expenses .expense-print-button:active {background:#244fd0;border-color:#244fd0;color:#fff;}
 #tw-expenses .expense-print-button:focus-visible {outline:3px solid #b2c4ff;outline-offset:3px;}
 #tw-expenses .expense-print-button .material-symbols-outlined {font-size:17px;}
+
+/* Clean metric surfaces and readable page-size selector. */
+#tw-expenses .expense-stats>div { position:relative; border:1px solid #e1eaf0; border-radius:18px; background:linear-gradient(145deg,#fff,#f8fbfd); box-shadow:0 5px 20px rgba(25,62,82,.045); padding-top:18px; }
+#tw-expenses .expense-stats>div::before,#tw-expenses .expense-stats>div::after { display:none; }
+#tw-expenses .expense-stat-icon { display:flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:12px; color:#008aa5; background:#eaf8fb; margin-bottom:14px; font-size:22px; font-style:normal; }
+#tw-expenses .expense-stats strong { overflow-wrap:anywhere; }
+#tw-expenses .dataTables_length select { width:auto !important; min-width:78px; height:40px; padding:8px 30px 8px 12px !important; background-position:right 9px center; font-size:13px; line-height:1.4; }
+#tw-expenses .dataTables_length label { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+#tw-expenses .page-item.active .page-link { background:#008aa5; border-color:#008aa5; color:white; }
+@media(max-width:600px) { #tw-expenses .expense-list-tools { gap:8px; } #tw-expenses .expense-stat-icon { width:36px; height:36px; } }
+
+@media(max-width:767.98px) {
+ #tw-expenses .expense-table-scroll { overflow:visible; }
+ #tw-expenses #ledger-table,#tw-expenses #ledger-table tbody { display:block; width:100% !important; min-width:0; }
+ #tw-expenses #ledger-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+ #tw-expenses #ledger-table tbody tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; padding:16px; margin:12px 0; border:1px solid #e1eaf0; border-radius:16px; background:#fff; }
+ #tw-expenses #ledger-table tbody td { display:block; min-width:0; width:auto !important; padding:0 !important; border:0; white-space:normal; overflow-wrap:anywhere; text-align:left !important; box-shadow:none; background:transparent; }
+ #tw-expenses #ledger-table tbody td::before { content:attr(data-label); display:block; margin-bottom:5px; color:#62758b; font-size:11px; font-weight:600; }
+ #tw-expenses #ledger-table tbody td:nth-child(2),#tw-expenses #ledger-table tbody td:last-child { grid-column:1/-1; }
+ #tw-expenses #ledger-table .expense-row-actions { justify-content:flex-start; }
+ #tw-expenses #ledger-table .expense-row-actions button { min-width:44px; min-height:44px; }
+ #tw-expenses #ledger-table td.dataTables_empty { grid-column:1/-1; text-align:center !important; }
+ #tw-expenses #ledger-table td.dataTables_empty::before { display:none; }
+ #tw-expenses .dataTables_wrapper>.row { margin:0; gap:10px; }
+ #tw-expenses .dataTables_wrapper>.row>* { padding:0; min-width:0; }
+ #tw-expenses .pagination { flex-wrap:wrap; justify-content:center; gap:4px; }
+ #tw-expenses .page-link { min-width:40px; min-height:40px; display:flex; align-items:center; justify-content:center; }
+}

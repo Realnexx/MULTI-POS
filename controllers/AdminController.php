@@ -63,7 +63,7 @@ class AdminController {
             $this->validateUserAccess((int)($_POST['user_id'] ?? 0), (array)($_POST['roles'] ?? []), true);
             if(in_array($action,['create','edit'],true)&&($action==='create'||!empty($_POST['password']))) {
                 require_once __DIR__.'/../models/AuthSecurity.php';
-                if($error=AuthSecurity::password_error($_POST['password']??'')){set_flash('danger',$error);redirect('?route=admin/users');}
+                if($error=AuthSecurity::password_error($_POST['password']??'')){$_SESSION['user_field_error']=['action'=>$action,'field'=>'password','message'=>$error,'values'=>array_intersect_key($_POST,array_flip(['user_id','firstname','middlename','lastname','extname','email','roles']))];redirect('?route=admin/users');}
             }
 
             if ($action === 'create') {
@@ -176,7 +176,9 @@ class AdminController {
                 $r['can_edit']=$allowed && !$r['is_superadmin'];
                 $r['can_delete']=$r['can_edit'] && !(int)$r['is_system'];
                 return $r;
-            }, Role::get_all_roles())
+            }, array_values(array_filter(Role::get_all_roles(), static function($role) use($actorSuper) {
+                return $actorSuper || preg_replace('/[ _-]/','',strtolower($role['name'])) !== 'superadmin';
+            })))
         ]);
         exit;
     }
@@ -323,14 +325,16 @@ class AdminController {
         $raw_channels = isset($_GET['channels']) ? (is_array($_GET['channels']) ? $_GET['channels'] : [$_GET['channels']]) : [];
         $raw_locations = isset($_GET['locations']) ? (is_array($_GET['locations']) ? $_GET['locations'] : [$_GET['locations']]) : [];
 
-        $is_admin = User::has_all_branch_access($_SESSION['user']['id']);
-        $branch_id = ($is_admin && $branch_id_req !== 'all') ? (int)$branch_id_req : ($is_admin ? null : ($_SESSION['user']['branch_id'] ?? null));
+        $access = User::access_context((int)$_SESSION['user']['id']);
+        $is_admin = $access['global'];
+        $branch_id = ($is_admin && $branch_id_req !== 'all') ? (int)$branch_id_req : ($is_admin ? null : ($access['branch_id'] ?? 0));
 
         $data = [];
         
         if ($type === 'sales') {
             // Build filters for Sale::get_filtered_sales
             $filters = [
+                'branch_id' => $branch_id,
                 'search' => $_GET['search'] ?? '',
                 'date_from' => $start_date,
                 'date_to' => $end_date,
@@ -344,9 +348,10 @@ class AdminController {
                 $data = Sale::get_filtered_sales($filters, 1, 5000, 's.id', 'DESC');
                 
                 // Recalculate stats for these specific filtered results
-                $rev = 0; $disc = 0; $count = count($data);
+                $rev = 0; $disc = 0; $count = 0;
                 foreach($data as $s) {
                     if ($s['status'] === 'Completed') {
+                        $count++;
                         $rev += $s['final_amount'];
                         $disc += $s['discount_amount'];
                     }
@@ -358,7 +363,7 @@ class AdminController {
             }
         } else {
             $stats = Sale::get_summary_stats($branch_id, $start_date, $end_date);
-            $data = Product::get_dt_inventory_logs(0, 5000, '', 0, 'desc', $branch_id, $start_date, $end_date);
+            $data = Product::get_dt_inventory_logs(0, 5000, '', -1, 'desc', $branch_id, $start_date, $end_date);
         }
 
         $branches = Branch::get_all();
@@ -422,12 +427,13 @@ class AdminController {
             if ($category === 'paymongo') {
                 require_once __DIR__.'/../models/PayMongo.php';
                 try {
+                    $paymentNotice=null;
                     if(($_POST['paymongo']['action']??'')==='expire')PayMongo::expire($_POST['paymongo']['payment_id']??0,(int)$_SESSION['user']['id']);
                     elseif(($_POST['paymongo']['action']??'')==='reconcile')PayMongo::reconcile($_POST['paymongo']['payment_id']??0,(int)$_SESSION['user']['id']);
-                    else PayMongo::save($_POST['paymongo'] ?? [],(int)$_SESSION['user']['id']);
+                    else $paymentNotice=PayMongo::save($_POST['paymongo'] ?? [],(int)$_SESSION['user']['id']);
                     ActivityLog::log('Payment Settings Updated','PayMongo settings saved; no credentials logged.');
                     $messages=['disable'=>'PayMongo disabled for new checkouts. Existing payments can still be verified.','reconcile'=>'Payment status checked.','expire'=>'Unpaid checkout expired. The order can now accept another payment.'];
-                    set_flash('success',$messages[$_POST['paymongo']['action']??'']??'PayMongo keys checked and available payment methods synchronized.');
+                    set_flash($paymentNotice?'warning':'success',$paymentNotice??($messages[$_POST['paymongo']['action']??'']??'PayMongo keys checked and available payment methods synchronized.'));
                 } catch(DomainException $error) { set_flash('danger',$error->getMessage()); }
                 catch(Throwable $error) { error_log('PayMongo settings update failed.');set_flash('danger','Payment settings could not be saved. Existing configuration was kept.'); }
                 redirect('?route=admin/settings&tab=paymongo');
@@ -547,6 +553,8 @@ class AdminController {
         if (move_uploaded_file($file['tmp_name'], $targetFile)) {
             return 'assets/img/users/' . $filename;
         }
+        $_SESSION['user_field_error']=['action'=>$_POST['action']??'edit','field'=>'image','message'=>'The profile photo could not be stored. Ask an administrator to check the upload folder permissions.','values'=>array_intersect_key($_POST,array_flip(['user_id','firstname','middlename','lastname','extname','email','roles']))];
+        redirect('?route=admin/users');
     }
     public function activityLogs() {
         require_once __DIR__ . '/../models/ActivityLog.php';

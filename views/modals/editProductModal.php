@@ -243,9 +243,9 @@
                                 <span class="material-symbols-outlined" style="font-size: 16px;">restaurant</span> Recipe Formula
                             </button>
                         </li>
-                    </ul>
+                    <li class="nav-item flex-fill bundle-tab-switch d-none" data-bundle-context="edit"><button type="button" class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#edit-bundle-tab"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Package items</button></li></ul>
 
-                    <div class="tab-content" id="editProductTabsContent">
+                    <div class="tab-content" id="editProductTabsContent"><div class="tab-pane fade bundle-editor" id="edit-bundle-tab" data-context="edit" role="tabpanel"><div class="bundle-editor-heading"><div><h6>Package contents</h6><p>One fixed package price. Included items consume their own stock or ingredients.</p></div><button type="button" class="btn btn-outline-primary btn-sm bundle-add-item"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">add</span>Add item</button></div><p class="bundle-editor-feedback" role="status"></p><div class="bundle-editor-rows"></div><div class="bundle-editor-summary" aria-live="polite"></div><p class="small text-muted">Whole item quantities only. No nested packages or variant parents. Preparation stations group items on the preparation ticket. Cost is estimated using available FIFO batches, falling back to recorded product costs if stock is missing.</p></div>
                         <!-- General Info Tab -->
                         <div class="tab-pane fade show active" id="edit-general-tab" role="tabpanel">
                             <div class="row g-3">
@@ -455,13 +455,13 @@
                                 <?php if ($is_admin): ?>
                                     <div class="col-md-4">
                                         <label class="form-label fw-700 text-muted mb-1" style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Assigned Branch</label>
-                                        <select id="edit_prod_branch" class="form-select" disabled>
+                                        <select id="edit_prod_branch" <?= User::can_change_product_branch($_SESSION['user']['id'])?'name="product_branch_id"':'disabled' ?> class="form-select">
                                             <option value="">Global (All Branches)</option>
                                             <?php foreach ($branches as $branch): ?>
                                                 <option value="<?= $branch['id'] ?>"><?= htmlspecialchars($branch['name']) ?></option>
                                             <?php endforeach; ?>
                                         </select>
-                                        <div class="form-text">Use Transfer Branch to move this product.</div>
+                                        <div class="form-text">Only Admin and Superadmin can change this assignment. Products with stock history must use the audited branch transfer workflow.</div>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -567,7 +567,7 @@
                                 <?php if (User::has_permission($_SESSION['user']['id'], 'prepare_recipe_stock')): ?>
                                 <div class="d-flex gap-2 align-items-end mt-3">
                                     <label class="small">Batch quantity<input type="number" class="form-control" id="prepare_recipe_quantity" value="1" min="1" step="1"></label>
-                                    <button type="button" class="btn btn-outline-primary" id="prepare_recipe_batch">Prepare batch</button>
+                                    <button type="button" class="btn btn-outline-primary" id="prepare_recipe_batch"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">inventory_2</span>Prepare batch</button>
                                 </div>
                                 <p class="small text-muted">Save the prepared-batch mode first. Preparing consumes ingredients and creates finished stock; checkout will not consume them again.</p>
                                 <?php endif; ?>
@@ -643,7 +643,7 @@
 
                 <!-- Footer Actions -->
                 <div class="modal-footer border-0 px-4 pb-4 pt-3 d-flex justify-content-end align-items-center gap-2" style="border-top: 1px solid #f1f5f9 !important;">
-                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Cancel</button>
                     <button type="submit" class="btn btn-modal-primary">
                         <span class="material-symbols-outlined" style="font-size: 16px;">save</span> Save Changes
                     </button>

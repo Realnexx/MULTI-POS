@@ -71,11 +71,9 @@
                     <div class="d-flex gap-2">
                         <button type="button"
                             class="btn btn-outline-light-gray flex-grow-1 rounded-pill fw-bold text-dark"
-                            data-bs-dismiss="modal">Cancel</button>
+                            data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Cancel</button>
                         <button type="submit"
-                            class="btn btn-warning flex-grow-1 rounded-pill fw-bold text-dark shadow-sm">
-                            Save Changes
-                        </button>
+                            class="btn btn-warning flex-grow-1 rounded-pill fw-bold text-dark shadow-sm"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">save</span>Save Changes</button>
                     </div>
                 </form>
             </div>

@@ -1,6 +1,6 @@
 <?php
 require_once $workspace.'/models/PublicCatalog.php';require_once $workspace.'/models/Cart.php';
-$id=product('Public catalog fixture','simple');
+$id=product('Public catalog fixture','simple','pc','legacy',false);
 check(!PublicCatalog::visible(Product::find_by_id($id)),'New products are private by default');
 RecipeInventory::query('UPDATE products SET show_on_website=1 WHERE id=?','i',[$id]);
 check(PublicCatalog::visible(Product::find_by_id($id)),'Enabled active sellable product is public');

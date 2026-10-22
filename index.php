@@ -35,6 +35,8 @@ require_once __DIR__ . '/middleware/access_policy.php';
 authorize_page($route);
 
 switch ($route) {
+    case 'admin/promotions': require __DIR__.'/controllers/PromotionController.php'; (new PromotionController())->index(); break;
+    case 'cart/promotion': $websiteController->cart_promotion(); break;
     case 'admin/monitoring':
         require __DIR__.'/controllers/MonitoringController.php';
         (new MonitoringController())->index(); break;
@@ -209,6 +211,9 @@ switch ($route) {
     case 'inventory/purchase_reports':
         require_once __DIR__.'/controllers/PurchasingController.php';
         (new PurchasingController())->page($route);
+        break;
+    case 'inventory/recipes/data':
+        $inventoryController->recipesData();
         break;
     case 'inventory/recipes':
         $inventoryController->recipes();

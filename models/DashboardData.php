@@ -39,7 +39,7 @@ class DashboardData
         }
         // In a consolidated view, a branch shortage must not be hidden by another branch's stock.
         if($branch===null) {
-            $low=RecipeInventory::rows("SELECT p.*,b.name stock_branch_name,b.id stock_branch_id,COALESCE((SELECT SUM(pb.quantity) FROM product_batches pb WHERE pb.product_id=p.id AND pb.branch_id=b.id AND pb.status='active' AND (pb.expiry_date IS NULL OR pb.expiry_date>=CURRENT_DATE)),0) stock FROM products p JOIN branches b ON (p.branch_id IS NULL OR p.branch_id=b.id) WHERE b.status='Active' AND p.status='active' AND p.track_stock=1 AND p.inventory_type NOT IN ('non-stock','unlimited') AND p.product_type<>'variant' AND (p.product_type<>'recipe' OR (p.recipe_mode='prepared_batch' AND p.is_sellable=1)) HAVING stock<=low_stock_threshold ORDER BY stock,b.name,p.name");
+            $low=RecipeInventory::rows("SELECT p.*,b.name stock_branch_name,b.id stock_branch_id,COALESCE((SELECT SUM(pb.quantity) FROM product_batches pb WHERE pb.product_id=p.id AND pb.branch_id=b.id AND pb.status='active' AND (pb.expiry_date IS NULL OR pb.expiry_date>=".RecipeInventory::expiryDateSql().")),0) stock FROM products p JOIN branches b ON (p.branch_id IS NULL OR p.branch_id=b.id) WHERE b.status='Active' AND p.status='active' AND p.track_stock=1 AND p.inventory_type NOT IN ('non-stock','unlimited') AND p.product_type<>'variant' AND (p.product_type<>'recipe' OR (p.recipe_mode='prepared_batch' AND p.is_sellable=1)) HAVING stock<=low_stock_threshold ORDER BY stock,b.name,p.name");
             foreach($low as &$alert) $alert['name'].=' · '.$alert['stock_branch_name'];unset($alert);
         }
         usort($low,static function($a,$b){return (float)$a['stock']<=>(float)$b['stock'];});

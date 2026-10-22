@@ -3,6 +3,7 @@ require_once __DIR__.'/Cart.php';
 require_once __DIR__.'/User.php';
 require_once __DIR__.'/Setting.php';
 require_once __DIR__.'/CheckoutPolicy.php';
+require_once __DIR__.'/Promotion.php';
 class OnlineOrder {
     public static function migrate($db) {
         $db->query("CREATE TABLE IF NOT EXISTS online_cart_owners(owner_key CHAR(64) PRIMARY KEY) ENGINE=InnoDB");
@@ -12,11 +13,11 @@ class OnlineOrder {
     }
     public static function enabled() { return Setting::get('online_ordering_enabled','1') === '1'; }
     private static function event($order,$status,$user,$note) { RecipeInventory::query('INSERT INTO online_order_events(order_id,status,user_id,note) VALUES (?,?,?,?)','isis',[$order,$status,$user,$note]); }
-    public static function place($user,$session,$branch,$name,$email,$phone,$key,$expectedTotal=null,$expectedQuote=null) {
+    public static function place($user,$session,$branch,$name,$email,$phone,$key,$expectedTotal=null,$expectedQuote=null,$promoCode='') {
         if(!$user||!User::find_by_id($user)||!preg_match('/^[a-f0-9]{64}$/D',$key))throw new DomainException('Please sign in and reload your cart.');
         if(!is_string($name)||trim($name)===''||mb_strlen($name)>150||!filter_var($email,FILTER_VALIDATE_EMAIL)||strlen($email)>254||!preg_match('/^[+0-9 ()-]{7,40}$/D',$phone))throw new DomainException('Enter your name, a valid email, and a contact number.');
-        $fingerprint=hash('sha256',json_encode([(int)$user,(int)$branch,trim($name),strtolower($email),$phone]));
-        return RecipeInventory::atomic(function()use($user,$session,$branch,$name,$email,$phone,$key,$fingerprint,$expectedTotal,$expectedQuote){
+        $fingerprint=hash('sha256',json_encode([(int)$user,(int)$branch,trim($name),strtolower($email),$phone,$promoCode]));
+        return RecipeInventory::atomic(function()use($user,$session,$branch,$name,$email,$phone,$key,$fingerprint,$expectedTotal,$expectedQuote,$promoCode){
             global $conn;Cart::lock_owner($session,$user);
             $old=RecipeInventory::rows('SELECT * FROM online_orders WHERE checkout_key=? FOR UPDATE','s',[$key]);
             if($old){if((int)$old[0]['user_id']!==$user||!hash_equals($old[0]['request_hash'],$fingerprint))throw new DomainException('This checkout was already submitted with different details. Reload your cart.');return $old[0];}
@@ -24,14 +25,14 @@ class OnlineOrder {
             if(!RecipeInventory::rows("SELECT id FROM branches WHERE id=? AND status='Active'",'i',[$branch]))throw new DomainException('Select an active pickup branch.');
             $cart=Cart::get_items($session,$user,$branch);if(!$cart)throw new DomainException('Your cart is empty.');
             if($expectedQuote!==null&&!hash_equals(Cart::fingerprint($cart,$branch),$expectedQuote))throw new DomainException('Your cart changed. Review it before placing your order.');
-            $ids=[];foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);$ids[]=$item['id'];$ids=array_merge($ids,array_keys($quote['needs']));}RecipeInventory::lockProducts($ids);
+            $ids=[];foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);$ids[]=$item['id'];$ids=array_merge($ids,array_keys($quote['needs']),$quote['lock_ids']??[]);}RecipeInventory::lockProducts($ids);
             $quotes=[];$needs=[];$cents=0;
-            foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);if(empty($quote['product']['show_on_website']))throw new DomainException('A product is no longer available on the website.');if(!empty($quote['product']['is_ingredient']))throw new DomainException('Ingredients are not available to order.');foreach($quote['needs'] as $id=>$qty){if(!in_array((int)$id,array_map('intval',$ids),true))throw new DomainException('The recipe changed. Reload your cart.');$needs[$id]=($needs[$id] ?? 0)+$qty;}$cents+=$quote['price_cents']*$quote['quantity'];$quotes[]=$quote;}
-            $financial=CheckoutPolicy::calculate($cents,$cents,'0');$cents=$financial['total_cents'];
+            foreach($cart as $item){$quote=RecipeInventory::quoteItem($item['id'],(string)$item['qty'],[],$branch);if(empty($quote['product']['show_on_website']))throw new DomainException('A product is no longer available on the website.');if(!empty($quote['product']['is_ingredient']))throw new DomainException('Ingredients are not available to order.');foreach($quote['needs'] as $id=>$qty){if(!in_array((int)$id,array_map('intval',$ids),true))throw new DomainException('The recipe changed. Reload your cart.');$needs[$id]=($needs[$id] ?? 0)+$qty;}$cents+=$quote['price_cents']*$quote['quantity'];foreach($quote['lock_ids']??[] as $lockedId)if(!in_array((int)$lockedId,array_map('intval',$ids),true))throw new DomainException('Package changed. Reload your cart.');$quotes[]=$quote;}
+            $financial=Promotion::financial($quotes,$branch,'online',$user,$promoCode,'0',true);$cents=$financial['total_cents'];require_once __DIR__.'/ProductBundle.php';$financial['bundle_contents']=ProductBundle::snapshots($quotes);
             if($expectedTotal!==null && (!preg_match('/^[0-9]{1,8}\.[0-9]{2}$/D',$expectedTotal) || intdiv(InventoryQuantity::parse($expectedTotal,true),100)!==$cents))throw new DomainException('Prices changed. Review your cart total and try again.');
             foreach($needs as $id=>$qty)if(RecipeInventory::balance($id,$branch)<$qty)throw new DomainException(RecipeInventory::product($id)['name'].': insufficient stock for this order.');
             $tracking='WEB-'.date('ymd').'-'.strtoupper(bin2hex(random_bytes(8)));$total=number_format($cents/100,2,'.','');
-            RecipeInventory::query('INSERT INTO online_orders(tracking_number,checkout_key,request_hash,user_id,branch_id,customer_name,email,phone,total) VALUES (?,?,?,?,?,?,?,?,?)','sssiissss',[$tracking,$key,$fingerprint,$user,$branch,trim($name),strtolower($email),$phone,$total]);$order=$conn->insert_id;CheckoutPolicy::orderSnapshot($order,$financial);
+            RecipeInventory::query('INSERT INTO online_orders(tracking_number,checkout_key,request_hash,user_id,branch_id,customer_name,email,phone,total) VALUES (?,?,?,?,?,?,?,?,?)','sssiissss',[$tracking,$key,$fingerprint,$user,$branch,trim($name),strtolower($email),$phone,$total]);$order=$conn->insert_id;CheckoutPolicy::orderSnapshot($order,$financial);Promotion::redeem($financial,$branch,$user,null,$order);
             $op=RecipeInventory::operation('online_order',$key,[$order,$quotes],$user,$branch);
             foreach($quotes as $quote){$p=$quote['product'];RecipeInventory::query('INSERT INTO online_order_items(order_id,product_id,product_name,quantity,unit_price,line_total,recipe_mode,needs_snapshot) VALUES (?,?,?,?,?,?,?,?)','iisissss',[$order,$p['id'],$p['name'],$quote['quantity'],number_format($quote['price_cents']/100,2,'.',''),number_format($quote['price_cents']*$quote['quantity']/100,2,'.',''),$p['recipe_mode'],json_encode($quote['needs'])]);$line=$conn->insert_id;foreach($quote['needs'] as $id=>$qty)RecipeInventory::consume($id,$qty,$user,$branch,$op['id'],null,'online:'.$tracking.':'.$line);}
             RecipeInventory::complete($op['id'],$order,['tracking'=>$tracking,'lines'=>$quotes]);RecipeInventory::query('UPDATE online_orders SET operation_id=? WHERE id=?','ii',[$op['id'],$order]);self::event($order,'pending',$user,'Order placed; stock reserved once.');Cart::clear($session,$user);
@@ -53,7 +54,7 @@ class OnlineOrder {
         if($staff&&!self::can_view($user))throw new DomainException('You cannot view staff online orders.');
         $sql='SELECT o.*,b.name branch_name,b.address branch_address FROM online_orders o LEFT JOIN branches b ON b.id=o.branch_id WHERE o.tracking_number=?';$types='s';$params=[$tracking];
         if(!$staff){$sql.=' AND o.user_id=?';$types.='i';$params[]=$user;}elseif(!User::has_all_branch_access($user)){$sql.=' AND o.branch_id=?';$types.='i';$params[]=User::access_context($user)['branch_id'] ?? 0;}
-        $rows=RecipeInventory::rows($sql,$types,$params);if(!$rows)return null;$order=$rows[0];$finance=RecipeInventory::rows('SELECT snapshot FROM order_finance WHERE order_id=?','i',[$order['id']]);$order['financial']=$finance?json_decode($finance[0]['snapshot'],true):null;$order['items']=RecipeInventory::rows('SELECT * FROM online_order_items WHERE order_id=? ORDER BY id','i',[$order['id']]);$order['events']=RecipeInventory::rows('SELECT status,note,created_at FROM online_order_events WHERE order_id=? ORDER BY id','i',[$order['id']]);return $order;
+        $rows=RecipeInventory::rows($sql,$types,$params);if(!$rows)return null;$order=$rows[0];$finance=RecipeInventory::rows('SELECT snapshot FROM order_finance WHERE order_id=?','i',[$order['id']]);$order['financial']=$finance?json_decode($finance[0]['snapshot'],true):null;$order['items']=RecipeInventory::rows('SELECT * FROM online_order_items WHERE order_id=? ORDER BY id','i',[$order['id']]);foreach($order['items'] as &$line)$line['bundle_components']=$order['financial']['bundle_contents'][$line['product_id']]??[];unset($line);$order['events']=RecipeInventory::rows('SELECT status,note,created_at FROM online_order_events WHERE order_id=? ORDER BY id','i',[$order['id']]);return $order;
     }
     public static function list_for($user,$staff=false) {
         if($staff&&!self::can_view($user))throw new DomainException('You cannot view staff online orders.');
@@ -83,6 +84,7 @@ class OnlineOrder {
                 $op=RecipeInventory::operation('online_cancel',hash('sha256','cancel:'.$order['checkout_key']),[$id],$actor,$order['branch_id']);
                 foreach($moves as $move){$qty=InventoryQuantity::parse(ltrim($move['quantity'],'-'));$batch=RecipeInventory::rows('SELECT * FROM product_batches WHERE id=? FOR UPDATE','i',[$move['batch_id']]);if(!$batch)throw new DomainException('An original stock batch is missing. Contact your administrator.');$batchStatus=($batch[0]['expiry_date']&&$batch[0]['expiry_date']<date('Y-m-d'))||$batch[0]['status']==='expired'?'expired':($batch[0]['status']==='depleted'?'active':$batch[0]['status']);RecipeInventory::query('UPDATE product_batches SET quantity=quantity+?,status=? WHERE id=?','ssi',[InventoryQuantity::format($qty),$batchStatus,$move['batch_id']]);RecipeInventory::query('INSERT INTO inventory_movements(operation_id,product_id,batch_id,branch_id,quantity,unit,product_name,unit_cost,component) VALUES (?,?,?,?,?,?,?,?,?)','iiiisssss',[$op['id'],$move['product_id'],$move['batch_id'],$order['branch_id'],InventoryQuantity::format($qty),$move['unit'],$move['product_name'],$move['unit_cost'],'cancel:'.$order['tracking_number']]);RecipeInventory::query('INSERT INTO inventory_logs(product_id,user_id,branch_id,batch_id,action,quantity,remarks) VALUES (?,?,?,?,?,?,?)','iiiisss',[$move['product_id'],$actor,$order['branch_id'],$move['batch_id'],'stock_in',InventoryQuantity::format($qty),'Cancelled '.$order['tracking_number']]);RecipeInventory::syncTotal($move['product_id']);}RecipeInventory::complete($op['id'],$id,['tracking'=>$order['tracking_number']]);
             }
+            if($status==='cancelled')Promotion::cancel($id);
             if($status==='completed' && $order['payment_status']!=='paid')throw new DomainException('Record payment before completing pickup.');
             RecipeInventory::query('UPDATE online_orders SET status=? WHERE id=?','si',[$status,$id]);self::event($id,$status,$actor,$status==='completed'?'Order collected.':'Order '.str_replace('_',' ',$status).'.');return RecipeInventory::rows('SELECT * FROM online_orders WHERE id=?','i',[$id])[0];
         });
@@ -92,7 +94,7 @@ class OnlineOrder {
         require_once __DIR__.'/CashShift.php';
         $cashShift=CashShift::context($actor,(int)$order['branch_id']);
                 CheckoutPolicy::assertMethod($payment);
-                $key='online-'.$order['checkout_key'];RecipeInventory::query("INSERT INTO sales(cashier_id,branch_id,total_amount,discount_amount,final_amount,amount_tendered,change_amount,payment_method,order_type,status,request_key) VALUES (?,?,?,0,?,?,0,?,'Online','Completed',?)",'iisssss',[$actor,$order['branch_id'],$order['total'],$order['total'],$order['total'],$payment,$key]);$sale=$conn->insert_id;CheckoutPolicy::orderReceipt($order['id'],$sale,$order['total']);
+                $key='online-'.$order['checkout_key'];RecipeInventory::query("INSERT INTO sales(cashier_id,branch_id,total_amount,discount_amount,final_amount,amount_tendered,change_amount,payment_method,order_type,status,request_key) VALUES (?,?,?,0,?,?,0,?,'Online','Completed',?)",'iisssss',[$actor,$order['branch_id'],$order['total'],$order['total'],$order['total'],$payment,$key]);$sale=$conn->insert_id;CheckoutPolicy::orderReceipt($order['id'],$sale,$order['total']);Promotion::settle($order['id'],$sale);
                 CashShift::sale($cashShift,$sale,$payment,$order['total'],$actor);
                 foreach(RecipeInventory::rows('SELECT * FROM online_order_items WHERE order_id=? ORDER BY id','i',[$id]) as $item){RecipeInventory::query('INSERT INTO sales_items(sale_id,product_id,quantity,price,subtotal) VALUES (?,?,?,?,?)','iiiss',[$sale,$item['product_id'],$item['quantity'],$item['unit_price'],$item['line_total']]);$saleItem=$conn->insert_id;RecipeInventory::query('UPDATE inventory_movements SET sale_item_id=? WHERE operation_id=? AND component=?','iis',[$saleItem,$order['operation_id'],'online:'.$order['tracking_number'].':'.$item['id']]);}
                 RecipeInventory::query("UPDATE online_orders SET sale_id=?,payment_status='paid' WHERE id=?",'ii',[$sale,$id]);
@@ -101,7 +103,7 @@ class OnlineOrder {
     public static function record_gateway_payment($order,$method) {
         global $conn;
         RecipeInventory::query("INSERT INTO sales(cashier_id,branch_id,total_amount,discount_amount,final_amount,amount_tendered,change_amount,payment_method,order_type,status,request_key) VALUES(NULL,?,?,0,?,?,0,?,'Online','Completed',?)",'isssss',[$order['branch_id'],$order['total'],$order['total'],$order['total'],substr($method,0,45),'online-'.$order['checkout_key']]);
-        $sale=$conn->insert_id;CheckoutPolicy::orderReceipt($order['id'],$sale,$order['total']);
+        $sale=$conn->insert_id;CheckoutPolicy::orderReceipt($order['id'],$sale,$order['total']);Promotion::settle($order['id'],$sale);
         foreach(RecipeInventory::rows('SELECT * FROM online_order_items WHERE order_id=? ORDER BY id','i',[$order['id']]) as $item){
             RecipeInventory::query('INSERT INTO sales_items(sale_id,product_id,quantity,price,subtotal) VALUES(?,?,?,?,?)','iiiss',[$sale,$item['product_id'],$item['quantity'],$item['unit_price'],$item['line_total']]);
             RecipeInventory::query('UPDATE inventory_movements SET sale_item_id=? WHERE operation_id=? AND component=?','iis',[$conn->insert_id,$order['operation_id'],'online:'.$order['tracking_number'].':'.$item['id']]);

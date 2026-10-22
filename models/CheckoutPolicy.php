@@ -17,7 +17,15 @@ class CheckoutPolicy {
         if($raw===null)return $all;$methods=json_decode($raw,true);
         if(!is_array($methods)||!$methods||array_diff($methods,$all))throw new DomainException('Manual payment configuration is invalid. Ask your administrator.');return $methods;
     }
-    public static function assertMethod($method) {if(!is_string($method)||!in_array($method,self::methods(),true))throw new DomainException('This payment method is disabled. Select an available method.');}
+    public static function posMethods() {
+        $methods=['Cash'];
+        require_once __DIR__.'/PayMongo.php';
+        if(PayMongo::ready())foreach(PayMongo::summary()['methods'] as $method){
+            if(!empty($method['available']))$methods[]=$method['label'];
+        }
+        return array_values(array_unique($methods));
+    }
+    public static function assertMethod($method,$pos=false) {if(!is_string($method)||!in_array($method,$pos?array_unique(array_merge(self::methods(),self::posMethods())):self::methods(),true))throw new DomainException('This payment method is disabled. Select an available method.');}
     public static function calculate($subtotal,$eligible,$discount) {
         if($subtotal<0||$eligible<0||$eligible>$subtotal)throw new DomainException('Invalid checkout subtotal.');
         $discount=self::cents($discount);$cap=self::rate(Setting::get('discount_max_percent','100'));

@@ -1,5 +1,4 @@
 document.addEventListener('click',function(event){
-    if(event.target.closest('[data-print-shift]')) window.print();
     const shortcut=event.target.closest('[data-shift-tab]');
     if(shortcut && window.bootstrap){
         const tab=document.getElementById('shift-tab-'+shortcut.dataset.shiftTab);
@@ -51,4 +50,19 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.querySelectorAll('.schedule-section-tabs [data-bs-toggle="pill"]').forEach(button=>button.addEventListener('shown.bs.tab',()=>{try{sessionStorage.setItem(sectionKey,button.id);}catch(_){}}));
  try{const previous=sessionStorage.getItem(sectionKey),button=previous&&document.getElementById(previous);if(button&&button.closest('.schedule-section-tabs')&&window.bootstrap)bootstrap.Tab.getOrCreateInstance(button).show();}catch(_){}
 
+});
+
+// Recount amounts apply only to recounts; approval uses the recorded closing count.
+document.addEventListener('DOMContentLoaded', () => {
+ const action = document.querySelector('#shiftReview [name="review_action"]');
+ const amount = document.querySelector('#shiftReview [name="amount"]');
+ if (!action || !amount) return;
+ const sync = () => {
+  const recount = action.value === 'recount';
+  amount.required = recount;
+  amount.disabled = !recount;
+  amount.closest('label').hidden = !recount;
+ };
+ action.addEventListener('change', sync);
+ sync();
 });

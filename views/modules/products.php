@@ -206,7 +206,25 @@ ob_start();
         width: 100%;
         background: transparent;
         text-align: left;
+        user-select: none;
+        -webkit-user-select: none;
+        gap: 10px;
+        min-height: 40px;
+        line-height: 1.3;
     }
+    .filter-dropdown-menu .filter-option .material-symbols-outlined {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        margin-right: 0 !important;
+        font-size: 18px !important;
+        border-radius: 6px;
+        background: #f1f5f9;
+    }
+    .filter-dropdown-menu .filter-option:focus-visible {outline:2px solid #5d87ff;outline-offset:-2px;}
 
     .filter-option:hover {
         background: #eef2ff !important;
@@ -731,7 +749,7 @@ ob_start();
 
 <input type="hidden" name="csrf_token" id="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
 
-<div class="px-0">
+<div class="px-0" id="inventory-directory">
     <!-- Page Header (Aurora Style) -->
     <div class="inv-page-header d-flex align-items-start justify-content-between flex-wrap gap-3">
         <div>
@@ -742,14 +760,14 @@ ob_start();
             <h1 class="inv-page-title">Inventory Management</h1>
             <p class="inv-page-subtitle">Monitor stock levels, manage product catalog, and orchestrate inventory across branches.</p>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-            <?php if(User::has_permission($_SESSION['user']['id'],'transfer_products') || User::has_permission($_SESSION['user']['id'],'view_stock_transfers') || User::has_permission($_SESSION['user']['id'],'approve_stock_transfers') || User::has_permission($_SESSION['user']['id'],'receive_stock_transfers')): ?><a class="btn btn-outline-primary" href="<?= url('?route=inventory/transfers') ?>">Stock Transfers</a><?php endif; ?>
+        <div class="inv-header-actions d-flex gap-2 flex-wrap">
+            <?php if(User::has_permission($_SESSION['user']['id'],'transfer_products') || User::has_permission($_SESSION['user']['id'],'view_stock_transfers') || User::has_permission($_SESSION['user']['id'],'approve_stock_transfers') || User::has_permission($_SESSION['user']['id'],'receive_stock_transfers')): ?><a class="btn btn-outline-primary" href="<?= url('?route=inventory/transfers') ?>"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">swap_horiz</span>Stock Transfers</a><?php endif; ?>
             <?php if(User::has_permission($_SESSION['user']['id'],'print_products')): ?><button type="button" class="btn-inv-secondary export-csv-btn">
                 <iconify-icon icon="solar:export-bold-duotone" width="18"></iconify-icon>
                 Export CSV
             </button><?php endif; ?>
             <?php if (User::has_permission($_SESSION['user']['id'], 'add_product')): ?>
-                <button type="button" class="btn btn-outline-secondary me-2" id="create_ingredient_shortcut">Add ingredient</button>
+                <button type="button" class="btn btn-outline-secondary me-2" id="create_ingredient_shortcut"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">add</span>Add ingredient</button>
                 <button type="button" class="btn-inv-primary" data-bs-toggle="modal" data-bs-target="#createProductModal">
                     <iconify-icon icon="solar:add-square-bold-duotone" width="18"></iconify-icon>
                     New Product
@@ -822,7 +840,7 @@ ob_start();
     </div>
 
     <!-- Table Card (Aurora Style) -->
-    <div class="aurora-card" style="overflow: visible;">
+    <div class="aurora-card inventory-directory-card" style="overflow: visible;">
         <!-- Single Integrated Toolbar matching reference design -->
         <div class="px-4 py-3 d-flex align-items-center justify-content-between flex-wrap gap-3 border-bottom">
             <!-- Left: Title & Filter Pills -->
@@ -893,6 +911,16 @@ ob_start();
                 </div>
 
                 <!-- Reset Filters -->
+                <select id="sortFilter" class="inv-filter-pill" aria-label="Sort products">
+                    <option value="newest">Newest first</option>
+                    <option value="oldest">Oldest first</option>
+                    <option value="name_asc">Name: A–Z</option>
+                    <option value="name_desc">Name: Z–A</option>
+                    <option value="price_asc">Price: Low to high</option>
+                    <option value="price_desc">Price: High to low</option>
+                    <option value="cost_asc">Cost: Low to high</option>
+                    <option value="cost_desc">Cost: High to low</option>
+                </select>
                 <button type="button" id="clearFilters" title="Reset Filters">
                     <span class="material-symbols-outlined" style="font-size: 17px; color: #5d87ff;">restart_alt</span>
                 </button>
@@ -949,14 +977,14 @@ ob_start();
     </div>
     <p id="return_stock_sale_hint" class="small text-muted mt-2">Suggestions show the latest 100 accessible sales with recorded stock consumption and no previous stock return. You can also enter an older sale number.</p>
     <div class="return-safety mt-3"><span class="material-symbols-outlined" aria-hidden="true">info</span><p class="mb-0">Prepared or spoiled food must remain consumed. Record discarded stock under <strong>Waste / Spoilage</strong> in stock adjustments.</p></div>
-    <div class="return-actions mt-4"><button type="button" id="return_sale_stock" class="btn return-review">Review stock return</button></div>
+    <div class="return-actions mt-4"><button type="button" id="return_sale_stock" class="btn return-review"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">assignment_return</span>Review stock return</button></div>
     </div>
     <div id="return_stock_confirmation" hidden>
         <div class="alert alert-warning d-flex gap-3 align-items-start" role="note"><span class="material-symbols-outlined" aria-hidden="true">verified_user</span><div>Confirm the selected stock is usable and this return policy is correct. <strong>Prepared food must not be returned as raw ingredients.</strong></div></div>
         <div class="return-summary mb-4"><div class="small text-muted">Sale number</div><div id="return_stock_confirm_sale" class="fw-bold mb-3"></div><div class="small text-muted">Stock return policy</div><div id="return_stock_confirm_policy" class="fw-bold"></div></div>
-        <div class="return-actions"><button type="button" id="cancel_return_stock" class="btn return-back">Back to details</button><button type="button" id="confirm_return_stock" class="btn return-confirm">Confirm and return stock</button></div>
+        <div class="return-actions"><button type="button" id="cancel_return_stock" class="btn return-back"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">arrow_back</span>Back to details</button><button type="button" id="confirm_return_stock" class="btn return-confirm"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">assignment_return</span>Confirm and return stock</button></div>
     </div>
-</div><div class="modal-footer"><span class="small text-muted me-auto d-flex align-items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">lock</span>Each sale can be returned once.</span><button type="button" class="btn return-close" data-bs-dismiss="modal">Close</button></div></div></div></div>
+</div><div class="modal-footer"><span class="small text-muted me-auto d-flex align-items-center gap-2"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">lock</span>Each sale can be returned once.</span><button type="button" class="btn return-close" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Close</button></div></div></div></div>
 <?php endif; ?>
 
 
@@ -984,14 +1012,26 @@ ob_start();
 
 
 
+    <div class="modal fade" id="recipe-capacity-modal" tabindex="-1" aria-labelledby="recipe-capacity-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><div><h5 class="modal-title" id="recipe-capacity-title">Ingredients &amp; production capacity</h5><p class="small text-muted mb-0">Understand what is ready and what your ingredients can produce.</p></div><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body" id="recipe-capacity-content" aria-live="polite"></div></div></div></div>
+    <script src="<?= url('assets/js/inventory-capacity.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-capacity.js') ?>"></script>
+    <script src="<?= url('assets/js/inventory-filter-state.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-filter-state.js') ?>"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             console.log('🚀 Initializing Inventory Management System...');
 
+            const inventoryStateKey='inventory-products:<?= (int)$_SESSION['user']['id'] ?>:'+location.pathname;
+            const inventoryParams=new URLSearchParams(location.search);
+            const inventoryDefaultBranch=<?= json_encode(User::has_all_branch_access($_SESSION['user']['id'])?'0':(string)($_SESSION['user']['branch_id']??0)) ?>;
+            const inventoryAllowedBranches=<?= json_encode(array_merge(User::has_all_branch_access($_SESSION['user']['id'])?['0']:[],array_map('strval',array_column(Branch::for_current_user(),'id')))) ?>;
+            let inventoryStorage;try{inventoryStorage=window.localStorage;}catch(e){inventoryStorage={getItem:()=>null,setItem:()=>{}};}
+            const restoredInventory=InventoryFilterState.restore(inventoryStorage,inventoryStateKey,inventoryParams,{branch:inventoryDefaultBranch,category:'all',stock:'all',sort:'newest'},inventoryAllowedBranches);
+            $('#branchFilter').val(restoredInventory.fields.branch);$('#categoryFilter').val(restoredInventory.fields.category);$('#stockFilter').val(restoredInventory.fields.stock);$('#sortFilter').val(restoredInventory.fields.sort);
+            function syncInventoryFilterLabels(){for(const id of ['branchFilter','categoryFilter','stockFilter']){const value=String($('#'+id).val());const options=$('.filter-option[data-target="'+id+'"]');options.removeClass('active fw-600');const selected=options.filter(function(){return String($(this).data('value'))===value;});selected.addClass('active fw-600');$('#'+id.replace('Filter','Label')).text(selected.data('label')||({branchFilter:'Branch '+value,categoryFilter:'Category '+value,stockFilter:'All Levels'}[id]));options.first().closest('.dropdown').find('.inv-filter-pill').toggleClass('active-filter',value!=='all'&&value!=='0');}}
+            syncInventoryFilterLabels();
             // Load Filter Options
             const loadFilters = () => {
                 const csrf = $('[name="csrf_token"]').val();
-                console.log('📡 Fetching filter options with CSRF:', csrf);
+                
 
                 // Load Categories
                 $.post('ajax/inventory_action.php', { action: 'get_categories', csrf_token: csrf }, function (res) {
@@ -1001,6 +1041,7 @@ ob_start();
                         res.categories.forEach(cat => {
                             menu.append(`<li><button class="filter-option dropdown-item rounded-2" data-value="${cat.id}" data-target="categoryFilter" data-label="${cat.name}"><span class="material-symbols-outlined me-2" style="font-size:16px;">sell</span>${cat.name}</button></li>`);
                         });
+                        syncInventoryFilterLabels();
                     }
                 }, 'json').fail(err => console.error('❌ Category Load Error:', err));
 
@@ -1012,6 +1053,7 @@ ob_start();
                         res.branches.forEach(branch => {
                             menu.append(`<li><button class="filter-option dropdown-item rounded-2" data-value="${branch.id}" data-target="branchFilter" data-label="${branch.name}"><span class="material-symbols-outlined me-2" style="font-size:16px;">place</span>${branch.name}</button></li>`);
                         });
+                        syncInventoryFilterLabels();
                     }
                 }, 'json').fail(err => console.error('❌ Branch Load Error:', err));
             };
@@ -1551,6 +1593,11 @@ ob_start();
 
             // Initialize DataTables
             const productsTable = $('#productsTable').DataTable({
+                ordering:false,
+                stateSave:true,
+                stateLoadCallback:function(){return restoredInventory.saved;},
+                stateSaveCallback:function(settings,data){InventoryFilterState.save(inventoryStorage,inventoryStateKey,data,{branch:String($('#branchFilter').val()),category:String($('#categoryFilter').val()),stock:String($('#stockFilter').val()),sort:String($('#sortFilter').val())});const target=new URL(location.href);for(const [key,value] of Object.entries({branch_id:$('#branchFilter').val(),category_id:$('#categoryFilter').val(),stock_status:$('#stockFilter').val(),sort:$('#sortFilter').val(),search:data.search?.search||''})){if(value&&value!=='0'&&value!=='all')target.searchParams.set(key,value);else target.searchParams.delete(key);}history.replaceState(null,'',target);},
+                search:{search:inventoryParams.get('search')||''},
                 processing: true,
                 serverSide: true,
                 responsive: false,
@@ -1560,6 +1607,8 @@ ob_start();
                     type: 'POST',
                     data: function (d) {
                         d.action = 'products_datatable';
+                        // Apply the dedicated sort selection independently of saved column sorts.
+                        d.order = [InventoryFilterState.sortOrder($('#sortFilter').val())];
                         d.csrf_token = $('[name="csrf_token"]').val();
                         d.branch_id = $('#branchFilter').val();
                         d.category_id = $('#categoryFilter').val() !== 'all' ? $('#categoryFilter').val() : null;
@@ -1580,6 +1629,10 @@ ob_start();
                         }
                         return json.data;
                     }
+                },
+                createdRow:function(row){
+                    const labels=['Product','Category','Selling price','Cost price','Stock level','Performance','Actions'];
+                    Array.from(row.cells).forEach((cell,index)=>cell.setAttribute('data-label',labels[index]));
                 },
                 columns: [
                     {
@@ -1629,7 +1682,8 @@ ob_start();
                     {
                         data: 'stock',
                         render: function (data, type, row) {
-                            const totalStock = row.product_type === 'variant' ? parseInt(row.variant_total_stock || 0) : parseFloat(data);
+                            if(row.stock_is_unlimited)return '<span class="prod-type-badge non-stock">No stock tracking</span><small class="d-block text-muted mt-1">Not limited by physical inventory</small>';
+                            const totalStock = parseFloat(data);
                             const isLow = totalStock <= parseFloat(row.low_stock_threshold);
                             const isOut = totalStock <= 0;
                             const barColor = isOut ? '#ef4444' : (isLow ? '#f59e0b' : '#10b981');
@@ -1658,16 +1712,21 @@ ob_start();
                             const nonStockBadge = row.track_stock == 0 ? `<span class="prod-type-badge non-stock">Non-Stock</span>` : '';
                             const ingredientBadge = row.is_ingredient == 1 && row.product_type !== 'ingredient' ? `<span class="prod-type-badge ingredient ms-1">Ingredient</span>` : '';
 
+                            if(row.product_type==='recipe'||row.product_type==='combo'){
+                                const mode=row.product_type==='combo'?'Package':row.recipe_mode==='made_to_order'?'Made to order':row.recipe_mode==='prepared_batch'?'Ready stock':'Needs review';
+                                const modeHint=row.recipe_mode==='made_to_order'?'Ingredients are deducted on sale':row.recipe_mode==='prepared_batch'?'Ingredients are deducted when preparing stock':'Reconcile recipe stock mode before selling';
+                                return `<div class="inv-stock-compact"><div class="inv-stock-top"><strong style="color:${stockColor}">${totalStock.toLocaleString(undefined,{maximumFractionDigits:4})}</strong><span>${row.stock_is_recipe_capacity?'can make':'ready'}</span><button type="button" class="recipe-capacity-btn inv-capacity-action" data-id="${row.id}" title="View ingredients and production capacity" aria-label="View ingredients and production capacity"><span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>Capacity</button></div><div class="inv-stock-meta"><span class="inv-recipe-chip" title="${modeHint}">${mode}</span><span class="inv-stock-scope">${row.branch_stocks?.length===1?row.branch_stocks[0].name:row.branch_stocks?.length?row.branch_stocks.length+' branches':'Shared'}</span></div></div>`;
+                            }
+                            if(row.branch_stocks && row.branch_stocks.length>1 && branchDetails)branchDetails='<details class="inv-stock-branches"><summary>'+row.branch_stocks.length+' branches</summary>'+branchDetails+'</details>';
                             return `<div style="min-width:130px;max-width:160px;">
                                 <div class="d-flex align-items-baseline gap-1 mb-1">
                                     <span style="font-size:1.15rem;font-weight:800;color:${stockColor};letter-spacing:-0.3px;">${totalStock.toLocaleString()}${row.stock_is_recipe_capacity ? '<small class="ms-1 fw-normal">can make</small>' : ''}</span>
-                                    <span style="font-size:0.75rem;color:#94a3b8;font-weight:500;">/ ${maxStock.toLocaleString()}</span>
+                                    <span style="font-size:0.75rem;color:#94a3b8;font-weight:500;">${row.stock_is_recipe_capacity ? 'units from ingredients' : '/ '+maxStock.toLocaleString()}</span>
                                 </div>
-                                <div class="rounded-pill overflow-hidden mb-1" style="height:4px;background:#f1f5f9;">
-                                    <div style="width:${pct}%;height:100%;background:${barColor};border-radius:50px;transition:width .4s;"></div>
-                                </div>
+                                ${row.stock_is_recipe_capacity?'':`<div class="rounded-pill overflow-hidden mb-1" style="height:4px;background:#f1f5f9;"><div style="width:${pct}%;height:100%;background:${barColor};border-radius:50px;transition:width .4s;"></div></div>`}
                                 <div class="mb-1">${typeBadge}${nonStockBadge}${ingredientBadge}</div>
                                 ${branchDetails}
+                                ${row.product_type==='recipe'?`<div class="mt-2 small text-muted">${row.recipe_mode==='made_to_order'?'Made to order · ingredients deducted on sale':row.recipe_mode==='prepared_batch'?'Ready stock · ingredients deducted on preparation':'Recipe requires reconciliation'}</div><button type="button" class="btn btn-sm btn-outline-primary mt-2 recipe-capacity-btn" data-id="${row.id}"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">receipt_long</span>Ingredients &amp; capacity</button>`:''}
                             </div>`;
                         }
                     },
@@ -1765,7 +1824,7 @@ ob_start();
                                     </li>` : ''}
 
                                     ${row.can_request_transfer ? `<li><a class="prod-menu-item" href="?route=inventory/transfers&product_id=${row.id}&source=${row.branch_id || ''}"><span class="menu-icon" style="background:#eef2ff;color:#5d87ff;"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">swap_horiz</span></span>Request stock transfer</a></li>` : ''}
-                                    ${row.can_transfer ? `<li><button type="button" class="prod-menu-item transfer-product-btn" data-id="${row.id}" data-source-branch="${row.branch_id || 'global'}" data-ingredient="${row.product_type === 'ingredient' || row.is_ingredient == 1 ? '1' : '0'}"><span class="menu-icon" style="background:#eef2ff;color:#5d87ff;"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">move_up</span></span><span>Move product ownership &amp; all stock</span></button></li>` : ''}
+                                    ${row.can_transfer ? `<li><button type="button" class="prod-menu-item transfer-product-btn" data-id="${row.id}" data-source-branch="${row.branch_id || 'global'}" data-ingredient="${row.product_type === 'ingredient' || row.is_ingredient == 1 ? '1' : '0'}"><span class="menu-icon" style="background:#eef2ff;color:#5d87ff;"><span class="material-symbols-outlined" style="font-size:16px;" aria-hidden="true">move_up</span></span><span>Transfer product, ingredients &amp; stock</span></button></li>` : ''}
 
                                     <!-- Stock History -->
                                     ${row.can_view_history ? `<li>
@@ -1807,7 +1866,7 @@ ob_start();
                             </div>
                             <h5 class="fw-bold text-dark">No items in sight</h5>
                             <p class="text-muted small mx-auto" style="max-width: 300px;">We couldn't find any products matching your current filters or search query.</p>
-                            <button id="reset-filters-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2">Reset All</button>
+                            <button id="reset-filters-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">restart_alt</span>Reset All</button>
                         </div>`,
                     zeroRecords: `
                         <div class="text-center py-5">
@@ -1816,7 +1875,7 @@ ob_start();
                             </div>
                             <h5 class="fw-bold text-dark">No matching records</h5>
                             <p class="text-muted small mx-auto" style="max-width: 300px;">We couldn't find any products matching your current search or filters. Try adjusting your criteria.</p>
-                            <button id="reset-filters-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2">Clear Search</button>
+                            <button id="reset-filters-btn" class="btn btn-outline-primary btn-sm rounded-pill px-4 mt-2"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">filter_alt_off</span>Clear Search</button>
                         </div>`
                 },
                 drawCallback: function () {
@@ -1835,14 +1894,16 @@ ob_start();
                             <input type="text" class="form-control dt-search-input" placeholder="Search catalog...">
                         </div>`;
                     $('.dt-custom-search').html(searchHtml);
+                    $('.dt-search-input').val(this.api().search());
 
                     $('.dt-search-input').on('keyup', function () {
-                        productsTable.search(this.value).draw();
+                        productsTable.search(this.value).page('first');productsTable.state.save();productsTable.draw();
                     });
                 }
             });
 
             // Custom filter dropdown selection
+            $('#sortFilter').on('change',function(){productsTable.page('first');productsTable.state.save();productsTable.draw();});
             $(document).on('click', '.filter-option', function () {
                 const $btn = $(this);
                 const targetId = $btn.data('target');
@@ -1865,8 +1926,8 @@ ob_start();
                 const isDefault = (value === 'all' || value === '0');
                 $pillBtn.toggleClass('active-filter', !isDefault);
 
-                // Redraw table
-                productsTable.draw();
+                // Persist before the request so refresh during loading keeps the selected scope.
+                productsTable.page('first');productsTable.state.save();productsTable.draw();
             });
 
             // Export CSV with current filters
@@ -1925,7 +1986,7 @@ ob_start();
                 modal.find('#view_prod_branch_text')
                     .text(data.branchName || 'Global (All Branches)')
                     .attr('title', data.branchName || 'Global (All Branches)');
-                const typeLabel = data.type === 'recipe' ? 'Recipe' : data.type === 'variant' ? 'Variant' : data.type === 'ingredient' ? 'Ingredient' : 'Simple';
+                const typeLabel = data.type === 'combo' ? 'Package' : data.type === 'recipe' ? (row?.recipe_mode === 'made_to_order' ? 'Made to order' : 'Recipe') : data.type === 'variant' ? 'Variant' : data.type === 'ingredient' ? 'Ingredient' : 'Simple';
                 modal.find('#view_prod_badge_type').text(typeLabel);
 
                 // SKU & Barcode
@@ -2010,28 +2071,9 @@ ob_start();
                     modal.find('#view_stock_progress').addClass('bg-success');
                 }
 
+                window.loadProductInsightBreakdown(data, row);
                 // Recipe Section
                 if (row && row.product_type === 'recipe') {
-                    $('#view_recipe_section').removeClass('d-none');
-                    $('#view_ingredients_list').html('<tr><td colspan="3" class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>');
-                    $.post('?route=ajax/inventory_action', { action: 'get_product_recipe', product_id: data.id, csrf_token: $('[name="csrf_token"]').val() }, function (res) {
-                        $('#view_ingredients_list').empty();
-                        if (res.success && res.recipe.length > 0) {
-                            res.recipe.forEach(ing => {
-                                const qty = parseFloat(ing.quantity);
-                                const fmtQty = qty.toFixed(2);
-                                $('#view_ingredients_list').append(`
-                                    <tr>
-                                        <td class="ps-3 py-2 border-0">${ing.ingredient_name}</td>
-                                        <td class="text-center py-2 border-0">${fmtQty}</td>
-                                        <td class="pe-3 text-end py-2 border-0">${ing.unit}</td>
-                                    </tr>
-                                `);
-                            });
-                        } else {
-                            $('#view_ingredients_list').html('<tr><td colspan="3" class="text-center py-2 text-muted">No recipe defined.</td></tr>');
-                        }
-                    }, 'json');
                     // Load modifiers
                     $('#view_modifiers_section').removeClass('d-none');
                     $('#view_modifiers_list').html('<tr><td colspan="3" class="text-center py-2"><div class="spinner-border spinner-border-sm text-warning"></div></td></tr>');
@@ -2054,7 +2096,7 @@ ob_start();
                         }
                     }, 'json');
                 } else {
-                    $('#view_recipe_section').addClass('d-none');
+
                     $('#view_modifiers_section').addClass('d-none');
                 }
 
@@ -2201,9 +2243,11 @@ ob_start();
 
             $(document).on('click', '#reset-filters-btn, #clearFilters', function () {
                 console.log('🔄 Resetting all filters...');
-                $('#branchFilter').val('0');
+                productsTable.state.clear();
+                $('#branchFilter').val(inventoryDefaultBranch);
                 $('#categoryFilter').val('all');
                 $('#stockFilter').val('all');
+                $('#sortFilter').val('newest');
                 $('#branchLabel').text('All Branches');
                 $('#categoryLabel').text('All Categories');
                 $('#stockLabel').text('Stock Level');
@@ -2211,7 +2255,7 @@ ob_start();
                 $('.filter-option[data-value="0"], .filter-option[data-value="all"]').addClass('active fw-600');
                 $('.inv-filter-pill').removeClass('active-filter');
                 $('.dt-search-input').val('');
-                productsTable.search('').draw();
+                syncInventoryFilterLabels();productsTable.search('').page('first');productsTable.state.save();productsTable.draw();
             });
 
 
@@ -2280,6 +2324,7 @@ ob_start();
                 modal.find('#edit_prod_stock').val(Number(data.stock || 0).toFixed(2));
                 modal.find('#edit_prod_thresh').val(Number(data.threshold || 0).toFixed(2));
                 modal.find('#edit_prod_max_thresh').val(Number(data.maxThreshold || 0).toFixed(2));
+                modal.attr('data-recipe-branch',data.branch==null?'':String(data.branch));
                 if (modal.find('#edit_prod_branch').length) modal.find('#edit_prod_branch').val(data.branch);
 
                 modal.find('#edit_track_stock').prop('checked', data.trackStock == 1);
@@ -2425,10 +2470,20 @@ ob_start();
                 return options.html();
             }
 
+            function scopedIngredients(listSelector) {
+                const editing = listSelector === '#ingredients_list' || listSelector === '#modifiers_list';
+                const branch = editing ? $('#editProductModal').attr('data-recipe-branch') : $('#createProductModal [name="branch_id"]').val();
+                const selectedBranches=$('#createProductModal [name="branch_ids[]"]:checked').map(function(){return this.value;}).get();
+                if(!editing && $('#createProductModal .product-branch-picker').length)return ingredientsData.filter(ingredient=>ingredient.branch_id===null || (selectedBranches.length===1&&String(ingredient.branch_id)===selectedBranches[0]));
+                const fallback = <?= json_encode($_SESSION['user']['branch_id']??null) ?>;
+                const scope = branch === undefined ? fallback : branch;
+                return ingredientsData.filter(ingredient => ingredient.branch_id === null || (scope !== null && scope !== '' && String(ingredient.branch_id) === String(scope)));
+            }
+
             function addIngredientRow(data = null, listSelector = '#ingredients_list') {
                 const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
                 let options = '<option value="" disabled selected>Select Ingredient</option>';
-                ingredientsData.forEach(ing => {
+                scopedIngredients(listSelector).forEach(ing => {
                     const selected = data && data.ingredient_product_id == ing.id ? 'selected' : '';
                     const unit = ing.unit_type || 'pc';
                     options += `<option value="${ing.id}" data-unit="${unit}" data-cost="${ing.cost_price || 0}" ${selected}>${ing.name}</option>`;
@@ -2454,6 +2509,20 @@ ob_start();
                 $(document).trigger('recipe:changed');
             }
 
+            $('#edit_prod_branch,.product-branch-picker input').on('change',function(){
+                const editing=this.id==='edit_prod_branch';
+                if(editing)$('#editProductModal').attr('data-recipe-branch',this.value);
+                const scope=editing?'#editProductModal':'#createProductModal';
+                if(!editing){const branches=$('#createProductModal [name="branch_ids[]"]:checked').map(function(){return this.value;}).get();$('#createProductModal [name="branch_id"]').val(branches.length===1?branches[0]:'');}
+                $(scope+' .ing-select,'+scope+' .mod-ing-select').each(function(){
+                    const select=$(this),previous=select.val(),modifier=select.hasClass('mod-ing-select');
+                    select.empty().append($('<option>').val('').text(modifier?'None (Charge only)':'Select Ingredient'));
+                    scopedIngredients(editing?'#ingredients_list':'#ingredients_list_create').forEach(ingredient=>select.append($('<option>').val(ingredient.id).text(ingredient.name).attr('data-unit',ingredient.unit_type||'pc').attr('data-cost',ingredient.cost_price||0)));
+                    select.val(select.find('option').toArray().some(option=>option.value===String(previous))?previous:'');
+                    select.prev('.ingredient-search').val('');
+                });
+                $(document).trigger('recipe:changed');
+            });
             $('#add_ingredient_row').on('click', () => addIngredientRow(null, '#ingredients_list'));
             $('#add_ingredient_row_create').on('click', () => addIngredientRow(null, '#ingredients_list_create'));
             $(document).on('recipe:import', function (event, rows) {
@@ -2518,7 +2587,7 @@ ob_start();
 
                 const index = Date.now().toString() + Math.floor(Math.random()*100000).toString();
                 let ingOptions = '<option value="">None (Charge only)</option>';
-                ingredientsData.forEach(ing => {
+                scopedIngredients(context==='edit'?'#modifiers_list':'#modifiers_list_create').forEach(ing => {
                     ingOptions += `<option value="${ing.id}" ${data && data.ingredient_product_id == ing.id ? 'selected' : ''}>${ing.name}</option>`;
                 });
 
@@ -2994,7 +3063,12 @@ ob_start();
     ?>
     <script src="<?= url('assets/js/inventory-controls.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-controls.js') ?>"></script>
     <script src="<?= url('assets/js/recipe-admin.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/recipe-admin.js') ?>"></script>
+    <link rel="stylesheet" href="<?= url('assets/css/product-bundles.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/product-bundles.css') ?>">
+    <script defer src="<?= url('assets/js/product-bundles.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/product-bundles.js') ?>"></script>
     <script src="<?= url('assets/js/product-branches.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/product-branches.js') ?>"></script>
+    <script src="<?= url('assets/js/product-insights.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/product-insights.js') ?>"></script>
+    <link rel="stylesheet" href="<?= url('assets/css/inventory-responsive.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/inventory-responsive.css') ?>">
+    <script src="<?= url('assets/js/inventory-modal-cards.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/inventory-modal-cards.js') ?>"></script>
     <script src="<?= url('assets/js/recipe-stock-adjustment.js') ?>?v=<?= filemtime(__DIR__ . '/../../assets/js/recipe-stock-adjustment.js') ?>"></script>
     <?php
     $content = ob_get_clean();

@@ -24,23 +24,23 @@
                         "secondary-fixed-dim": "#e0b6ff",
                         "background": "#f8f9fa",
                         "on-background": "#191c1d",
-                        "surface-tint": "#ba1340",
+                        "surface-tint": "#008ba8",
                         "surface-container": "#edeeef",
                         "secondary-fixed": "#f2daff",
                         "on-secondary-fixed-variant": "#6b00af",
                         "inverse-on-surface": "#f0f1f2",
                         "on-secondary-fixed": "#2e004e",
-                        "on-primary-fixed": "#40000f",
+                        "on-primary-fixed": "#073d4a",
                         "on-primary": "#ffffff",
                         "inverse-surface": "#2e3132",
-                        "outline-variant": "#e2bec0",
+                        "outline-variant": "#d9e5ec",
                         "tertiary-container": "#996c00",
                         "surface": "#f8f9fa",
                         "surface-variant": "#e1e3e4",
-                        "primary-fixed": "#ffdadb",
-                        "primary-fixed-dim": "#ffb2b8",
-                        "outline": "#8e6f71",
-                        "inverse-primary": "#ffb2b8",
+                        "primary-fixed": "#ddf5fa",
+                        "primary-fixed-dim": "#c5edf5",
+                        "outline": "#7b8d9b",
+                        "inverse-primary": "#8dd9e9",
                         "error": "#ba1a1a",
                         "error-container": "#ffdad6",
                         "on-tertiary": "#ffffff",
@@ -49,16 +49,16 @@
                         "surface-dim": "#d9dadb",
                         "on-secondary-container": "#fffbff",
                         "secondary-container": "#9e49e3",
-                        "primary": "#b60e3d",
-                        "secondary": "#8429c8",
+                        "primary": "#008ba8",
+                        "secondary": "#00758d",
                         "surface-container-highest": "#e1e3e4",
                         "on-error": "#ffffff",
                         "tertiary": "#7a5500",
                         "on-primary-container": "#fffbff",
-                        "on-surface-variant": "#5a4042",
+                        "on-surface-variant": "#627486",
                         "surface-container-low": "#f3f4f5",
                         "on-tertiary-fixed-variant": "#5e4100",
-                        "on-primary-fixed-variant": "#91002d"
+                        "on-primary-fixed-variant": "#00667d"
                     },
                     "borderRadius": {
                         "DEFAULT": "0.25rem",
@@ -222,12 +222,12 @@
     </style>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="<?= url('assets/css/style.css') ?>">
-    <link rel="stylesheet" href="<?= url('assets/css/pos-responsive.css') ?>?v=1">
+    <link rel="stylesheet" href="<?= url('assets/css/pos-responsive.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/pos-responsive.css') ?>">
     <meta name="csrf-token" content="<?= csrf_token() ?>">
     <!-- jQuery for AJAX -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="<?= url('assets/js/request-security.js') ?>"></script>
-    <script src="<?= url('assets/js/main.js') ?>?v=1.5"></script>
+    <script src="<?= url('assets/js/main.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/main.js') ?>"></script>
 
     <script>
     // Defined in <head> — guaranteed to exist before any click is possible
@@ -307,15 +307,22 @@ if (!isset($branches)) {
 </div>
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
+<?php
+$posProfile=User::find_by_id((int)($_SESSION['user']['id']??0))?:[];
+$posProfileName=$posProfile['name']??($_SESSION['user']['name']??'');
+$posProfilePhoto=$posProfile['image']??'';
+if(!$posProfilePhoto)$posProfilePhoto=$posProfile['avatar_url']??'';
+$posProfilePhoto=$posProfilePhoto?get_user_avatar($posProfilePhoto,$posProfileName):'';
+?>
 <!-- Top Navigation / Header -->
 <header class="pos-topbar h-20 flex items-center justify-between px-margin-desktop bg-surface border-b border-outline-variant border-opacity-35 shrink-0 z-20">
-    <div class="flex items-center gap-md">
+    <div class="flex items-center gap-md pos-header-primary"><button type="button" id="pos-mobile-menu-open" aria-label="Open POS menu" aria-haspopup="dialog" aria-controls="pos-mobile-menu"><span class="material-symbols-outlined" aria-hidden="true">menu</span></button>
 <?php require_once __DIR__.'/../../models/OnlineOrder.php'; if(OnlineOrder::can_view($_SESSION['user']['id'])): ?>        <a class="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-container text-primary text-xs font-bold text-decoration-none" href="<?= url('?route=admin/online_orders') ?>">Online Orders</a><?php endif; ?>
         <?php if(User::has_permission($_SESSION['user']['id'],'view_dashboard')): ?><a class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-container hover:bg-primary-fixed text-primary font-bold text-xs text-decoration-none transition-all duration-300 border border-outline-variant border-opacity-25 shadow-xs cursor-pointer" href="<?= url('?route=dashboard') ?>">
             <span class="material-symbols-outlined text-[16px] font-bold">arrow_back</span>
             <span>Dashboard</span>
         </a><?php endif; ?>
-        <div class="flex flex-col">
+        <div class="flex flex-col pos-header-brand">
             <h1 class="font-bold text-lg text-primary leading-tight m-0 font-headline-md"><?= htmlspecialchars($store_name ?? 'Stacey Halu') ?></h1>
             <div class="flex items-center gap-1.5 mt-0.5">
                 <?php
@@ -362,18 +369,21 @@ if (!isset($branches)) {
                 <?php endif; ?>
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px] opacity-65">search</span>
                 <input class="w-full bg-surface-container-low border border-outline-variant border-opacity-40 rounded-full pl-10 pr-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-xs text-on-surface font-body-md shadow-none transition-all duration-300"
-                       aria-label="Search menu" placeholder="Search menu..." type="text" name="search" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"/>
+                       aria-label="Search products" placeholder="Search products..." type="text" name="search" value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"/>
             </form>
         </div>
 
         <div class="h-8 w-px bg-outline-variant opacity-40 mx-2"></div>
 
         <div class="flex items-center gap-sm pl-2">
-            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs"><?= strtoupper(substr($_SESSION['user']['name'], 0, 2)) ?></div>
-            <span class="font-label-md text-xs text-on-surface hidden sm:inline font-bold"><?= htmlspecialchars($_SESSION['user']['name']) ?></span>
+            <div class="pos-user-avatar w-8 h-8 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-xs" title="<?= htmlspecialchars($posProfileName,ENT_QUOTES) ?>"><span><?= htmlspecialchars(mb_strtoupper(mb_substr($posProfileName,0,2)),ENT_QUOTES) ?></span><?php if($posProfilePhoto): ?><img src="<?= htmlspecialchars($posProfilePhoto,ENT_QUOTES) ?>" alt="<?= htmlspecialchars($posProfileName.' profile photo',ENT_QUOTES) ?>" width="32" height="32" onerror="this.remove()" decoding="async"><?php endif; ?></div>
+            <span class="font-label-md text-xs text-on-surface hidden sm:inline font-bold"><?= htmlspecialchars($posProfileName) ?></span>
         </div>
     </div>
 </header>
+
+<dialog id="pos-mobile-menu" aria-labelledby="pos-mobile-menu-title"><header><div><span>YOUR WORKSPACE</span><h2 id="pos-mobile-menu-title">POS menu</h2></div><button type="button" id="pos-mobile-menu-close" aria-label="Close POS menu"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></header><p class="pos-menu-user"><span class="material-symbols-outlined" aria-hidden="true">account_circle</span><?= htmlspecialchars($_SESSION['user']['name']??'') ?></p><nav id="pos-mobile-menu-links" aria-label="POS shortcuts"></nav><section id="pos-mobile-menu-register" aria-label="Cashier register"></section><p class="pos-menu-hint">Your cart stays available while you navigate your workspace.</p></dialog>
+<script defer src="<?= url('assets/js/pos-mobile-menu.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/pos-mobile-menu.js') ?>"></script>
 
 <?php require __DIR__.'/../partials/demo_notice.php'; ?>
 <!-- Main Content Canvas -->

@@ -13,6 +13,11 @@ $current_user = $_SESSION['user'] ?? [
 $user_avatar = get_user_avatar($current_user['avatar_url'] ?? '', $current_user['name'] ?? 'A');
 $user_branch = $current_user['branch'] ?? 'General';
 
+// Remove database padding while retaining meaningful fractional stock quantities.
+$format_stock_alert_quantity = static function ($value) {
+    return rtrim(rtrim(number_format((float)$value, 4, '.', ','), '0'), '.');
+};
+
 // Sync and fetch stock alerts
 $header_branch_id = !empty($_SESSION['user']['branch_id']) ? (int)$_SESSION['user']['branch_id'] : null;
 if (User::has_all_branch_access($_SESSION['user']['id'])) $header_branch_id=null;
@@ -164,6 +169,10 @@ $initial_alerts = $can_stock_alerts ? StockNotification::get_active_alerts(25, $
           </span>
         </div>
       </li>
+      <li class="mobile-header-brand">
+        <span class="mobile-header-name"><?= htmlspecialchars($sidebar_store_name ?? 'Workspace', ENT_QUOTES, 'UTF-8') ?></span>
+        <span class="mobile-header-branch"><?= htmlspecialchars($user_branch, ENT_QUOTES, 'UTF-8') ?></span>
+      </li>
     </ul>
 
     <div class="navbar-collapse justify-content-end px-0" id="navbarNav">
@@ -189,7 +198,7 @@ $initial_alerts = $can_stock_alerts ? StockNotification::get_active_alerts(25, $
 
         <!-- Automated Stock Notifications Dropdown -->
         <li class="nav-item dropdown" id="stockNotificationNavContainer" <?= !$can_stock_alerts ? 'style="display:none"' : '' ?>>
-          <a class="header-icon-btn stock-notif-btn" href="javascript:void(0)" id="dropNotifications" data-bs-toggle="dropdown" aria-expanded="false" title="Stock Inventory Alerts">
+          <a class="header-icon-btn stock-notif-btn" href="javascript:void(0)" id="dropNotifications" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" title="Stock Inventory Alerts">
             <iconify-icon icon="solar:bell-linear" class="fs-5"></iconify-icon>
             <span class="stock-notif-badge badge rounded-pill bg-danger <?= ($stock_counts['total'] > 0) ? '' : 'd-none' ?>" id="headerNotifBadge">
               <?= $stock_counts['total'] > 99 ? '99+' : $stock_counts['total'] ?>
@@ -245,15 +254,15 @@ $initial_alerts = $can_stock_alerts ? StockNotification::get_active_alerts(25, $
                   if ($is_out) {
                     $badge_style = 'background: #fee2e2; color: #b91c1c;';
                     $badge_label = 'No Stock';
-                    $stock_text = '<span class="text-danger fw-bold">0 units</span> (Min: ' . $alert['threshold'] . ')';
+                    $stock_text = '<span class="text-danger fw-bold">0 units</span> (Min: ' . $format_stock_alert_quantity($alert['threshold']) . ')';
                   } elseif ($is_low) {
                     $badge_style = 'background: #fef3c7; color: #b45309;';
                     $badge_label = 'Low Stock';
-                    $stock_text = '<span class="text-warning fw-bold">' . $alert['current_stock'] . ' units</span> (Min: ' . $alert['threshold'] . ')';
+                    $stock_text = '<span class="text-warning fw-bold">' . $format_stock_alert_quantity($alert['current_stock']) . ' units</span> (Min: ' . $format_stock_alert_quantity($alert['threshold']) . ')';
                   } else {
                     $badge_style = 'background: #f3e8ff; color: #7e22ce;';
                     $badge_label = 'Overstock';
-                    $stock_text = '<span style="color:#7e22ce;" class="fw-bold">' . $alert['current_stock'] . ' units</span> (Max: ' . $alert['threshold'] . ')';
+                    $stock_text = '<span style="color:#7e22ce;" class="fw-bold">' . $format_stock_alert_quantity($alert['current_stock']) . ' units</span> (Max: ' . $format_stock_alert_quantity($alert['threshold']) . ')';
                   }
                   
                   $prod_img = get_product_image($alert['image_url'] ?? '', $alert['product_id']);

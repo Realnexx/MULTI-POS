@@ -56,6 +56,12 @@ if (!function_exists('redirect')) {
     {
         // Modal forms need a result before deciding whether to leave the page.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_SERVER['HTTP_X_MODAL_FORM'] ?? '') === '1') {
+            $fieldError=$_SESSION['user_field_error']??null;
+            if($fieldError){
+                unset($_SESSION['user_field_error']);
+                http_response_code(422);header('Content-Type: application/json');
+                echo json_encode(['success'=>false,'message'=>$fieldError['message'],'field_errors'=>[$fieldError['field']=>$fieldError['message']]]);exit;
+            }
             $flash = $_SESSION['flash'] ?? null;
             $success = $flash && $flash['type'] === 'success';
             if (!$success) unset($_SESSION['flash']);

@@ -401,15 +401,16 @@
                         <div id="view_recipe_section" class="d-none mb-3">
                             <div class="d-flex align-items-center gap-2 mb-2">
                                 <span class="material-symbols-outlined" style="font-size: 16px; color: #5d87ff;">receipt_long</span>
-                                <span class="fw-700 text-dark" style="font-size: 0.82rem;">Recipe Formula</span>
+                                <span id="view_breakdown_title" class="fw-700 text-dark" style="font-size: 0.82rem;">Recipe Formula</span>
                             </div>
+                            <p id="view_breakdown_note" class="small text-muted mb-2"></p>
                             <div class="view-table-card">
                                 <table class="table table-sm mb-0" style="font-size: 0.78rem;">
                                     <thead>
                                         <tr>
-                                            <th class="ps-3">Ingredient Item</th>
+                                            <th id="view_breakdown_item_heading" class="ps-3">Ingredient Item</th>
                                             <th class="text-center">Required Qty</th>
-                                            <th class="pe-3 text-end">Unit</th>
+                                            <th id="view_breakdown_detail_heading" class="pe-3 text-end">Unit</th>
                                         </tr>
                                     </thead>
                                     <tbody id="view_ingredients_list"></tbody>
@@ -487,9 +488,7 @@
 
                         <!-- Footer Actions -->
                         <div class="d-flex justify-content-end align-items-center gap-2 pt-3 mt-1 border-top" style="border-color: #f1f5f9 !important;">
-                            <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal">
-                                Close
-                            </button>
+                            <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Close</button>
                             <button type="button" id="view_edit_btn" class="btn btn-modal-primary">
                                 <span class="material-symbols-outlined" style="font-size: 16px;">edit_square</span>
                                 Edit Product Details

@@ -210,10 +210,22 @@ class ExpenseController
     public function summary_print() {
         require_permission('manage_expenses');
         global $conn;
-        $branch_id = $_GET['branch_id'] ?? null;
-        $start_date = $this->printDate($_GET['start_date'] ?? null, date('Y-m-01'));
-        $end_date = $this->printDate($_GET['end_date'] ?? null, date('Y-m-t'));
-        if ($start_date > $end_date) { http_response_code(400); exit('The start date must be before the end date.'); }
+        $access = User::access_context((int)$_SESSION['user']['id']);
+        if (!$access['global'] && !$access['branch_id']) { http_response_code(403); exit('Ask an administrator to assign your branch first.'); }
+        $branch_id = $access['global'] ? (!empty($_GET['branch_id']) ? (int)$_GET['branch_id'] : null) : $access['branch_id'];
+        if ($branch_id !== null && !in_array((int)$branch_id, array_map('intval',array_column(Branch::for_current_user(false),'id')),true)) { http_response_code(403); exit('Select an accessible branch.'); }
+        $monthly_report = isset($_GET['month']);
+        if ($monthly_report) {
+            $month = (string)$_GET['month'];
+            $monthDate = DateTime::createFromFormat('!Y-m', $month);
+            if (!$monthDate || $monthDate->format('Y-m') !== $month) { http_response_code(400); exit('Select a valid reporting month.'); }
+            $start_date = $monthDate->format('Y-m-01');
+            $end_date = $monthDate->format('Y-m-t');
+        } else {
+            $start_date = $this->printDate($_GET['start_date'] ?? null, date('Y-m-01'));
+            $end_date = $this->printDate($_GET['end_date'] ?? null, date('Y-m-t'));
+        }
+        if ($start_date > $end_date || (strtotime($end_date)-strtotime($start_date))/86400 > 3660) { http_response_code(400); exit('Choose a valid report range of up to ten years.'); }
 
         $branches = Branch::for_current_user(false);
         $store_name = Setting::get('store_name', 'Stacey Halo Halo');

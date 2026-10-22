@@ -2,7 +2,7 @@
 const cfg=window.demoRequestsConfig;if(!cfg||!window.jQuery||!jQuery.fn.DataTable)return;
 const escape=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const text=jQuery.fn.dataTable.render.text();
-const table=jQuery('#demo-requests-table').DataTable({processing:true,serverSide:true,searchDelay:400,pageLength:10,lengthMenu:[10,25,50,100],order:[[0,'desc']],ajax:{url:cfg.endpoint,data:d=>{d.status=document.getElementById('demo-status-filter').value;},error:()=>{document.getElementById('demo-table-error').hidden=false;}},columns:[
+const table=jQuery('#demo-requests-table').DataTable({autoWidth:false,createdRow:function(row){const labels=['Request','Business','Contact','Type','Branches','Status','Submitted','Actions'];Array.from(row.cells).forEach((cell,i)=>cell.dataset.label=labels[i]||'');},processing:true,serverSide:true,searchDelay:400,pageLength:10,lengthMenu:[10,25,50,100],order:[[0,'desc']],ajax:{url:cfg.endpoint,data:d=>{d.status=document.getElementById('demo-status-filter').value;},error:()=>{document.getElementById('demo-table-error').hidden=false;}},columns:[
 {data:'id',render:d=>'#'+Number(d)},
 {data:'business_name',render:text},
 {data:'full_name',render:(v,t,r)=>t==='display'?'<strong>'+escape(v)+'</strong><div class="small text-muted">'+escape(r.email)+'<br>'+escape(r.phone)+'</div>':v},

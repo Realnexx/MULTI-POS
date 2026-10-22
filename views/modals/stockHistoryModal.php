@@ -264,9 +264,7 @@
                     <span class="material-symbols-outlined" style="font-size: 15px; color: #5d87ff;">verified_user</span>
                     <span>All inventory audit logs are timestamped and preserved for compliance and loss prevention.</span>
                 </div>
-                <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal">
-                    Close Audit Trail
-                </button>
+                <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Close Audit Trail</button>
             </div>
         </div>
     </div>

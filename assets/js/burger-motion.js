@@ -6,6 +6,11 @@
     if (initialized || preference.matches || !window.AOS || !document.querySelector('.burger-home')) return;
     const reveal = (element, delay = 0) => {
       if (element.hasAttribute('data-aos')) return;
+      if (document.querySelector('[data-login-motion]') && element.closest('.signin-layout')) return;
+      if (document.querySelector('[data-demo-motion]') && element.closest('.page-intro, .contact-layout')) return;
+      if (document.querySelector('[data-pricing-motion]') && element.matches('.pricing-card')) return;
+      if (document.querySelector('[data-pricing-motion], [data-about-motion]') && element.closest('.page-intro')) return;
+      if (document.querySelector('[data-home-motion]') && element.closest('.hero-copy, .platform-preview')) return;
       element.setAttribute('data-aos', 'fade-up');
       element.setAttribute('data-aos-delay', String(delay));
     };
@@ -16,6 +21,13 @@
     };
     document.querySelectorAll('.hero-copy, .page-intro, .story-copy, .about-copy').forEach(parent => staggerChildren(parent));
     document.querySelectorAll('.hero-visual, .section-heading, .story-photo, .editorial-photo, .detail-photo, .contact-details, .contact-aside > img, .public-callout, .menu-empty, .last-call .eyebrow, .last-call h2, .last-call .button, .footer-top, .footer-bottom, .detail-copy > .eyebrow, .detail-copy > h1, .detail-copy > .body-copy, .detail-price, .cart-summary > h2, .signin-art, .signin-panel > .eyebrow, .signin-panel > h1, .signin-panel > .signin-description, .auth-recovery > .eyebrow, .auth-recovery > h1').forEach(element => reveal(element));
+    if (document.querySelector('[data-home-motion]')) {
+      document.querySelectorAll('.system-section > div, .system-features article, .pricing-section .eyebrow, .pricing-section h2, .pricing-section p').forEach((element,index) => reveal(element, (index % 3) * 60));
+    }
+    if (document.querySelector('[data-pricing-motion]')) {
+      document.querySelectorAll('.pricing-card, .pricing-disclaimer, .shop-panel').forEach((element,index) => reveal(element, Math.min(index * 120, 240)));
+    }
+    if (document.querySelector('[data-about-motion]')) document.querySelectorAll('.about-principles article').forEach((element,index) => reveal(element,index * 120));
     // Animate wrappers so card hover transforms and sticky panels stay independent.
     document.querySelectorAll('.product-grid, .branch-grid, .location-grid, .cart-items, .order-list').forEach(grid => {
       const columns = Math.max(1, getComputedStyle(grid).gridTemplateColumns.split(' ').length);
@@ -30,7 +42,7 @@
     });
     try {
       document.body.classList.add('motion-ready');
-      window.AOS.init({ duration: 650, easing: 'ease-out-cubic', offset: 35, delay: 0, once: true, mirror: false, anchorPlacement: 'top-bottom' });
+      window.AOS.init({ duration: document.querySelector('[data-home-motion], [data-pricing-motion], [data-about-motion]') ? 950 : 650, easing: 'ease-out-cubic', offset: document.querySelector('[data-home-motion], [data-pricing-motion], [data-about-motion]') ? 70 : 35, delay: 0, once: true, mirror: false, anchorPlacement: 'top-bottom' });
       initialized = true;
     } catch (error) {
       document.body.classList.remove('motion-ready');

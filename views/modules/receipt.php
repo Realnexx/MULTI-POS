@@ -21,6 +21,7 @@ $store_logo = $general_settings['store_logo'] ?? Setting::get('store_logo', '');
 // Pre-calculate receipt data
 require_once __DIR__.'/../../models/CheckoutPolicy.php';
 $receiptPolicy=CheckoutPolicy::forSale($sale['id']);
+if(($_GET['kitchen']??'')==='1'){require __DIR__.'/../partials/preparation_ticket.php';return;}
 $receipt_number=$receiptPolicy['number'];
 $barcode_value=$receipt_number;
 $formatted_date = date('M d, Y h:i A', strtotime($sale['created_at']));
@@ -718,7 +719,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                             </div>
                         <?php endif; ?>
                     </div>
-                    <h1 class="brand-title"><?= htmlspecialchars($store_name) ?></h1><p><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?></p><p class="small text-muted">Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
+                    <h1 class="brand-title"><?= htmlspecialchars($store_name) ?></h1><p><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><?php if(!empty($receiptPolicy['promotion'])): ?><br>Promotion: <?= htmlspecialchars($receiptPolicy['promotion']['name'],ENT_QUOTES,'UTF-8') ?><?php endif; ?></p><p class="small text-muted">Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                     <div class="text-muted small mt-1">
                         <div><?= htmlspecialchars($store_address) ?></div>
                         <div>Tel: <?= htmlspecialchars($store_phone) ?> &bull; <?= htmlspecialchars($store_email) ?></div>
@@ -779,6 +780,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                             <td class="text-muted fw-semibold"><?= $item_idx++ ?></td>
                             <td>
                                 <div class="fw-bold text-dark"><?= htmlspecialchars($item['product_name']) ?></div>
+                                <?php foreach($item['bundle_components']??[] as $component): ?><div class="small text-muted"><?= (int)$component['quantity']*(int)$item['quantity'] ?> × <?= htmlspecialchars($component['name'],ENT_QUOTES) ?> (included)</div><?php endforeach; ?>
                                 <?php if (!empty($item['modifiers'])): ?>
                                     <div class="mt-1" style="padding-left: 10px;">
                                         <?php foreach ($item['modifiers'] as $mod): ?>
@@ -883,7 +885,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                     <?php endif; ?>
                 </div>
 
-                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><?php if(!empty($receiptPolicy['promotion'])): ?><br>Promotion: <?= htmlspecialchars($receiptPolicy['promotion']['name'],ENT_QUOTES,'UTF-8') ?><?php endif; ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <div class="fw-bold text-uppercase" style="font-size: 13px; letter-spacing: 0.02em;"><?= htmlspecialchars($store_name) ?></div>
                 <div style="font-size: 10px; line-height: 1.35;" class="mt-1">
                     <?= htmlspecialchars($store_address) ?><br>
@@ -937,6 +939,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                                 <div style="font-size: 9px; color: #444; margin-top: 1px;">
                                     <?= $item['quantity'] ?> x &#x20B1;<?= number_format($item['price'], 2) ?>
                                 </div>
+                                <?php foreach($item['bundle_components']??[] as $component): ?><div class="small text-muted"><?= (int)$component['quantity']*(int)$item['quantity'] ?> × <?= htmlspecialchars($component['name'],ENT_QUOTES) ?> (included)</div><?php endforeach; ?>
                                 <?php if (!empty($item['modifiers'])): ?>
                                     <?php foreach ($item['modifiers'] as $mod): ?>
                                         <div style="font-size: 8.5px; color: #555; padding-left: 6px; line-height: 1.2;">
@@ -994,7 +997,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
 
             <!-- Footer Message -->
             <div class="text-center mt-2 pt-1" style="font-size: 10px; line-height: 1.4;">
-                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><?php if(!empty($receiptPolicy['promotion'])): ?><br>Promotion: <?= htmlspecialchars($receiptPolicy['promotion']['name'],ENT_QUOTES,'UTF-8') ?><?php endif; ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <div class="fw-bold text-uppercase"><?= nl2br(htmlspecialchars($receiptPolicy['footer'],ENT_QUOTES)) ?></div>
                 <div>Please come again soon</div>
                 <div class="mt-1" style="font-size: 9px; opacity: 0.75;">No return or refund without receipt</div>
@@ -1023,7 +1026,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                     <?php endif; ?>
                 </div>
 
-                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
+                <p style="font-size:9px"><?= nl2br(htmlspecialchars($receiptPolicy['header'],ENT_QUOTES)) ?><?php if(!empty($receiptPolicy['promotion'])): ?><br>Promotion: <?= htmlspecialchars($receiptPolicy['promotion']['name'],ENT_QUOTES,'UTF-8') ?><?php endif; ?><br>Tax <?= !empty($receiptPolicy['tax_inclusive'])?'(included)':'' ?>: PHP <?= number_format(($receiptPolicy['tax_cents']??0)/100,2) ?> · Service charge: PHP <?= number_format(($receiptPolicy['service_cents']??0)/100,2) ?></p>
                 <div class="fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.02em;"><?= htmlspecialchars($store_name) ?></div>
                 <div style="font-size: 8.5px; line-height: 1.3;" class="mt-0.5">
                     <?= htmlspecialchars($store_address) ?><br>
@@ -1073,6 +1076,7 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                                 <div style="font-size: 8px; color: #444;">
                                     <?= $item['quantity'] ?>x &#x20B1;<?= number_format($item['price'], 2) ?>
                                 </div>
+                                <?php foreach($item['bundle_components']??[] as $component): ?><div class="small text-muted"><?= (int)$component['quantity']*(int)$item['quantity'] ?> × <?= htmlspecialchars($component['name'],ENT_QUOTES) ?> (included)</div><?php endforeach; ?>
                                 <?php if (!empty($item['modifiers'])): ?>
                                     <?php foreach ($item['modifiers'] as $mod): ?>
                                         <div style="font-size: 7.5px; color: #555; padding-left: 4px;">
@@ -1391,6 +1395,9 @@ $autoprint = isset($_GET['autoprint']) && $_GET['autoprint'] == '1';
                 const qty = String(item.quantity).padStart(4, ' ');
                 const sub = ('₱' + parseFloat(item.subtotal).toFixed(2)).padStart(12, ' ');
                 text += `${name} ${qty} ${sub}\n`;
+                (item.bundle_components || []).forEach(component => {
+                    text += `  ${Number(component.quantity)*Number(item.quantity)} x ${component.name} (included)\n`;
+                });
                 if (item.modifiers && item.modifiers.length > 0) {
                     item.modifiers.forEach(mod => {
                         const modPrice = parseFloat(mod.additional_price || 0);

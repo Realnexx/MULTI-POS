@@ -9,6 +9,8 @@ function setOrderType(type) {
     const btnTakeOut = $('#btnOrderTypeTakeOut');
     
     if (!btnDineIn.length || !btnTakeOut.length) return;
+    btnDineIn.attr('aria-pressed', type === 'Dine-in' ? 'true' : 'false');
+    btnTakeOut.attr('aria-pressed', type === 'Take-out' ? 'true' : 'false');
     
     const activeClasses = ['bg-surface-container-lowest', 'text-primary', 'font-bold', 'shadow-xs'];
     const inactiveClasses = ['text-on-surface-variant', 'font-medium', 'hover:bg-surface-container-highest', 'bg-transparent'];
@@ -190,8 +192,11 @@ function removeFromCart(productId) {
             if (response.success) {
                 if (response.request_key) posCheckoutKey = response.request_key;
                 renderCart(response.cart, response.subtotal, response.discount, response.total); renderFinance(response.financial);
+            } else {
+                showWarningModal(response.message || 'Could not remove this item.', 'Cart update', 'Review cart', 'shopping_cart');
             }
-        }
+        },
+        error: function() { showWarningModal('Could not reach the server. Please try removing the item again.', 'Cart update', 'Try again', 'shopping_cart'); }
     });
 }
 // Open Custom Confirm Clear Modal
@@ -259,20 +264,21 @@ function renderCart(cartItems, subtotal, discount, total) {
                     </div>
                     <div class="flex-grow min-w-0">
                         <h4 class="font-bold text-sm text-on-surface truncate m-0 font-label-md">${item.name}</h4>
+                        ${item.bundle_components?.length ? `<details class="pos-cart-included"><summary>Included items (${item.bundle_components.length})</summary>${(item.bundle_components||[]).map(component=>`<div class="pos-bundle-included">${Number(component.quantity)*Number(item.quantity)} × ${String(component.name).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</div>`).join('')}</details>` : ''}
                         ${item.modifiers && item.modifiers.length > 0 ? `<div class="text-[10px] text-on-surface-variant opacity-70 mt-0.5 leading-tight">${item.modifiers.map(m => '+' + m.modifier_name).join(', ')}</div>` : ''}
                         <p class="text-xs text-primary font-bold m-0 mt-0.5">₱${(item.subtotal || item.price * item.quantity).toFixed(2)}</p>
                     </div>
                     <div class="flex items-center gap-1.5 bg-surface-container-high rounded-full px-2 py-0.5 shrink-0">
-                        <button onclick="updateCartQty(${item.id}, ${item.quantity - 1})" class="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-variant hover:text-primary transition-all text-on-surface-variant border-0 p-0" style="background:none;">
+                        <button type="button" aria-label="Decrease item quantity" onclick="updateCartQty(${item.id}, ${item.quantity - 1})" class="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-variant hover:text-primary transition-all text-on-surface-variant border-0 p-0" style="background:none;">
                             <span class="material-symbols-outlined text-[14px] font-bold">remove</span>
                         </button>
-                        <input type="number" min="1" max="${item.max_stock || 999}" value="${item.quantity}" onchange="updateCartQty(${item.id}, parseInt(this.value) || 1)" onkeydown="if(event.key === 'Enter') this.blur()" onwheel="event.preventDefault()" class="font-bold text-xs w-8 text-center text-on-surface bg-transparent border-0 outline-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" style="box-shadow: none;">
-                        <button onclick="updateCartQty(${item.id}, ${item.quantity + 1})" class="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-variant hover:text-primary transition-all text-on-surface-variant border-0 p-0" style="background:none;">
+                        <input aria-label="Item quantity" type="number" min="1" max="${item.max_stock || 999}" value="${item.quantity}" onchange="updateCartQty(${item.id}, parseInt(this.value) || 1)" onkeydown="if(event.key === 'Enter') this.blur()" onwheel="event.preventDefault()" class="font-bold text-xs w-8 text-center text-on-surface bg-transparent border-0 outline-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" style="box-shadow: none;">
+                        <button type="button" aria-label="Increase item quantity" onclick="updateCartQty(${item.id}, ${item.quantity + 1})" class="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-variant hover:text-primary transition-all text-on-surface-variant border-0 p-0" style="background:none;">
                             <span class="material-symbols-outlined text-[14px] font-bold">add</span>
                         </button>
                     </div>
-                    <button onclick="removeFromCart(${item.id})" class="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant opacity-50 hover:opacity-100 hover:text-error hover:bg-error-container/10 transition-all border-0 p-0 cursor-pointer" style="background:none;" title="Delete item">
-                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                    <button type="button" aria-label="Remove item from cart" onclick="removeFromCart(${item.id})" class="w-7 h-7 flex items-center justify-center rounded-full text-on-surface-variant opacity-50 hover:opacity-100 hover:text-error hover:bg-error-container/10 transition-all border-0 p-0 cursor-pointer" style="background:none;" title="Delete item">
+                        <span class="pos-cart-remove-label">Remove</span>
                     </button>
                 </div>
             `);
@@ -480,6 +486,7 @@ function setPaymentMethod(method) {
     if(window.manualPaymentMethods && !window.manualPaymentMethods.includes(method))method=window.manualPaymentMethods[0];
     $('#manualPaymentChoice').val(method);
     $('#paymentMethod').val(method);
+    document.querySelectorAll('.pos-payment-option').forEach(button=>{const selected=button.dataset.paymentMethod===method;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});
     
     const btnCash = $('#btnPayCash');
     const btnGCash = $('#btnPayGCash');
@@ -607,6 +614,7 @@ function showReceiptModal(saleId) {
                 let itemsHtml = '';
                 sale.items.forEach(item => {
                     let modsHtml = '';
+                    modsHtml+=(item.bundle_components||[]).map(component=>`<div class="text-xs text-on-surface-variant">${Number(component.quantity)*Number(item.quantity)} × ${escapeReceipt(component.name)} (included)</div>`).join('');
                     if (item.modifiers && item.modifiers.length > 0) {
                         item.modifiers.forEach(mod => {
                             const modPrice = parseFloat(mod.additional_price || 0);

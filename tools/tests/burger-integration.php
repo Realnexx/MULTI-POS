@@ -58,6 +58,9 @@ if (($argv[1] ?? '') === '--endpoint') {
         require_once $argv[2].'/middleware/access_policy.php';
         authorize_page($_GET['route']);
         (new PurchasingController())->page($_GET['route']);
+    } elseif($argv[3]==='promotion_render') {
+        $_SESSION['user']=['id'=>(int)($_POST['_user']??2),'branch_id'=>1,'name'=>'Promo Test User','email'=>'promo-test@invalid.local'];$_GET=['route'=>'admin/promotions'];$_SERVER['REQUEST_METHOD']='GET';$_SERVER['HTTP_HOST']='localhost';$_SERVER['SCRIPT_NAME']='/pos/index.php';
+        require $argv[2].'/controllers/PromotionController.php';require_once $argv[2].'/middleware/access_policy.php';authorize_page('admin/promotions');(new PromotionController())->index();
     } elseif($argv[3]==='render_paymongo_settings') {
         $_SERVER['REQUEST_METHOD']='GET';$_GET=['route'=>'admin/settings','tab'=>$_POST['_tab']??'paymongo'];$_SESSION['auth']['mfa_verified']=true;$_SESSION['user']=['id'=>2,'name'=>'Gateway test admin','branch_id'=>1];
         $_SERVER['SCRIPT_NAME']='/pos/index.php';$_SERVER['HTTP_HOST']='localhost';
@@ -115,6 +118,12 @@ if (($argv[1] ?? '') === '--purchase-worker') {
     catch (Throwable $e) { echo 'REJECTED: '.$e->getMessage(); }
     exit;
 }
+if (($argv[1] ?? '') === '--promo-worker') {
+    ini_set('session.save_path',$argv[2]);require $argv[2].'/models/Promotion.php';
+    $_SESSION['user']=['id'=>1,'branch_id'=>1];
+    try{RecipeInventory::checkout(1,1,[['product_id'=>(int)$argv[3],'quantity'=>1]],'0','100','Cash','Dine-in',$argv[4],false,['code'=>'RACE']);echo 'PROMO_SUCCESS';}
+    catch(DomainException $e){echo 'PROMO_REJECTED';}exit;
+}
 if (($argv[1] ?? '') === '--worker') {
     ini_set('session.save_path', $argv[2]);
     require $argv[2] . '/models/Product.php';
@@ -170,6 +179,8 @@ try {
     do { if($migrationResult=$admin->store_result()) $migrationResult->free(); } while($admin->more_results() && $admin->next_result());
     $admin->multi_query(file_get_contents($root.'/tools/migrations/20261016-pos-drawer.sql'));
     do { if($migrationResult=$admin->store_result()) $migrationResult->free(); } while($admin->more_results() && $admin->next_result());
+    mkdir($workspace . '/tools/migrations',0755,true);
+    foreach(glob($root.'/tools/migrations/*.sql') as $migration)copy($migration,$workspace.'/tools/migrations/'.basename($migration));
     mkdir($workspace . '/models',0755,true); mkdir($workspace . '/config',0755,true);
     mkdir($workspace . '/assets/js',0755,true);
     mkdir($workspace . '/assets/css',0755,true);
@@ -181,6 +192,7 @@ try {
     do { if($r=$admin->store_result())$r->free(); } while($admin->more_results() && $admin->next_result());
     copy($root.'/assets/css/cash-shifts.css',$workspace.'/assets/css/cash-shifts.css');
     copy($root.'/assets/css/pos-drawer.css',$workspace.'/assets/css/pos-drawer.css');
+    foreach (glob($root . '/assets/css/*.css') as $path) copy($path,$workspace . '/assets/css/' . basename($path));
     foreach (glob($root . '/assets/js/*.js') as $path) copy($path,$workspace . '/assets/js/' . basename($path));
     foreach (glob($root . '/models/*.php') as $path) copy($path,$workspace . '/models/' . basename($path));
     mkdir($workspace . '/ajax',0755,true);
@@ -192,6 +204,8 @@ try {
     copy($root.'/controllers/AuthController.php',$workspace.'/controllers/AuthController.php');
     copy($root . '/controllers/PurchasingController.php',$workspace . '/controllers/PurchasingController.php');
     copy($root . '/controllers/CashShiftController.php',$workspace . '/controllers/CashShiftController.php');
+    copy($root . '/controllers/PromotionController.php',$workspace . '/controllers/PromotionController.php');
+    copy($root . '/assets/css/promotions.css',$workspace . '/assets/css/promotions.css');
     copy($root . '/controllers/PosController.php',$workspace . '/controllers/PosController.php');
     copy($root . '/controllers/OnlineOrderController.php',$workspace . '/controllers/OnlineOrderController.php');
     mkdir($workspace . '/middleware',0755,true);
@@ -227,16 +241,24 @@ try {
     $conn->query("INSERT INTO categories (id,name) VALUES (1,'Test')");
     $conn->query("INSERT INTO roles (id,name) VALUES (1,'Test cashier')");
     $conn->query("INSERT INTO user_roles (user_id,role_id) VALUES (1,1)");
-    foreach (['view_dashboard','access_pos','manage_inventory','view_product','edit_product','add_product','delete_product','print_products','view_stock_history','edit_stock_batches','prepare_recipe_stock','reassign_products'] as $permission) {
+    foreach (['view_dashboard','access_pos','manage_inventory','view_product','edit_product','add_product','delete_product','print_products','view_stock_history','edit_stock_batches','prepare_recipe_stock','reassign_products','view_recipes','create_recipes','edit_recipes','manage_global_recipes'] as $permission) {
         RecipeInventory::query('INSERT INTO permissions (name,description,module) VALUES (?,?,?)','sss',[$permission,'Test only','Test']);
         $permissionId=$conn->insert_id;
         RecipeInventory::query('INSERT INTO role_permissions (role_id,permission_id) VALUES (1,?)','i',[$permissionId]);
     }
-    function product($name,$type='ingredient',$unit='pc',$mode='legacy') {
+    function product($name,$type='ingredient',$unit='pc',$mode='legacy',$publish=true) {
         $id=Product::create(1,$name,uniqid(),uniqid(),'',100,1,'0','0','', 'active',0,0,'100000',1,$type,1,$type==='ingredient'?0:1,$type==='ingredient'?1:0,'stocked',null,$unit,1);
         RecipeInventory::query('UPDATE products SET recipe_mode = ? WHERE id = ?','si',[$mode,$id]);
+        if($publish)RecipeInventory::query('UPDATE products SET show_on_website=1 WHERE id=?','i',[$id]);
         return $id;
     }
+    if(($argv[1]??'')!=='--promotions-only'){
+        require_once $workspace.'/models/Promotion.php';Promotion::migrate($conn);
+        RecipeInventory::query("INSERT IGNORE INTO role_permissions(role_id,permission_id) SELECT 1,id FROM permissions WHERE name='approve_discount_overrides'");
+    }
+    if(($argv[1]??'')==='--bundles-only'){require $root.'/tools/tests/bundle-cases.php';echo "All {$checks} bundle checks passed. Source business data was not modified.\n";return;}
+    if(($argv[1]??'')==='--stock-review-only'){require $root.'/tools/tests/stock-review-cases.php';echo "All {$checks} stock review checks passed. Source business data was not modified.\n";return;}
+    if(($argv[1]??'')==='--promotions-only'){require $root.'/tools/tests/promotion-cases.php';echo "All {$checks} promotion checks passed. Source business data was not modified.\n";return;}
     if(($argv[1]??'')==='--website-permissions-only'){require $root.'/tools/tests/website-permission-cases.php';echo "All {$checks} website permission checks passed.\n";return;}
     if(($argv[1]??'')==='--pricing-only'){require $root.'/tools/tests/pricing-cases.php';echo "All {$checks} pricing checks passed.\n";return;}
     if(($argv[1]??'')==='--demo-requests-only'){require $root.'/tools/tests/demo-request-cases.php';echo "All {$checks} demo request checks passed. Source data was not modified.\n";return;}
@@ -448,9 +470,9 @@ try {
     $copiedProduct=RecipeInventory::rows('SELECT id FROM products WHERE name=?','s',[$copyForm['name']])[0]['id'];
     check((float)Product::get_recipes($copiedProduct)[0]['quantity']===30.0 && RecipeInventory::balance($sauce,1)===$libraryBefore-600000,'editing the source recipe never rewrites existing product copies or inventory');
     reject(function()use($definitionRows){RecipeLibrary::save(0,'Wrong branch recipe','',1,2,$definitionRows,bin2hex(random_bytes(16)));},'recipe library enforces branch ownership');
-    RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=1 AND permission_id=(SELECT id FROM permissions WHERE name=?)','s',['edit_product']);
-    reject(function()use($definitionRows){RecipeLibrary::save(0,'Unauthorized recipe','',1,1,$definitionRows,bin2hex(random_bytes(16)));},'recipe library enforces editing permission');
-    RecipeInventory::query("INSERT INTO role_permissions(role_id,permission_id) SELECT 1,id FROM permissions WHERE name='edit_product'");
+    RecipeInventory::query('DELETE FROM role_permissions WHERE role_id=1 AND permission_id=(SELECT id FROM permissions WHERE name=?)','s',['create_recipes']);
+    reject(function()use($definitionRows){RecipeLibrary::save(0,'Unauthorized recipe','',1,1,$definitionRows,bin2hex(random_bytes(16)));},'recipe library enforces creation permission');
+    RecipeInventory::query("INSERT INTO role_permissions(role_id,permission_id) SELECT 1,id FROM permissions WHERE name='create_recipes'");
     // Global definitions share ingredients, never physical branch balances.
     $conn->query("INSERT INTO roles(id,name) VALUES (2,'Admin')");
     $conn->query("INSERT INTO users(id,name,email,password,branch_id) VALUES(2,'Test Admin','admin@invalid.local','not-a-login',1)");
@@ -592,7 +614,7 @@ try {
     $pageProcess=proc_open([PHP_BINARY,__FILE__,'--endpoint',$workspace,'render_recipes',base64_encode('{}')],[0=>['pipe','r'],1=>['pipe','w'],2=>['pipe','w']],$pipes);
     fclose($pipes[0]); $recipeHtml=stream_get_contents($pipes[1]); $recipeErrors=stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]); proc_close($pageProcess);
     file_put_contents($root . '/scratch/recipe-management-rendered.html',$recipeHtml);
-    check(strpos($recipeHtml,'recipe-definition-form')!==false && strpos($recipeHtml,'Iced tea reusable definition')!==false && !preg_match('/Warning:|Notice:|Fatal error/',$recipeHtml.$recipeErrors),'recipe management renders saved definitions and a generic ingredient editor without warnings');
+    check(strpos($recipeHtml,'recipe-definition-form')!==false && strpos($recipeHtml,'recipe-library.js')!==false && !preg_match('/Warning:|Notice:|Fatal error/',$recipeHtml.$recipeErrors),'recipe management renders its paginated library and ingredient editor without warnings');
     $catalog=endpoint('inventory_action',['action'=>'products_datatable','draw'=>1,'start'=>0,'length'=>100,
         'search'=>['value'=>'Burger'],'order'=>[['column'=>0,'dir'=>'asc']]]);
     $burgerRow=null;
@@ -660,7 +682,7 @@ try {
     }
     $otherBranchRead=endpoint('inventory_action',['action'=>'get_product_attribute_values','product_id'=>$transferItem]);
     check(empty($otherBranchRead['success']),'product attribute helpers cannot read another branch product');
-    require_once $root.'/models/PermissionSeeder.php';
+    require_once $workspace.'/models/PermissionSeeder.php';
     $conn->query("DELETE rp FROM role_permissions rp JOIN permissions p ON p.id=rp.permission_id WHERE p.name IN ('view_stock_history','edit_stock_batches','prepare_recipe_stock','reassign_products')");
     $conn->query("DELETE FROM permissions WHERE name IN ('view_stock_history','edit_stock_batches','prepare_recipe_stock','reassign_products')");
     PermissionSeeder::syncInventoryActions($conn);

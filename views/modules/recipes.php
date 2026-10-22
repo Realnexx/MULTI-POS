@@ -1,10 +1,17 @@
 <?php
 $title = 'Recipe Management';
 $esc = static function ($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); };
-$can_edit = User::has_permission($_SESSION['user']['id'],'edit_product');
-$can_create = $can_edit && User::has_permission($_SESSION['user']['id'],'add_product');
-$global_access = User::has_all_branch_access($_SESSION['user']['id']);
+$can_edit = User::has_permission($_SESSION['user']['id'],'edit_recipes');
+$can_create = User::has_permission($_SESSION['user']['id'],'create_recipes');
+$global_access = User::has_all_branch_access($_SESSION['user']['id']) && User::has_permission($_SESSION['user']['id'],'manage_global_recipes');
 if ($selected && $selected['branch_id'] === null && !$global_access) $can_edit = false;
+$recipe_readonly_reason='';
+if($selected&&!$can_edit){
+    $recipe_readonly_reason=$selected['branch_id']===null&&!$global_access
+        ? 'This is a shared recipe used by all branches. Editing requires the Edit Recipes and Manage Shared Recipes permissions, plus access to all branches. Your account can view its ingredients but cannot change this shared formula.'
+        : 'Your role can view recipes but does not have the Edit Recipes permission. Ask an administrator to update your role permissions.';
+}
+
 $scope_editable = !$selected || (!$selected['is_sellable'] && !$selected['track_stock']);
 $scope_value = (string)($form_data['branch_id'] ?? '');
 if (!$selected && $scope_value === '' && !$global_access) $scope_value = (string)($_SESSION['user']['branch_id'] ?? '');
@@ -16,35 +23,31 @@ ob_start();
 
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div><span class="recipe-eyebrow">INVENTORY WORKSPACE</span><h1 class="h3 fw-bold"><i class="ti ti-notebook" aria-hidden="true"></i> Recipe Management</h1><p class="text-muted mb-0">Configure ingredients for any product: food, drinks, bundles or other prepared items.</p></div>
-        <div class="d-flex gap-2"><a class="btn btn-outline-secondary" href="<?= url('?route=inventory/products') ?>"><i class="ti ti-box me-2" aria-hidden="true"></i>Products &amp; stock</a><?php if ($can_create): ?><a class="btn btn-primary" href="<?= url('?route=inventory/recipes&create=1') ?>" <?= !$selected?'data-bs-toggle="modal" data-bs-target="#recipe-editor-modal"':'' ?>><i class="ti ti-plus me-2" aria-hidden="true"></i>New recipe</a><?php endif; ?></div>
+        <div class="d-flex gap-2"><?php if(User::has_permission($_SESSION['user']['id'],'view_product')): ?><a class="btn btn-outline-secondary" href="<?= url('?route=inventory/products') ?>"><i class="ti ti-box me-2" aria-hidden="true"></i>Products &amp; stock</a><?php endif; ?><?php if ($can_create): ?><a class="btn btn-primary" href="<?= url('?route=inventory/recipes&create=1') ?>" <?= !$selected?'data-bs-toggle="modal" data-bs-target="#recipe-editor-modal"':'' ?>><i class="ti ti-plus me-2" aria-hidden="true"></i>New recipe</a><?php endif; ?></div>
     </div>
-    <div class="recipe-workspace-stats"><?php foreach([['Saved recipes',count($recipes),'notebook'],['Available ingredients',count($ingredients),'box'],['Shared recipes',count(array_filter($recipes,function($r){return $r['branch_id']===null;})),'building-community']] as $stat): ?><div class="recipe-stat"><span><i class="ti ti-<?= $stat[2] ?>" aria-hidden="true"></i></span><div><small><?= $stat[0] ?></small><strong><?= $stat[1] ?></strong></div></div><?php endforeach; ?></div>
+    <div class="recipe-workspace-stats"><?php foreach([['Saved recipes',$libraryPage['recordsTotal'],'notebook'],['Available ingredients',count($ingredients),'box'],['Shared recipes',$libraryPage['shared'],'building-community']] as $stat): ?><div class="recipe-stat"><span><i class="ti ti-<?= $stat[2] ?>" aria-hidden="true"></i></span><div><small><?= $stat[0] ?></small><strong><?= $stat[1] ?></strong></div></div><?php endforeach; ?></div>
     <div class="alert alert-info recipe-workspace-notice"><i class="ti ti-info-circle" aria-hidden="true"></i><div><strong>Recipe setup does not change stock.</strong><br>Saving a recipe only saves its ingredients. To consume ingredients, select the recipe in Add New Product and enter Initial Stock, or prepare an additional batch for an existing product.</div></div>
     <div class="row g-4">
         <div class="col-12 recipe-library-column">
             <div class="card"><div class="card-body">
                 <div class="recipe-panel-heading"><span class="recipe-panel-icon"><i class="ti ti-books" aria-hidden="true"></i></span><div><h2 class="h5">Recipe library</h2><p>Select a recipe to view its ingredients.</p></div></div>
                 <label class="form-label" for="recipe-search">Find a recipe</label><input class="form-control mb-3" id="recipe-search" type="search" placeholder="Search recipe name">
-                <div id="recipe-list" class="list-group list-group-flush" >
-                    <?php foreach ($recipes as $item): ?>
-                    <a class="list-group-item list-group-item-action <?= (int)$item['id']===$selected_id?'active':'' ?>" href="<?= url('?route=inventory/recipes&id='.(int)$item['id']) ?>" data-recipe-name="<?= $esc($item['name']) ?>">
-                        <span class="recipe-list-icon"><i class="ti ti-chef-hat" aria-hidden="true"></i></span><strong class="d-block"><?= $esc($item['name']) ?></strong><small><?= (int)$item['ingredient_count'] ?> ingredients · <?= $esc($item['branch_name'] ?: 'Global (All branches)') ?><?= !$item['is_sellable']?' · Definition only':'' ?></small>
-                    </a>
-                    <?php endforeach; ?>
-                    <?php if (!$recipes): ?><p class="text-muted my-2">Create your first recipe, then choose it when adding a product.</p><?php endif; ?>
-                </div>
-                <p id="recipe-search-empty" class="text-muted d-none mt-3">No matching recipes.</p>
+                <form id="recipe-select-form" method="post" action="<?= url('?route=inventory/recipes') ?>"><input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="action" value="select_recipe"></form><div id="recipe-list" class="list-group list-group-flush" aria-busy="true" data-endpoint="<?= url('?route=inventory/recipes/data') ?>" data-selected="<?= (int)$selected_id ?>"><p class="text-muted">Loading recipes…</p></div>
+                <p id="recipe-search-empty" class="text-muted d-none mt-3">No matching recipes.</p><div id="recipe-library-error" class="alert alert-danger mt-3" role="alert" hidden><span>Recipes could not be loaded.</span> <button type="button" class="btn btn-sm btn-outline-danger" id="recipe-library-retry">Retry</button></div>
+                <div class="recipe-library-footer"><label for="recipe-page-size">Show <select id="recipe-page-size" class="form-select form-select-sm"><?php foreach([6,12,24,48] as $size): ?><option value="<?= $size ?>" <?= $size===12?'selected':'' ?>><?= $size ?></option><?php endforeach; ?></select> recipes</label><p id="recipe-page-info" role="status" aria-live="polite"></p><nav id="recipe-pagination" aria-label="Recipe library pages"></nav></div>
+
             </div></div>
         </div>
-        <div class="modal fade" id="recipe-editor-modal" tabindex="-1" aria-labelledby="recipe-editor-title" aria-hidden="true"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content"><div class="modal-header"><div><h2 class="modal-title h5" id="recipe-editor-title"><i class="ti ti-notebook me-2" aria-hidden="true"></i><?= $selected?'Configure recipe':'Create a recipe' ?></h2><p class="text-muted small mb-0 mt-1">Define the components needed for one finished unit.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-            <div class="modal-body recipe-editor-column"><div class="recipe-editor-body">
-                <form method="post" action="<?= url('?route=inventory/recipes'.($selected_id?'&id='.$selected_id:'')) ?>" id="recipe-definition-form">
+        <div class="modal fade" id="recipe-editor-modal" tabindex="-1" aria-labelledby="recipe-editor-title" aria-hidden="true"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content"><div class="modal-header"><span class="recipe-editor-header-icon"><i class="ti ti-notebook" aria-hidden="true"></i></span><div><h2 class="modal-title h5" id="recipe-editor-title"><i class="ti ti-notebook me-2" aria-hidden="true"></i><?= $selected?($can_edit?'Configure recipe':'View recipe'):'Create a recipe' ?></h2><p class="text-muted small mb-0 mt-1">Define the components needed for one finished unit.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <div class="modal-body recipe-editor-column"><div class="recipe-editor-body"><?php if($recipe_readonly_reason): ?><div class="recipe-readonly-notice" role="status"><i class="ti ti-lock" aria-hidden="true"></i><div><strong>Read-only recipe</strong><p><?= $esc($recipe_readonly_reason) ?></p></div></div><?php endif; ?>
+                <form method="post" action="<?= url('?route=inventory/recipes') ?>" id="recipe-definition-form">
                     <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
                     <input type="hidden" name="recipe_id" value="<?= $selected_id ?>">
                     <input type="hidden" name="request_key" value="<?= $esc($request_key) ?>">
-                    <fieldset <?= (!$can_edit || (!$selected && !$can_create))?'disabled':'' ?>>
-                        <div class="recipe-modal-layout"><div class="recipe-modal-details"><h3 class="recipe-section-title"><span>01</span> Recipe details</h3>
-                        <label for="recipe-name" class="form-label">Recipe name</label><input class="form-control mb-3" id="recipe-name" name="name" maxlength="255" required value="<?= $esc($form_data['name']) ?>" placeholder="e.g. Product kit, prepared item or bundle">
+                    <fieldset <?= ($selected?!$can_edit:!$can_create)?'disabled':'' ?>>
+                        <div class="recipe-modal-layout"><div class="recipe-modal-details"><h3 class="recipe-section-title"><span><i class="ti ti-adjustments" aria-hidden="true"></i></span> Recipe details</h3>
+                        <label for="recipe-name" class="form-label">Recipe name</label><input class="form-control mb-3" id="recipe-name" <?= !$selected?'autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="recipe-product-suggestions"':'' ?> name="name" maxlength="255" required value="<?= $esc($form_data['name']) ?>" placeholder="e.g. Product kit, prepared item or bundle">
+                        <?php if(!$selected): ?><div id="recipe-product-suggestions" class="recipe-product-suggestions" role="listbox" aria-label="Product suggestions" hidden></div><p class="recipe-name-hint">Type to see product names, or enter a new recipe name. Selecting a suggestion fills the name only.</p><?php endif; ?>
                         <label for="recipe-description" class="form-label">Description</label><textarea class="form-control mb-3" id="recipe-description" name="description" rows="2"><?= $esc($form_data['description']) ?></textarea>
                         <?php if (!$selected): ?>
                         <div class="row g-3 mb-3"><div class="col-md-6"><label class="form-label" for="recipe-category">Category</label><select required class="form-select" name="category_id" id="recipe-category"><option value="">Choose category</option><?php foreach ($categories as $category): ?><option value="<?= (int)$category['id'] ?>" <?= (int)$form_data['category_id']===(int)$category['id']?'selected':'' ?>><?= $esc($category['name']) ?></option><?php endforeach; ?></select></div>
@@ -59,15 +62,15 @@ ob_start();
                         <?php else: ?><input type="hidden" name="branch_id" id="recipe-branch" value="<?= $esc($scope_value) ?>"><p class="form-control-plaintext"><?= $esc($selected['branch_name'] ?: 'Global (All branches)') ?></p><?php endif; ?>
                         <p id="recipe-branch-help" class="small text-muted mt-2 mb-0">Choose a branch to see its ingredients and shared ingredients. Global recipes use shared ingredients and are available to every branch; each branch keeps its own stock.</p></div>
                         </div><div class="recipe-modal-ingredients">
-                        <div class="recipe-ingredients-heading d-flex flex-wrap justify-content-between gap-2 align-items-center mb-2"><h3 class="recipe-section-title"><span>02</span> Ingredients per unit</h3><button type="button" class="btn btn-sm btn-outline-primary" id="recipe-add-row"><i class="ti ti-plus me-1" aria-hidden="true"></i>Add ingredient</button></div>
+                        <div class="recipe-ingredients-heading d-flex flex-wrap justify-content-between gap-2 align-items-center mb-2"><h3 class="recipe-section-title"><span><i class="ti ti-box" aria-hidden="true"></i></span> Ingredients per unit</h3><button type="button" class="btn btn-sm btn-outline-primary" id="recipe-add-row"><i class="ti ti-plus me-1" aria-hidden="true"></i>Add ingredient</button></div>
                         <p class="small text-muted">Choose any stocked ingredient and its quantity/unit. For an offer or bundle, configure everything included in one offer.</p>
                         <div id="recipe-definition-rows"></div>
-                        </div><div class="recipe-preview-panel"><h3 class="recipe-section-title"><span>03</span> Requirements preview</h3>
+                        </div><div class="recipe-preview-panel"><h3 class="recipe-section-title"><span><i class="ti ti-calculator" aria-hidden="true"></i></span> Requirements preview</h3>
                             <label for="recipe-yield-preview" class="form-label">Preview requirements for</label><input id="recipe-yield-preview" type="number" value="1" min="1" max="100000" step="1" class="form-control mb-2" style="max-width:180px" aria-label="Stock units to preview">
                             <div id="recipe-definition-preview" class="small" aria-live="polite"></div>
                             <p class="small text-muted mb-0 mt-2">Preview only. Saving does not add or deduct inventory.</p>
                         </div>
-                        </div><div class="recipe-save-bar"><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><span><i class="ti ti-shield-check me-1" aria-hidden="true"></i>Stock stays unchanged until preparation.</span><button class="btn btn-primary" type="submit" <?= !$ingredients?'disabled':'' ?>><i class="ti ti-device-floppy me-2" aria-hidden="true"></i>Save recipe</button></div>
+                        </div><div class="recipe-save-bar"><span><i class="ti ti-shield-check me-1" aria-hidden="true"></i>Stock stays unchanged until preparation.</span><button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" type="submit" <?= !$ingredients?'disabled':'' ?>><i class="ti ti-device-floppy me-2" aria-hidden="true"></i>Save recipe</button></div>
                         <?php if (!$ingredients): ?><p class="text-danger mt-2">Add Raw Ingredient products in Products &amp; Stock before configuring a recipe.</p><?php endif; ?>
                     </fieldset>
                 </form>
@@ -76,6 +79,7 @@ ob_start();
     </div>
     <script type="application/json" id="recipe-definition-data"><?= json_encode(['ingredients'=>$ingredients,'rows'=>$form_rows],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) ?></script>
 </section>
+<script src="<?= url('assets/js/recipe-library.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/recipe-library.js') ?>" defer></script>
 <script src="<?= url('assets/js/recipe-management.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/recipe-management.js') ?>" defer></script>
 <?php if($selected || isset($_GET['create']) || ($_SERVER['REQUEST_METHOD']??'GET')==='POST'): ?><script>document.addEventListener('DOMContentLoaded',function(){bootstrap.Modal.getOrCreateInstance(document.getElementById('recipe-editor-modal')).show();});</script><?php endif; ?>
 <?php $content=ob_get_clean(); require __DIR__.'/../layouts/admin.php'; ?>

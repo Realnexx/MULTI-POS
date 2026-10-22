@@ -28,9 +28,8 @@
                 </div>
                 <div class="modal-footer bg-light border-0 p-4 justify-content-between">
                     <button type="button" class="btn btn-outline-light-gray text-dark rounded-pill px-4 fw-semibold"
-                        data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger rounded-pill px-5 fw-bold shadow-sm">Delete
-                        Product</button>
+                        data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Cancel</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-5 fw-bold shadow-sm"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">delete</span>Delete Product</button>
                 </div>
             </form>
         </div>

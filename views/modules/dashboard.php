@@ -505,7 +505,7 @@ ob_start();
             </div>
             <h2 class="dash-page-title">Good
                 <?= (date('H') < 12) ? 'Morning' : ((date('H') < 17) ? 'Afternoon' : 'Evening') ?>, <?= $user_first ?>
-                👋</h2>
+                </h2>
             <p class="dash-page-subtitle">Here's your store's performance snapshot and operations summary for today.</p>
         </div>
 
@@ -1100,6 +1100,9 @@ ob_start();
 </script>
 
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+<script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script defer src="<?= url('assets/js/dashboard-motion.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/dashboard-motion.js') ?>"></script>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

@@ -8,23 +8,25 @@ $hidden=static function($action,$extra=[])use($esc){
     echo '<input type="hidden" name="csrf_token" value="'.$esc($_SESSION['csrf_token']).'"><input type="hidden" name="request_key" value="'.bin2hex(random_bytes(16)).'"><input type="hidden" name="action" value="'.$esc($action).'">';
     foreach ($extra as $k=>$v) echo '<input type="hidden" name="'.$esc($k).'" value="'.$esc($v).'">';
 };
-$modalStart=static function($id,$heading)use($esc){echo '<div class="modal fade purchase-modal" id="'.$esc($id).'" tabindex="-1" aria-labelledby="'.$esc($id).'-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="'.$esc($id).'-title">'.$esc($heading).'</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">';};
+$modalStart=static function($id,$heading)use($esc,$isSuppliers){echo '<div class="modal fade purchase-modal'.($isSuppliers?' supplier-modal':'').'" id="'.$esc($id).'" tabindex="-1" aria-labelledby="'.$esc($id).'-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="'.$esc($id).'-title">'.$esc($heading).'</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">';};
 $modalEnd=static function(){echo '</div></div></div></div>';};
 $supplierForm=static function($s)use($esc,$hidden,$branches,$branch){
 ?>
-<form method="post" action="<?= url('?route=inventory/suppliers') ?>">
+<form method="post" class="supplier-form" action="<?= url('?route=inventory/suppliers') ?>">
 <?php $hidden('supplier_save',['supplier_id'=>$s['id'] ?? 0]); ?>
+<div class="supplier-form-fields">
 <div class="row g-3">
 <div class="col-md-6"><label>Branch<select class="form-select" name="branch_id" required><?php foreach ($branches as $b): if (!empty($s['id']) && (int)$b['id']!==(int)$s['branch_id']) continue; ?><option value="<?= (int)$b['id'] ?>" <?= (int)($s['branch_id'] ?? $branch)===(int)$b['id']?'selected':'' ?>><?= $esc($b['name']) ?></option><?php endforeach; ?></select></label></div>
 <?php foreach (['name'=>['Supplier name',160],'contact_name'=>['Contact person',160],'phone'=>['Phone',80],'email'=>['Email',190],'payment_terms'=>['Payment terms',255]] as $field=>$meta): ?>
 <div class="col-md-6"><label><?= $meta[0] ?><input class="form-control" type="<?= $field==='email'?'email':'text' ?>" name="<?= $field ?>" value="<?= $esc($s[$field] ?? '') ?>" maxlength="<?= $meta[1] ?>" <?= $field==='name'?'required':'' ?>></label></div><?php endforeach; ?>
 <div class="col-12"><label>Address<textarea class="form-control" name="address" maxlength="2000"><?= $esc($s['address'] ?? '') ?></textarea></label></div>
 <div class="col-md-6"><label>Status<select class="form-select" name="status"><option value="active">Active</option><option value="inactive" <?= ($s['status'] ?? '')==='inactive'?'selected':'' ?>>Archived</option></select></label></div></div>
-<div class="purchase-actions"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn btn-primary">Save supplier</button></div></form>
+</div><div class="purchase-actions supplier-form-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal"><span class="material-symbols-outlined" aria-hidden="true">close</span>Cancel</button><button type="submit" class="btn btn-primary"><span class="material-symbols-outlined" aria-hidden="true">save</span>Save supplier</button></div></form>
 <?php };
 ob_start(); ?>
 <link rel="stylesheet" href="<?= url('assets/css/purchasing.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/purchasing.css') ?>">
-<div class="purchase-page">
+<?php if($isSuppliers): ?><link rel="stylesheet" href="<?= url('assets/css/suppliers-responsive.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/suppliers-responsive.css') ?>"><?php endif; ?>
+<div class="purchase-page <?= $isSuppliers?'suppliers-page':'' ?>">
 <header class="purchase-heading"><div><span class="purchase-eyebrow">BRANCH PURCHASING</span><h1><?= $title ?></h1><p>Plan purchases, record deliveries and keep supplier costs traceable.</p></div><nav class="d-flex gap-2 flex-wrap" aria-label="Purchasing navigation">
 <?php if ($can('view_suppliers') || $can('manage_suppliers')): ?><a class="btn purchase-nav purchase-nav-suppliers" <?= $isSuppliers?'aria-current="page"':'' ?> href="<?= url('?route=inventory/suppliers') ?>"><span class="material-symbols-outlined" aria-hidden="true">groups</span>Suppliers</a><?php endif; ?>
 <?php foreach (Purchasing::orderPermissions() as $p) if ($can($p)): ?><a class="btn purchase-nav purchase-nav-orders" <?= !$isSuppliers && !$isReport?'aria-current="page"':'' ?> href="<?= url('?route=inventory/purchases') ?>"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span>Purchase orders</a><?php break; endif; ?>
@@ -38,14 +40,14 @@ ob_start(); ?>
 <label>Supplier ID<input type="number" class="form-control" min="1" name="supplier_id" value="<?= !empty($_GET['supplier_id'])?(int)$_GET['supplier_id']:'' ?>" placeholder="All suppliers" list="purchase-report-suppliers"></label><datalist id="purchase-report-suppliers"><?php foreach ($report as $r): ?><option value="<?= (int)$r['supplier_id'] ?>"><?= $esc($r['supplier_name'].' — '.$r['branch_name']) ?></option><?php endforeach; ?></datalist>
 <label>From<input type="date" class="form-control" name="from" value="<?= $esc($from) ?>" required></label><label>Through<input type="date" class="form-control" name="to" value="<?= $esc($to) ?>" required></label>
 <?php elseif (!empty($_GET['supplier_id'])): ?><input type="hidden" name="supplier_id" value="<?= (int)$_GET['supplier_id'] ?>"><?php endif; ?>
-<button type="submit" class="btn btn-primary">Apply filters</button>
+<button type="submit" class="btn btn-primary"><?php if($isSuppliers): ?><span class="material-symbols-outlined" aria-hidden="true">filter_alt</span><?php endif; ?>Apply filters</button>
 <?php if ($isReport): ?><button type="submit" class="btn btn-outline-primary" name="export" value="csv">Export CSV</button><?php endif; ?>
 </form></section>
 <?php if ($isSuppliers): ?>
-<div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0">Branch supplier directory</h2><?php if ($can('manage_suppliers')): ?><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierNew">Register supplier</button><?php endif; ?></div>
+<div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 mb-0">Branch supplier directory</h2><?php if ($can('manage_suppliers')): ?><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierNew"><span class="material-symbols-outlined" aria-hidden="true">person_add</span>Register supplier</button><?php endif; ?></div>
 <div class="purchase-grid"><?php foreach ($suppliers as $s): ?><article class="purchase-card"><div class="d-flex justify-content-between gap-2"><h3 class="h6"><?= $esc($s['name']) ?></h3><span class="purchase-status"><?= $esc($s['status']) ?></span></div><p class="small text-muted"><?= $esc($s['branch_name']) ?> · #<?= (int)$s['id'] ?></p><dl class="purchase-contact"><?php foreach (['contact_name'=>'Contact','phone'=>'Phone','email'=>'Email','address'=>'Address','payment_terms'=>'Terms'] as $k=>$v): ?><dt><?= $v ?></dt><dd><?= $esc($s[$k] ?: '—') ?></dd><?php endforeach; ?></dl><div class="d-flex gap-2 flex-wrap">
-<?php if ($can('manage_suppliers')): ?><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#supplier<?= (int)$s['id'] ?>">Edit supplier</button><?php endif; ?>
-<?php foreach (Purchasing::orderPermissions() as $p) if ($can($p)): ?><a class="btn btn-light" href="<?= url('?route=inventory/purchases&branch_id='.(int)$s['branch_id'].'&supplier_id='.(int)$s['id']) ?>">Purchase history</a><?php break; endif; ?></div></article><?php endforeach; ?></div>
+<?php if ($can('manage_suppliers')): ?><button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#supplier<?= (int)$s['id'] ?>"><span class="material-symbols-outlined" aria-hidden="true">edit</span>Edit supplier</button><?php endif; ?>
+<?php foreach (Purchasing::orderPermissions() as $p) if ($can($p)): ?><a class="btn btn-light" href="<?= url('?route=inventory/purchases&branch_id='.(int)$s['branch_id'].'&supplier_id='.(int)$s['id']) ?>"><span class="material-symbols-outlined" aria-hidden="true">history</span>Purchase history</a><?php break; endif; ?></div></article><?php endforeach; ?></div>
 <?php if (!$suppliers): ?><div class="purchase-empty">No suppliers registered for the selected branch.</div><?php endif; ?>
 <?php if ($can('manage_suppliers')): $modalStart('supplierNew','Register supplier'); $supplierForm([]); $modalEnd(); foreach ($suppliers as $s): $modalStart('supplier'.$s['id'],'Edit supplier'); $supplierForm($s); $modalEnd(); endforeach; endif; ?>
 <?php elseif ($isReport): ?>

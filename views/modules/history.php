@@ -483,6 +483,18 @@ select.form-select-sm,
 .receipt-policy { border-top: 1px dashed #e5e7eb; margin-top: 10px; padding-top: 8px; }
 .receipt-policy p { font-size: 8px; color: #9ca3af; letter-spacing: 1px; text-transform: uppercase; margin: 0; }
 
+
+/* Match Reports and Dashboard surfaces. */
+.his-kpi-glow { display:none; }
+.his-kpi-card { border:1px solid #e1eaf0; background:linear-gradient(145deg,#fff,#f8fbfd); box-shadow:0 5px 20px rgba(25,62,82,.045); }
+.his-kpi-label { color:#62758b; }
+.his-wrapper .filter-applied { border-color:#008aa5 !important; background-color:#eaf8fb !important; color:#006b80 !important; box-shadow:0 0 0 1px rgba(0,138,165,.12); }
+.his-wrapper .page-item.active .page-link,
+.his-wrapper .dataTables_paginate .paginate_button.current { background:#008aa5 !important; border-color:#008aa5 !important; color:#fff !important; box-shadow:0 3px 9px rgba(0,138,165,.2); font-weight:700; }
+.his-wrapper .page-link { min-width:40px; min-height:40px; display:inline-flex; align-items:center; justify-content:center; }
+.his-wrapper a:focus-visible,.his-wrapper button:focus-visible { outline:3px solid #64cfe0; outline-offset:3px; }
+@media(max-width:575px) { .his-wrapper .filter-card,.his-wrapper .aurora-card { padding:16px !important; } .his-kpi-value { font-size:1.65rem; } .his-page-header>div:last-child { flex-wrap:wrap; } }
+@media(prefers-reduced-motion:reduce) { .his-kpi-card,.his-wrapper .form-select-solid,.his-wrapper .form-control-solid { transition:none !important; } .his-kpi-card:hover { transform:none; } }
 </style>
 
 <!-- Print Header (Hidden on screen) -->
@@ -598,7 +610,7 @@ select.form-select-sm,
                     <span>Branch</span>
                 </label>
                 <select name="locations[]" id="locationFilter" class="form-select form-select-solid">
-                    <option value="">All Branches</option>
+                    <?php if(User::has_all_branch_access($_SESSION['user']['id'])): ?><option value="">All Branches</option><?php endif; ?>
                     <?php foreach ($active_branches as $b): ?>
                         <option value="<?= htmlspecialchars($b['name']) ?>" <?= ($selected_location === $b['name']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($b['name']) ?>
@@ -831,6 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (customSearch.length) {
         customSearch.on('input', function() {
             table.search(this.value).draw();
+            updateFilteredStats(); updateExportLink();
         });
         customSearch.on('keypress', function(e) {
             if (e.key === 'Enter') e.preventDefault();
@@ -873,18 +886,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Refresh KPI Stats via AJAX
+    let historyStatsRequest = null;
     function updateFilteredStats() {
+        if (historyStatsRequest) historyStatsRequest.abort();
         const params = {
             date_from: $('#date_from').val(),
             date_to: $('#date_to').val(),
-            payment_status: $('#paymentStatusFilter').val() || 'All'
+            payment_status: $('#paymentStatusFilter').val() || 'All',
+            search: $('#custom-search').val() || ''
         };
         const channels = $('#channelFilter').val();
         if (channels) params['channels[]'] = channels;
         const locations = $('#locationFilter').val();
         if (locations) params['locations[]'] = locations;
 
-        $.get('?route=pos/history/stats', params, function(stats) {
+        historyStatsRequest = $.get('?route=pos/history/stats', params, function(stats) {
             if (stats) {
                 $('#stat-revenue').text('₱' + Number(stats.revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                 $('#stat-orders').text(Number(stats.orders || 0).toLocaleString());
@@ -893,7 +909,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 'json');
     }
 
+    function highlightFilters() {
+        $('#locationFilter, #paymentStatusFilter, #channelFilter, #date_from, #date_to').each(function() {
+            const value = this.value;
+            this.classList.toggle('filter-applied', Boolean(value && value !== 'All'));
+        });
+    }
+    highlightFilters();
     function reloadAll() {
+        highlightFilters();
         table.draw();
         updateFilteredStats();
         updateExportLink();
@@ -907,7 +931,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset filter click
     $('#btn-clear-all').on('click', function(e) {
         e.preventDefault();
-        $('#locationFilter').val('');
+        const branchSelect = document.getElementById('locationFilter');
+        if (branchSelect) branchSelect.selectedIndex = 0;
         $('#paymentStatusFilter').val('All');
         $('#channelFilter').val('');
         $('#date_from').val('');
@@ -1047,6 +1072,9 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+<script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script defer src="<?= url('assets/js/dashboard-motion.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/dashboard-motion.js') ?>"></script>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

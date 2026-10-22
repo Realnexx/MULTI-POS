@@ -4,8 +4,8 @@ require_once __DIR__ . '/../../../config/db.php';
 require_once __DIR__ . '/../../../models/Setting.php';
 
 $footer_settings = Setting::get_by_category('general');
-$store_name = $footer_settings['store_name'] ?? 'Stacey Halo Halo';
-$tagline = $footer_settings['footer_tagline'] ?? 'Sweet Efficiency in every scoop.';
+$store_name = $footer_settings['store_name'] ?? 'kairo';
+$tagline = 'Smart POS and inventory system by Reyal Solutions.';
 ?>
 
 <div class="py-6 px-6 text-center mt-4">

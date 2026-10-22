@@ -20,7 +20,7 @@ class PosController {
                 $drawer=RecipeInventory::rows('SELECT branch_id FROM cash_shifts WHERE active_cashier=?','i',[(int)$_SESSION['user']['id']]);
                 if($drawer){$_SESSION['pos_branch_id']=(int)$drawer[0]['branch_id'];set_flash('danger','Close your POS drawer before switching branches.');redirect('?route=pos');return;}
             }
-            unset($_SESSION['pos_branch_id']);
+            unset($_SESSION['pos_branch_id'],$_SESSION['pos_promo_code'],$_SESSION['pos_promo_customer'],$_SESSION['pos_discount_approval']);
             redirect('?route=pos');
         }
 
@@ -36,6 +36,7 @@ class PosController {
                     $drawer=RecipeInventory::rows('SELECT branch_id FROM cash_shifts WHERE active_cashier=?','i',[(int)$_SESSION['user']['id']]);
                     if($drawer && (int)$drawer[0]['branch_id']!==$bid){$_SESSION['pos_branch_id']=(int)$drawer[0]['branch_id'];set_flash('danger','Close your POS drawer before switching branches.');redirect('?route=pos');return;}
                 }
+                if((int)($_SESSION['pos_branch_id']??0)!==$bid)unset($_SESSION['pos_promo_code'],$_SESSION['pos_promo_customer'],$_SESSION['pos_discount_approval']);
                 $_SESSION['pos_branch_id'] = $bid;
                 
                 require_once __DIR__ . '/../models/Branch.php';
@@ -89,8 +90,10 @@ class PosController {
         $search = isset($_GET['search']) ? trim($_GET['search']) : null;
         $product_type = isset($_GET['product_type']) ? trim($_GET['product_type']) : null;
 
-        $categories = Product::get_all_categories($active_branch_id) ?: [];
-        $type_counts = Product::get_product_type_counts($active_branch_id) ?: [];
+        if (!in_array($product_type, ['simple','variant','recipe','combo'], true)) $product_type = null;
+        $categories = Product::get_all_categories($active_branch_id, true) ?: [];
+        $type_counts = Product::get_product_type_counts($active_branch_id, true) ?: [];
+        if ($category_id && !in_array($category_id, array_map('intval', array_column($categories, 'id')), true)) $category_id = null;
         $products = Product::get_all_products($category_id, $search, $active_branch_id, $product_type) ?: [];
         $products = array_values(array_filter($products, function ($p) { return $p['status'] === 'active' && $p['is_sellable'] && $p['product_type'] !== 'ingredient'; }));
 
@@ -160,7 +163,7 @@ class PosController {
 
             foreach ($all_filtered_sales as $sale) {
                 $final = (float)$sale['final_amount'];
-                $total_final += $final;
+                if ($sale['status'] === 'Completed') $total_final += $final;
                 $order_count++;
 
                 fputcsv($output, [
@@ -181,7 +184,7 @@ class PosController {
             fputcsv($output, []); // Spacer
             fputcsv($output, ['SUMMARY TOTALS']);
             fputcsv($output, ['Total Order Count:', $order_count]);
-            fputcsv($output, ['Total Revenue (Final Amount):', number_format($total_final, 2, '.', '')]);
+            fputcsv($output, ['Completed Sales Revenue:', number_format($total_final, 2, '.', '')]);
             
             fclose($output);
             exit;
@@ -450,7 +453,7 @@ class PosController {
         
         $draw = isset($params['draw']) ? intval($params['draw']) : 1;
         $start = isset($params['start']) ? intval($params['start']) : 0;
-        $length = isset($params['length']) ? intval($params['length']) : 10;
+        $length = max(1, min(100, intval($params['length'] ?? 10)));
         
         // Calculate page for SQL query
         $page = floor($start / $length) + 1;
@@ -496,7 +499,7 @@ class PosController {
         $order_by = isset($columns_map[$order_column_idx]) ? $columns_map[$order_column_idx] : 's.id';
         
         // Fetch counts and records
-        $total_records = Sale::get_total_sales_count();
+        $total_records = Sale::get_filtered_sales_count();
         $filtered_records = Sale::get_filtered_sales_count($filters);
         $sales = Sale::get_filtered_sales($filters, $page, $limit, $order_by, $order_dir);
         

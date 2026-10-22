@@ -2,6 +2,7 @@
 require_once __DIR__ . '/rbac.php';
 function access_page_rules() {
  return [
+ 'admin/promotions'=>['view_promotions','approve_discount_overrides','view_promotion_reports'],
  'admin/monitoring'=>'view_monitoring',
  'admin/online_orders'=>'manage_online_orders',
  'dashboard'=>'view_dashboard', 'admin/users'=>'manage_users','admin/users/data'=>'manage_users','admin/users/single'=>'manage_users',
@@ -16,7 +17,7 @@ function access_page_rules() {
  'inventory/suppliers'=>['view_suppliers','manage_suppliers'],
  'inventory/purchases'=>['view_purchase_orders','create_purchase_orders','approve_purchase_orders','receive_purchases','return_purchases'],
  'inventory/purchase_reports'=>'view_purchase_reports',
- 'inventory/products'=>'view_product','inventory/recipes'=>'view_product','inventory/categories'=>'edit_product','inventory/logs'=>'manage_inventory','inventory/logs/print'=>'manage_inventory','inventory/low_stock'=>'manage_inventory'
+ 'inventory/products'=>'view_product','inventory/recipes'=>'view_recipes','inventory/recipes/data'=>'view_recipes','inventory/categories'=>'edit_product','inventory/logs'=>'manage_inventory','inventory/logs/print'=>'manage_inventory','inventory/low_stock'=>'manage_inventory'
  ];
 }
 function access_ajax_rules() {
@@ -30,7 +31,7 @@ function access_ajax_rules() {
   'get_product_modifiers'=>['view_product','access_pos'],'save_product_modifiers'=>'edit_product',
   'check_recipe_availability'=>['view_product','access_pos'],'products_datatable'=>'view_product',
   'get_categories'=>['view_product','add_product','edit_product'],'get_active_batches'=>'view_product','get_branches'=>['view_product','manage_branches'],
-  'get_batch_breakdown'=>'view_product','update_batch_data'=>'edit_stock_batches','get_product_recipe'=>'view_product',
+  'get_batch_breakdown'=>'view_product','update_batch_data'=>'edit_stock_batches','get_bundle_config'=>'view_product','get_recipe_capacity'=>'view_product','get_product_recipe'=>'view_product',
   'save_product_recipe'=>'edit_product','prepare_recipe_batch'=>'prepare_recipe_stock','reverse_sale_stock'=>'manage_inventory','record_waste'=>'manage_inventory',
   'get_ingredients_list'=>['add_product','edit_product'],'logs_datatable'=>'view_stock_history',
   'get_attributes'=>['view_product','edit_product','add_product'],'save_attribute'=>'edit_product','get_product_variants'=>['view_product','access_pos'],
@@ -41,7 +42,7 @@ function access_ajax_rules() {
  'role_action'=>array_fill_keys(['get_permissions','add_permission','get_modules','update_permission','delete_permission'],'manage_roles'),
  'cms_action'=>['mark_read'=>'access_website_admin'],
  'report_action'=>array_fill_keys(['get_dt_sales','get_dt_inventory_logs','get_summary_stats'],'view_reports'),
- 'pos_cart'=>array_fill_keys(['load','set_order_type','add','update_qty','remove','clear','set_discount','get_receipt','checkout'],'access_pos'),
+ 'pos_cart'=>array_fill_keys(['load','set_order_type','add','update_qty','remove','clear','set_discount','set_promotion','get_promotions','request_discount_approval','get_receipt','checkout'],'access_pos'),
  'notification_action'=>array_fill_keys(['get_alerts','mark_read','mark_all_read'],['view_product','manage_inventory']),
  'pos_drawer'=>array_fill_keys(['status','transactions','open','close','lock','unlock','move'],'access_pos'),
  'cash_shift_audit'=>['get'=>['manage_cashier_schedules','view_own_shifts','open_cash_shift','close_cash_shift','cash_drawer_movements','view_cash_shifts','manage_cash_shifts','approve_cash_shifts','manage_registers','view_shift_reports']],

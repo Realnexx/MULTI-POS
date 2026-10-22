@@ -176,6 +176,30 @@
         font-size: 0.7rem !important;
         display: inline-block;
     }
+    #stockAdjustmentModal.package-stock-mode .modal-dialog {max-width:680px!important;}
+    #stockAdjustmentModal.package-stock-mode .modal-body {display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:16px!important;max-height:65vh;overflow-y:auto;align-content:start;}
+    #stockAdjustmentModal.package-stock-mode .modal-body>[role="alert"],#stockAdjustmentModal.package-stock-mode #adj-recipe-panel {grid-column:1/-1;}
+    #stockAdjustmentModal.package-stock-mode .package-quantity-card {order:0;}
+    #stockAdjustmentModal.package-stock-mode .package-branch-card {order:1;}
+    #stockAdjustmentModal.package-stock-mode .package-quantity-card .adj-card-label,#stockAdjustmentModal.package-stock-mode .package-branch-card .adj-card-label {display:none;}
+    #stockAdjustmentModal.package-stock-mode .package-quantity-card .form-control,#stockAdjustmentModal.package-stock-mode .package-branch-card .form-select {min-height:43px;}
+    #stockAdjustmentModal.package-stock-mode .adj-spec-card {margin-bottom:0;padding:16px;}
+    #stockAdjustmentModal.package-stock-mode #adj-recipe-panel {order:2;background:#f8fbfd;border:1px solid #dceaf0;border-radius:14px;color:#294b59;padding:16px;margin:0;}
+    #stockAdjustmentModal.package-stock-mode #adj-recipe-panel>strong {display:block;font-size:14px;color:#075e72;}
+    #stockAdjustmentModal.package-stock-mode #adj-recipe-message {line-height:1.65;color:#526b77;}
+    #stockAdjustmentModal .package-capacity-summary {display:flex;gap:8px;align-items:center;background:#e5f4f8;color:#08677b;border-radius:9px;padding:10px 12px;font-weight:700;margin:12px 0;}
+    #stockAdjustmentModal .package-capacity-summary small {margin-left:auto;font-weight:500;}
+    #stockAdjustmentModal .package-capacity-summary.needs-setup {background:#fff4df;color:#8a570c;}
+    #stockAdjustmentModal .package-setup-error {background:#fff2f1;border:1px solid #f5b8b4;border-left:4px solid #de4941;border-radius:10px;color:#9c2925;padding:14px;line-height:1.6;}
+    #stockAdjustmentModal .package-setup-error p {margin:6px 0;font-size:13px;}
+    #stockAdjustmentModal .package-next-step {border-top:1px solid #efd0cd;padding-top:9px;margin-top:10px!important;color:#704440;}
+    #stockAdjustmentModal .package-stock-item {display:grid;grid-template-columns:1fr auto;gap:5px 12px;background:white;border:1px solid #dce8ed;border-radius:10px;padding:12px;margin-bottom:8px;font-size:13px;}
+    #stockAdjustmentModal .package-stock-item small {grid-column:1/-1;color:#607785;}
+    #stockAdjustmentModal .package-stock-state {color:#087c63;font-size:12px;font-weight:700;}
+    #stockAdjustmentModal .package-stock-item.is-short {border-color:#f0bbb5;}
+    #stockAdjustmentModal .is-short .package-stock-state {color:#b83429;}
+    @media(max-width:480px){#stockAdjustmentModal.package-stock-mode .modal-body {grid-template-columns:1fr;}#stockAdjustmentModal.package-stock-mode .modal-header .badge.rounded-pill {display:none;}#stockAdjustmentModal .package-stock-item {grid-template-columns:1fr;}}
+    #stockAdjustmentModal.package-stock-mode .modal-footer {padding-top:14px!important;padding-bottom:18px!important;}
 </style>
 
 <div class="modal fade" id="stockAdjustmentModal" tabindex="-1" aria-hidden="true">
@@ -380,7 +404,7 @@
 
                 <!-- Footer Actions -->
                 <div class="modal-footer border-0 px-4 pb-4 pt-3 d-flex justify-content-end align-items-center gap-2" style="border-top: 1px solid #f1f5f9 !important;">
-                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal">Discard</button>
+                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Discard</button>
                     <button type="submit" class="btn btn-modal-primary">
                         <span class="material-symbols-outlined" style="font-size: 16px;">sync_alt</span> Process Adjustment
                     </button>

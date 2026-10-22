@@ -257,6 +257,11 @@ class CashShift
     public static function unlockDrawer($id,$secret) {
         if (!is_string($secret) || strlen($secret)>200 || $secret==='') throw new DomainException('Enter your personal POS PIN or account password.');
         $initial=self::locked($id);
+        require_once __DIR__.'/SystemPolicy.php';
+        $actor=self::actor('lock_cash_drawer',(int)$initial['branch_id']);
+        if((int)$initial['cashier_id']!==$actor)throw new DomainException('Only the assigned cashier can unlock this drawer.');
+        $wait=SystemPolicy::reservePinAttempt($actor);
+        if($wait)throw new DomainException('Too many authentication attempts. Try again in '.$wait.' seconds. Refreshing will not reset this limit.');
         $result=RecipeInventory::atomic(function()use($initial,$id,$secret){
             self::lockCashier($initial['cashier_id']); $s=RecipeInventory::rows('SELECT * FROM cash_shifts WHERE id=? FOR UPDATE','i',[$id])[0];
             $user=self::actor('lock_cash_drawer',(int)$s['branch_id']);
@@ -265,7 +270,8 @@ class CashShift
             if(!$rows || !$rows[0]['locked'])return 'ok'; $lock=$rows[0];
             if($lock['is_blocked'])return 'blocked';
             $account=User::find_by_id($user);
-            if(!User::verify_pin($user,$secret) && !password_verify($secret,$account['password'])) {
+            require_once __DIR__.'/SystemPolicy.php';
+            if(!SystemPolicy::verifyAccessPin($user,$secret) && !password_verify($secret,$account['password'])) {
                 $attempts=$lock['blocked_until']!==null?1:(int)$lock['failed_attempts']+1;
                 RecipeInventory::query('UPDATE cash_shift_locks SET failed_attempts=?,blocked_until=IF(? >= 5,DATE_ADD(NOW(),INTERVAL 60 SECOND),NULL) WHERE shift_id=?','iii',[$attempts,$attempts,$id]);
                 self::event($id,(int)$s['branch_id'],'unlock_failed',$user,null,['attempt'=>$attempts]); return $attempts>=5?'blocked':'invalid';
@@ -274,6 +280,7 @@ class CashShift
             self::event($id,(int)$s['branch_id'],'drawer_unlocked',$user,null,[]); return 'ok';
         });
         if($result!=='ok')throw new DomainException($result==='blocked'?'Too many attempts. Wait one minute before trying again.':'Incorrect PIN or password. The drawer remains locked.');
+        SystemPolicy::clearPinAttempts($actor);
     }
     public static function posState($branch,$transactions=false) {
         $branch=self::activeBranch($branch); $user=self::actor('access_pos',$branch);

@@ -18,6 +18,30 @@ class SystemPolicy {
         if(!is_string($pin)||!preg_match('/^[0-9]{4,6}$/D',$pin)||!is_string($stored)||$stored==='')return false;
         return password_get_info($stored)['algo']?password_verify($pin,$stored):hash_equals($stored,$pin);
     }
+    public static function reservePinAttempt($userId) {
+        require_once __DIR__.'/AuthSecurity.php';
+        $ipWait=AuthSecurity::consume('pos-pin-ip',AuthSecurity::ip(),20,300);
+        if($ipWait)return $ipWait;
+        return AuthSecurity::consume('pos-pin','user:'.(int)$userId,5,300);
+    }
+    public static function clearPinAttempts($userId) {
+        require_once __DIR__.'/AuthSecurity.php';
+        AuthSecurity::clear_limit('pos-pin','user:'.(int)$userId);
+    }
+    public static function canOverridePosPin($userId) {
+        require_once __DIR__.'/User.php';
+        if(!User::find_by_id($userId))return false;
+        foreach(User::get_user_roles($userId) as $role){
+            $name=strtolower(preg_replace('/[ _-]+/','',$role['name']));
+            if(in_array($name,['admin','superadmin'],true))return true;
+        }
+        return false;
+    }
+    public static function verifyAccessPin($userId,$pin) {
+        require_once __DIR__.'/User.php';
+        if(User::verify_pin($userId,$pin))return true;
+        return self::canOverridePosPin($userId) && self::verifyPin($pin,Setting::get('master_pos_pin',''));
+    }
     public static function saveSecurity(array $data,array $pins,$password,$actor) {
         require_once __DIR__.'/DatabaseBackup.php';DatabaseBackup::authorize($actor,$password);
         $timeout=filter_var($data['session_timeout']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>5,'max_range'=>480]]);

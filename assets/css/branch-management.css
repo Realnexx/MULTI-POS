@@ -210,3 +210,6 @@
 #tw-branches .branch-card-actions .btn{margin:0;min-width:0;height:42px;white-space:nowrap;padding:9px 10px;}
 #tw-branches .branch-card-actions .branch-delete{width:42px;border:1px solid #efdede;border-radius:9px;background:#fffafa;padding:9px;}
 @media(max-width:380px){#tw-branches .branch-card-actions{grid-template-columns:1fr 38px 1.25fr;gap:6px;}#tw-branches .branch-card-actions .branch-delete{width:38px;}#tw-branches .branch-card-actions .btn{padding:8px 6px;font-size:11px;}}
+
+#tw-branches .branches-stats .branch-stat-icon { display:flex; align-items:center; justify-content:center; width:40px; height:40px; margin-bottom:12px; border-radius:12px; background:#eaf8fb; color:#008aa5; font-size:22px; font-style:normal; }
+@media(max-width:575px) { #tw-branches .branches-stats .branch-stat-icon { width:36px; height:36px; font-size:20px; } }

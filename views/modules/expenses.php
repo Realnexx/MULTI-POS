@@ -30,7 +30,7 @@ if (isset($_SESSION['user']['id'])) {
 }
 ?>
 
-<link rel="stylesheet" href="<?= url('assets/css/expense-management.css') ?>">
+<link rel="stylesheet" href="<?= url('assets/css/expense-management.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/expense-management.css') ?>">
 <div id="tw-expenses" class="expenses-workspace">
     <header class="expenses-heading">
 <div class="expenses-title">
@@ -40,7 +40,7 @@ if (isset($_SESSION['user']['id'])) {
 <p>Track sales and business spending for <?= htmlspecialchars($store_name) ?>.</p>
 </div>
 </div>
-<div class="expense-heading-actions"><button type="button" class="btn btn-light expense-print-button" id="print-report-btn"><span class="material-symbols-outlined" aria-hidden="true">print</span>Print Report</button><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">+ Add Expense</button></div>
+<div class="expense-heading-actions"><button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExpenseModal">+ Add Expense</button></div>
 </header>
     <div class="expenses-filters">
 <div>
@@ -66,28 +66,24 @@ if (isset($_SESSION['user']['id'])) {
 </div>
 </div>
     <div class="expense-stats">
-        <div>
-<span>
+        <div><i class="material-symbols-outlined expense-stat-icon" aria-hidden="true">payments</i><span>
 <?= ($start_date && $end_date) ? 'Sales in Selected Dates' : 'Sales This Month' ?>
 </span>
 <strong>₱<?= number_format($stats['total_revenue'], 2) ?>
 </strong>
 </div>
-        <div>
-<span>
+        <div><i class="material-symbols-outlined expense-stat-icon" aria-hidden="true">receipt_long</i><span>
 <?= ($start_date && $end_date) ? 'Expenses in Selected Dates' : 'Expenses This Month' ?>
 </span>
 <strong>₱<?= number_format($stats['total_expenses'], 2) ?>
 </strong>
 </div>
-        <div>
-<span>Estimated Profit</span>
+        <div><i class="material-symbols-outlined expense-stat-icon" aria-hidden="true">account_balance</i><span>Revenue Less Expenses</span>
 <strong>₱<?= number_format($stats['net_profit'], 2) ?>
 </strong>
-<small>Sales minus expenses</small>
+<small>Excludes product costs</small>
 </div>
-        <div>
-<span>Biggest Expense Category</span>
+        <div><i class="material-symbols-outlined expense-stat-icon" aria-hidden="true">category</i><span>Biggest Expense Category</span>
 <strong class="expense-category-total">
 <?= htmlspecialchars(['Utilities' => 'Bills', 'Repair' => 'Repairs', 'Salary' => 'Staff Pay', 'Marketing' => 'Advertising', 'Other' => 'Other'][$stats['highest_category'] ?? ''] ?? ($stats['highest_category'] ?? 'N/A')) ?>
 </strong>
@@ -122,6 +118,9 @@ if (isset($_SESSION['user']['id'])) {
 <div class="expense-list-tools">
 <input type="search" id="ledger-search" class="form-control" placeholder="Search expenses..." aria-label="Search expenses">
 <button type="button" id="print-ledger-btn" class="btn btn-light expense-print-button"><span class="material-symbols-outlined" aria-hidden="true">print</span>Print List</button>
+<label class="visually-hidden" for="expense-report-month">Reporting month</label>
+<input type="month" id="expense-report-month" value="<?= date('Y-m') ?>" class="form-control" style="width:160px" aria-label="Reporting month">
+<button type="button" id="print-monthly-btn" class="btn btn-light expense-print-button"><span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>Print Monthly</button>
 <button type="button" id="print-summary-btn" class="btn btn-light expense-print-button"><span class="material-symbols-outlined" aria-hidden="true">print</span>Print Summary</button>
 </div>
 </div>
@@ -372,6 +371,10 @@ if (isset($_SESSION['user']['id'])) {
 
             // High-Performance Transaction Ledger Initialization
             const ledgerTable = $('#ledger-table').DataTable({
+                createdRow: function(row) {
+                    const labels = ['Date', 'Description', 'Category', 'Branch', 'Amount', 'Status', 'Actions'];
+                    Array.from(row.cells).forEach((cell, index) => { cell.dataset.label = labels[index] || ''; });
+                },
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -480,6 +483,14 @@ if (isset($_SESSION['user']['id'])) {
                 window.open(printUrl, '_blank');
             });
 
+            $('#print-monthly-btn').on('click', function() {
+                const month = document.getElementById('expense-report-month');
+                if (!month.value || !month.reportValidity()) return;
+                const params = new URLSearchParams({route:'admin/expenses/summary_print',month:month.value});
+                const branch = $('#branch-filter').val();
+                if (branch) params.set('branch_id',branch);
+                window.open('?' + params.toString(), '_blank', 'noopener');
+            });
             // Summary Audit Print Logic
             $("#print-summary-btn").on("click", function() {
                 const branchId = $('#branch-filter').val();

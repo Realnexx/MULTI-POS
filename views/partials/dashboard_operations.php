@@ -4,9 +4,9 @@
     <?php if(($operations_section??'all')==='all'||$operations_section==='summary'): ?>
     <div class="do-summaries">
         <?php foreach (['today'=>["Today's sales", 'Today'], 'week'=>['Weekly sales', 'Monday to today'], 'month'=>['Monthly sales', 'Month to date']] as $key=>$label): $summary=$operations['summaries'][$key]; ?>
-        <article class="do-metric"><p><?= $label[0] ?></p><strong>₱<?= number_format($summary['total'],2) ?></strong><span><?= number_format($summary['transactions']) ?> transactions · <?= $label[1] ?></span></article>
+        <article class="do-metric do-metric-<?= $key ?>"><div class="do-metric-heading"><span class="do-metric-icon material-symbols-outlined" aria-hidden="true"><?= ['today'=>'payments','week'=>'date_range','month'=>'calendar_month'][$key] ?></span><p><?= $label[0] ?></p></div><strong>₱<?= number_format($summary['total'],2) ?></strong><span><?= number_format($summary['transactions']) ?> transactions · <?= $label[1] ?></span></article>
         <?php endforeach; ?>
-        <article class="do-metric"><p>Estimated gross profit</p><strong>₱<?= number_format($operations['gross_profit'],2) ?></strong><span><?= $display_date ?> · Sales less estimated item costs</span></article>
+        <article class="do-metric do-metric-profit"><div class="do-metric-heading"><span class="do-metric-icon material-symbols-outlined" aria-hidden="true">trending_up</span><p>Estimated gross profit</p></div><strong>₱<?= number_format($operations['gross_profit'],2) ?></strong><span><?= $display_date ?> · Sales less estimated item costs</span></article>
     </div>
     <p class="do-note">Completed sales only. Weeks start on Monday. Gross profit uses recorded stock costs where available and current product costs otherwise; it excludes operating expenses.</p>
     <?php endif; ?>
@@ -14,7 +14,7 @@
     <div class="do-panels">
         <?php foreach(['branches'=>'Branch performance','payments'=>'Payment methods'] as $key=>$heading): ?>
         <article class="do-panel">
-            <div class="do-panel-heading"><div><h3><?= $heading ?></h3><p><?= $display_date ?> · <?= $display_branch ?></p></div><?php if($key==='branches'): ?><span><?= count($operations['branches']) ?> <?= count($operations['branches'])===1?'branch':'branches' ?></span><?php endif; ?></div>
+            <div class="do-panel-heading"><div><h3><?= $heading ?></h3><p><?= $display_date ?> · <?= $display_branch ?></p></div><?php if($key==='branches'): ?><div class="branch-share-heading"><span><?= count($operations['branches']) ?> <?= count($operations['branches'])===1?'branch':'branches' ?></span><button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#branch-share-modal"><i class="ti ti-share" aria-hidden="true"></i> Share</button></div><?php endif; ?></div>
             <?php if ($key==='branches' && $can_choose_branch): ?><p class="do-note">Choose All Branches in the branch filter to compare the entire active branch network.</p><?php endif; ?>
             <div class="do-table-scroll"><table><thead><tr><th scope="col"><?= $key==='branches'?'Branch':'Method' ?></th><th scope="col">Transactions</th><th scope="col">Sales</th></tr></thead><tbody>
             <?php foreach($operations[$key] as $row): ?><tr><th scope="row"><?= htmlspecialchars($key==='branches'?$row['name']:($row['payment_method'] ?: 'Unspecified')) ?></th><td><?= number_format($row['transactions']) ?></td><td>₱<?= number_format($row['total'],2) ?></td></tr><?php endforeach; ?>
@@ -23,6 +23,7 @@
         </article>
         <?php endforeach; ?>
     </div>
+    <?php require __DIR__.'/branch_share.php'; ?>
     <?php endif; ?>
     <?php if((($operations_section??'all')==='all'||$operations_section==='attention')&&$operations['can_view_shifts']): ?>
     <article class="do-panel do-shifts">

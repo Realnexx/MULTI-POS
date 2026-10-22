@@ -7,6 +7,32 @@
     const preview = document.getElementById('recipe-definition-preview');
     const countInput = document.getElementById('recipe-yield-preview');
     const branch = document.getElementById('recipe-branch');
+    const nameInput=document.getElementById('recipe-name'),suggestions=document.getElementById('recipe-product-suggestions');
+    if(nameInput&&suggestions){
+        let suggestionTimer,request=null,generation=0,active=-1;
+        const suggestionStatus=document.createElement('p');suggestionStatus.className='recipe-name-hint';suggestionStatus.setAttribute('role','status');suggestionStatus.hidden=true;suggestions.after(suggestionStatus);
+        function closeSuggestions(){suggestions.hidden=true;nameInput.setAttribute('aria-expanded','false');nameInput.removeAttribute('aria-activedescendant');active=-1;}
+        function highlight(){Array.from(suggestions.children).forEach((option,index)=>{option.setAttribute('aria-selected',index===active?'true':'false');});if(active>=0){const option=suggestions.children[active];nameInput.setAttribute('aria-activedescendant',option.id);option.scrollIntoView({block:'nearest'});}}
+        function refreshSuggestions(){
+            clearTimeout(suggestionTimer);if(request)request.abort();const serial=++generation;suggestions.replaceChildren();closeSuggestions();suggestionStatus.hidden=false;suggestionStatus.dataset.state='loading';suggestionStatus.textContent='Loading product suggestions…';
+            suggestionTimer=setTimeout(async()=>{request=new AbortController();try{
+                const url=new URL(document.getElementById('recipe-list').dataset.endpoint,location.href);url.searchParams.set('suggest','products');url.searchParams.set('search',nameInput.value.trim());url.searchParams.set('branch',branch?.value||'');
+                const response=await fetch(url,{credentials:'same-origin',signal:request.signal});const result=await response.json();if(serial!==generation)return;if(!response.ok)throw new Error(result.message||'Product suggestions could not be loaded.');
+                (result.products||[]).forEach((product,index)=>{
+                    const option=document.createElement('button');option.type='button';option.tabIndex=-1;option.id='recipe-product-option-'+index;option.setAttribute('role','option');option.setAttribute('aria-selected','false');
+                    const details=document.createElement('span'),title=document.createElement('strong'),scope=document.createElement('small');title.textContent=product.name;scope.textContent=product.branch_name||'Global (All branches)';details.append(title,scope);
+                    const badge=document.createElement('span');const configured=Number(product.has_recipe)===1;badge.className='recipe-suggestion-badge'+(configured?' has-recipe':'');badge.textContent=configured?'Has recipe':'No recipe';option.append(details,badge);
+                    option.addEventListener('pointerdown',event=>event.preventDefault());option.addEventListener('click',()=>{nameInput.value=product.name;closeSuggestions();nameInput.focus();});suggestions.append(option);
+                });
+                suggestionStatus.dataset.state=suggestions.children.length?'':'empty';suggestionStatus.textContent=suggestions.children.length?'':'No matching products are available for your branch.';suggestionStatus.hidden=!!suggestions.children.length;
+                if(document.activeElement!==nameInput){closeSuggestions();return;}
+                suggestions.hidden=!suggestions.children.length;nameInput.setAttribute('aria-expanded',suggestions.children.length?'true':'false');
+            }catch(error){if(error.name==='AbortError'||serial!==generation)return;closeSuggestions();suggestionStatus.hidden=false;suggestionStatus.dataset.state='error';suggestionStatus.textContent=error.message||'Could not load product suggestions. Focus this field to retry.';}},200);
+        }
+        nameInput.addEventListener('focus',refreshSuggestions);nameInput.addEventListener('input',refreshSuggestions);branch?.addEventListener('change',refreshSuggestions);
+        nameInput.addEventListener('keydown',event=>{if(suggestions.hidden)return;if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();active=(active+(event.key==='ArrowDown'?1:-1)+suggestions.children.length)%suggestions.children.length;highlight();}else if(event.key==='Enter'&&active>=0){event.preventDefault();suggestions.children[active].click();}else if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeSuggestions();}});
+        nameInput.addEventListener('blur',()=>setTimeout(closeSuggestions,150));
+    }
     const factors = {g:1,kg:1000,ml:1,l:1000};
     const canonical = unit => ({pcs:'pc',piece:'pc',pieces:'pc',gram:'g',grams:'g',kilogram:'kg',kilograms:'kg',liter:'l',litre:'l',liters:'l',milliliter:'ml'}[String(unit).toLowerCase()] || String(unit).toLowerCase());
     let sequence = 0;
@@ -81,11 +107,6 @@
             }
         });
         update();
-    });
-    document.getElementById('recipe-search').addEventListener('input',event=>{
-        let matches=0;
-        root.querySelectorAll('[data-recipe-name]').forEach(item=>{item.hidden=!item.dataset.recipeName.toLowerCase().includes(event.target.value.toLowerCase());if(!item.hidden)matches++;});
-        document.getElementById('recipe-search-empty').classList.toggle('d-none',matches>0);
     });
     (data.rows.length?data.rows:[{}]).forEach(addRow);
     update();

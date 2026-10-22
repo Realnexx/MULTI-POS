@@ -26,7 +26,7 @@ if ($icReady && $icBranch) {
 <input type="hidden" name="route" value="inventory/products"><input type="hidden" name="controls" value="1">
 <input type="hidden" name="control_tab" value="inventory_count">
 <label>Branch<select name="control_branch" class="form-select"><?php foreach ($icBranches as $b): ?><option value="<?= (int)$b['id'] ?>" <?= (int)$b['id']===$icBranch?'selected':'' ?>><?= $icEscape($b['name']) ?></option><?php endforeach; ?></select></label>
-<button class="btn btn-outline-secondary">Show branch</button></form>
+<button class="btn btn-outline-secondary"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">filter_alt</span>Show branch</button></form>
 <p class="small text-muted">Count usable on-hand stock in the item's base unit. Record expired stock separately. Saving a count keeps stock unchanged until you reconcile its discrepancy. Count corrections do not consume recipe ingredients.</p>
 <ul class="nav nav-pills ic-tabs mb-4" role="tablist" aria-label="Inventory operations">
 <?php foreach (['inventory_count'=>['fact_check','Physical count'],'inventory_loss'=>['broken_image','Record loss'],'inventory_reorder'=>['notifications_active','Reorder levels'],'inventory_history'=>['history','Discrepancies & history']] as $tab=>$meta): ?>
@@ -62,11 +62,11 @@ if ($icReady && $icBranch) {
 <form method="post" action="<?= url('?route=inventory/products') ?>" class="mt-2">
 <input type="hidden" name="csrf_token" value="<?= $icEscape($_SESSION['csrf_token']) ?>"><input type="hidden" name="action" value="inventory_resolve"><input type="hidden" name="review_id" value="<?= (int)$r['id'] ?>"><input type="hidden" name="control_branch" value="<?= $icBranch ?>">
 <label class="d-block">Resolution reason<input name="notes" class="form-control mb-2" required maxlength="2000"></label>
-<button type="submit" name="resolution" value="reconcile" class="btn btn-outline-primary">Reconcile stock to count</button>
-<button type="submit" name="resolution" value="dismiss" class="btn btn-outline-secondary">Dismiss without changing stock</button>
+<button type="submit" name="resolution" value="reconcile" class="btn btn-outline-primary"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">fact_check</span>Reconcile stock to count</button>
+<button type="submit" name="resolution" value="dismiss" class="btn btn-outline-secondary"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Dismiss without changing stock</button>
 </form><?php endif; ?>
 </article><?php endforeach; ?>
 <?php if (!$icReviews): ?><p>No counts or categorized losses recorded for this branch.</p><?php endif; ?>
 </div></div>
-<?php endif; ?></div><div class="modal-footer"><span class="small text-muted me-auto">Changes are recorded in stock history.</span><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button></div></div></div></div>
+<?php endif; ?></div><div class="modal-footer"><span class="small text-muted me-auto">Changes are recorded in stock history.</span><button type="button" class="btn btn-light" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Close</button></div></div></div></div>
 <?php endif; ?>

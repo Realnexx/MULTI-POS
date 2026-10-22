@@ -31,6 +31,8 @@ $pdBlockedAuth=endpoint('pos_drawer',['action'=>'unlock','shift_id'=>$pdShift,'s
 $pdAudit=RecipeInventory::rows("SELECT details FROM cash_shift_events WHERE shift_id=? AND action='unlock_failed'",'i',[$pdShift]);
 check(strpos(json_encode($pdAudit),'wrong-drawer-secret')===false,'unlock audit never stores submitted PINs or passwords');
 RecipeInventory::query('UPDATE cash_shift_locks SET blocked_until=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE shift_id=?','i',[$pdShift]);
+// Simulate expiration of the persistent account cooldown as well as the drawer cooldown.
+RecipeInventory::query('UPDATE auth_rate_limits SET expires_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 MINUTE)');
 $pdUnlock=endpoint('pos_drawer',['action'=>'unlock','shift_id'=>$pdShift,'secret'=>'1234']);
 check($pdUnlock['success'] && !$pdUnlock['state']['shift']['locked'],'cashier personal PIN unlocks the persistent drawer');
 $pdCheckout=endpoint('pos_cart',['action'=>'checkout','payment_method'=>'Cash','amount_tendered'=>'100','request_key'=>$pdCart['request_key']]);

@@ -7,6 +7,8 @@ class RecipeInventory
     private static $depth = 0;
     private static $locked = [];
 
+    public static function expiryDateSql(){return "'".(new DateTimeImmutable('now',new DateTimeZone('Asia/Manila')))->format('Y-m-d')."'";}
+
     public static function ready()
     {
         try {
@@ -163,8 +165,10 @@ class RecipeInventory
         if (($old['product_type'] === 'recipe' || $type === 'recipe') && $old['product_type'] !== $type) {
             throw new DomainException('Create a new product to change between recipe and ordinary stock.');
         }
+        if($old['product_type']!==$type&&in_array('combo',[$old['product_type'],$type],true))throw new DomainException('Create a new product to change between a package and ordinary stock.');
         $changed=InventoryQuantity::unit($old['unit_type']) !== InventoryQuantity::unit($unit)
             || ($old['branch_id'] === null ? null : (int)$old['branch_id']) !== $branch;
+        if($changed){require_once __DIR__.'/ProductBundle.php';if(ProductBundle::ready()&&self::rows('SELECT id FROM product_combos WHERE item_product_id=? LIMIT 1 FOR UPDATE','i',[$id]))throw new DomainException('Remove this product from packages before changing its branch or stock unit.');}
         if ($changed) {
             require_once __DIR__.'/Purchasing.php';
             Purchasing::protectOpenOrders($id);
@@ -207,18 +211,18 @@ class RecipeInventory
     public static function balance($productId, $branch)
     {
         if (isset(self::$locked[(int)$productId])) {
-            $rows=self::rows("SELECT quantity FROM product_batches WHERE product_id = ? AND branch_id <=> ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= CURRENT_DATE) ORDER BY id FOR UPDATE",'ii',[$productId,$branch]);
+            $rows=self::rows("SELECT quantity FROM product_batches WHERE product_id = ? AND branch_id <=> ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= ".self::expiryDateSql().") ORDER BY id FOR UPDATE",'ii',[$productId,$branch]);
             $sum=0;
             foreach ($rows as $row) $sum+=InventoryQuantity::parse($row['quantity'],true);
             return $sum;
         }
-        $row = self::rows("SELECT COALESCE(SUM(quantity),0) AS qty FROM product_batches WHERE product_id = ? AND branch_id <=> ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= CURRENT_DATE)", 'ii', [$productId, $branch])[0];
+        $row = self::rows("SELECT COALESCE(SUM(quantity),0) AS qty FROM product_batches WHERE product_id = ? AND branch_id <=> ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= ".self::expiryDateSql().")", 'ii', [$productId, $branch])[0];
         return InventoryQuantity::parse($row['qty'], true);
     }
 
     public static function syncTotal($id)
     {
-        self::query("UPDATE products SET stock = (SELECT COALESCE(SUM(quantity),0) FROM product_batches WHERE product_id = ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= CURRENT_DATE)) WHERE id = ?", 'ii', [$id, $id]);
+        self::query("UPDATE products SET stock = (SELECT COALESCE(SUM(quantity),0) FROM product_batches WHERE product_id = ? AND status = 'active' AND quantity > 0 AND (expiry_date IS NULL OR expiry_date >= ".self::expiryDateSql().")) WHERE id = ?", 'ii', [$id, $id]);
     }
 
     public static function recipe($id, $branch, $count)
@@ -238,6 +242,7 @@ class RecipeInventory
     {
         if ($product['status'] !== 'active' || !$product['is_sellable']) return 0;
         if ($product['branch_id'] !== null && (int) $product['branch_id'] !== (int) $branch) return 0;
+        if($product['product_type']==='combo'){require_once __DIR__.'/ProductBundle.php';try{return ProductBundle::capacity($product['id'],$branch);}catch(DomainException | InvalidArgumentException $e){return 0;}}
         if ($product['product_type'] === 'recipe') {
             if (($product['recipe_mode'] ?? 'legacy') === 'legacy') return 0;
             if ($product['recipe_mode'] === 'made_to_order') {
@@ -247,11 +252,27 @@ class RecipeInventory
                         $capacity = min($capacity, intdiv(self::balance($id, $branch), $need));
                     }
                     return $capacity;
-                } catch (DomainException $error) { return 0; }
+                } catch (DomainException | InvalidArgumentException $error) { return 0; }
             }
         }
         if (!$product['track_stock'] || in_array($product['inventory_type'], ['non-stock', 'unlimited'], true)) return 999999;
         return intdiv(self::balance($product['id'], $branch), InventoryQuantity::SCALE);
+    }
+
+    /** Read-only capacity by branch, using the same normalized recipe requirements as checkout. */
+    public static function capacityReport($id,$requested=null)
+    {
+        require_once __DIR__.'/User.php';$p=self::product($id);if(!in_array($p['product_type'],['recipe','combo'],true))throw new DomainException('Select a recipe or package product.');
+        $ctx=User::access_context($_SESSION['user']['id']??0);if(!$ctx['global']){$branch=self::branch($requested);$branches=self::rows("SELECT id,name FROM branches WHERE id=? AND status='Active'",'i',[$branch]);}
+        elseif($requested){$branch=self::branch($requested);$branches=self::rows("SELECT id,name FROM branches WHERE id=? AND status='Active'",'i',[$branch]);}
+        elseif($p['branch_id']!==null)$branches=self::rows("SELECT id,name FROM branches WHERE id=? AND status='Active'",'i',[$p['branch_id']]);
+        else $branches=self::rows("SELECT id,name FROM branches WHERE status='Active' ORDER BY name");
+        $out=[];foreach($branches as $branch){$branchId=(int)$branch['id'];if($p['branch_id']!==null&&(int)$p['branch_id']!==$branchId)throw new DomainException('Product belongs to another branch.');$capacity=PHP_INT_MAX;$ingredients=[];$problem=null;
+            try{require_once __DIR__.'/ProductBundle.php';$requirements=$p['product_type']==='combo'?ProductBundle::quote($id,1,$branchId)['needs']:self::recipe($id,$branchId,1);foreach($requirements as $ingredientId=>$need){if($need<=0)throw new DomainException('Recipe ingredient quantities must be positive.');$ingredient=self::product($ingredientId);$balance=self::balance($ingredientId,$branchId);$units=intdiv($balance,$need);$capacity=min($capacity,$units);$ingredients[]=['name'=>$ingredient['name'],'unit'=>$ingredient['unit_type'],'per_unit'=>InventoryQuantity::format($need),'available'=>InventoryQuantity::format($balance),'capacity'=>$units];}}catch(DomainException | InvalidArgumentException $e){$problem=$e->getMessage();$capacity=0;}
+            if($capacity===PHP_INT_MAX)$capacity=0;foreach($ingredients as &$row)$row['limiting']=$row['capacity']===$capacity;unset($row);
+            $out[]=['branch'=>$branch['name'],'branch_id'=>$branchId,'capacity'=>$capacity,'ready_stock'=>InventoryQuantity::format(self::balance($id,$branchId)),'ingredients'=>$ingredients,'problem'=>$problem];
+        }
+        return ['name'=>$p['name'],'mode'=>$p['product_type']==='combo'?'combo':($p['recipe_mode']??'legacy'),'branches'=>$out,'note'=>'Uses active, unexpired ingredient batches in each branch. Capacities are independent estimates: recipes can share ingredients, and optional extras may reduce the quantity available.'];
     }
 
     public static function checkRecipe($id, $count, $branch)
@@ -300,7 +321,7 @@ class RecipeInventory
         if (self::$depth === 0) throw new LogicException('Consumption requires an inventory transaction.');
         $p = self::product($id);
         $sql = "SELECT * FROM product_batches WHERE product_id = ? AND branch_id <=> ? AND quantity > 0";
-        $sql .= strpos($component,'waste') === 0 ? " AND status IN ('active','expired')" : " AND status = 'active' AND (expiry_date IS NULL OR expiry_date >= CURRENT_DATE)";
+        $sql .= strpos($component,'waste') === 0 ? " AND status IN ('active','expired')" : " AND status = 'active' AND (expiry_date IS NULL OR expiry_date >= ".self::expiryDateSql().")";
         $params = [$id, $branch]; $types = 'ii';
         if ($batchId !== null) { $sql .= ' AND id = ?'; $params[] = $batchId; $types .= 'i'; }
         $batches = self::rows($sql . ' ORDER BY created_at, id FOR UPDATE', $types, $params);
@@ -350,6 +371,7 @@ class RecipeInventory
             $branch = self::branch($branch);
             self::lockProducts([$id]);
             $p = self::product($id);
+            if($p['product_type']==='combo')throw new DomainException('Packages have no physical stock. Adjust their component products instead.');
             if ($p['branch_id'] !== null && (int)$p['branch_id'] !== (int)$branch) throw new DomainException('Product belongs to another branch.');
             if ($p['product_type'] === 'recipe' && $action !== 'waste' && $action !== 'stock_out') {
                 throw new DomainException('Use Prepare batch for finished recipe products.');
@@ -411,7 +433,8 @@ class RecipeInventory
             $fresh = self::recipe($id,$branch,(int)$count);
             if (array_keys($fresh) !== array_keys($needs)) throw new DomainException('Recipe changed. Reload and retry.');
             foreach ($fresh as $ing=>$qty) self::consume($ing,$qty,$user,$branch,$op['id'],null,'production ingredient');
-            $batch = self::receive($id,(int)$count*InventoryQuantity::SCALE,$user,$branch,$op['id'],'PREP-' . $op['id']);
+            $productionCost=self::rows("SELECT COALESCE(SUM(-quantity*COALESCE(unit_cost,0)),0) cost FROM inventory_movements WHERE operation_id=? AND quantity<0",'i',[$op['id']])[0]['cost'];
+            $batch = self::receive($id,(int)$count*InventoryQuantity::SCALE,$user,$branch,$op['id'],'PREP-' . $op['id'],number_format((float)$productionCost/(int)$count,4,'.',''));
             self::complete($op['id'],$batch,['product'=>$p,'recipe'=>$fresh,'count'=>(int)$count]);
             return $batch;
         });
@@ -423,13 +446,14 @@ class RecipeInventory
         $p = self::product($id);
         if ($p['status'] !== 'active' || !$p['is_sellable'] || $p['product_type'] === 'ingredient') throw new DomainException('This item is not available for sale.');
         if ($p['branch_id'] !== null && (int)$p['branch_id'] !== (int)$branch) throw new DomainException('Product belongs to another branch.');
-        $needs = [];
+        $needs = [];$bundleComponents=[];$lockIds=[];
+        if($p['product_type']==='combo'){require_once __DIR__.'/ProductBundle.php';$bundle=ProductBundle::quote($id,(int)$quantity,$branch);$needs=$bundle['needs'];$bundleComponents=$bundle['components'];$lockIds=$bundle['lock_ids'];}
         if ($p['product_type'] === 'recipe') {
             if (($p['recipe_mode'] ?? 'legacy') === 'legacy') throw new DomainException('Reconcile this existing recipe before selling it.');
             if ($p['recipe_mode'] === 'made_to_order') $needs = self::recipe($id,$branch,(int)$quantity);
             elseif ($p['recipe_mode'] === 'prepared_batch') $needs[$id] = (int)$quantity*InventoryQuantity::SCALE;
             else throw new DomainException('Invalid recipe mode.');
-        } elseif ($p['track_stock'] && !in_array($p['inventory_type'],['non-stock','unlimited'],true)) {
+        } elseif ($p['product_type']!=='combo' && $p['track_stock'] && !in_array($p['inventory_type'],['non-stock','unlimited'],true)) {
             $needs[$id] = (int)$quantity*InventoryQuantity::SCALE;
         }
         $price = self::cents($p['price']);
@@ -449,18 +473,18 @@ class RecipeInventory
             $modifiers[] = $mod;
         }
         ksort($needs,SORT_NUMERIC);
-        return ['product'=>$p,'quantity'=>(int)$quantity,'price_cents'=>$price,'modifiers'=>$modifiers,'needs'=>$needs];
+        return ['product'=>$p,'quantity'=>(int)$quantity,'price_cents'=>$price,'modifiers'=>$modifiers,'needs'=>$needs,'bundle_components'=>$bundleComponents,'lock_ids'=>$lockIds];
     }
 
-    public static function checkout($user, $branch, array $items, $discount, $tendered, $payment, $orderType, $key, $requireDrawer=false)
+    public static function checkout($user, $branch, array $items, $discount, $tendered, $payment, $orderType, $key, $requireDrawer=false, array $promoContext=[])
     {
-        return self::atomic(function () use ($user,$branch,$items,$discount,$tendered,$payment,$orderType,$key,$requireDrawer) {
+        return self::atomic(function () use ($user,$branch,$items,$discount,$tendered,$payment,$orderType,$key,$requireDrawer,$promoContext) {
             global $conn;
             $branch = self::branch($branch);
             if (!$items) throw new DomainException('Cart is empty.');
             if (!in_array($orderType,['Dine-in','Take-out','Online'],true)) throw new DomainException('Invalid order type.');
-            require_once __DIR__.'/CheckoutPolicy.php';CheckoutPolicy::assertMethod($payment);
-            $payload = [$items,(string)$discount,(string)$tendered,$payment,$orderType];
+            require_once __DIR__.'/CheckoutPolicy.php';CheckoutPolicy::assertMethod($payment,true);
+            $payload = [$items,(string)$discount,(string)$tendered,$payment,$orderType,$promoContext];
             $op = self::operation('sale',$key,$payload,$user,$branch);
             if ($op['result_id'] !== null) return (int)$op['result_id'];
             $quotes = []; $ids = [];
@@ -470,12 +494,13 @@ class RecipeInventory
                 $quote = self::quoteItem((int)$item['product_id'],$item['quantity'],$item['modifiers'] ?? [],$branch);
                 $quotes[] = $quote;
                 $ids[] = $quote['product']['id'];
-                $ids = array_merge($ids,array_keys($quote['needs']));
+                $ids = array_merge($ids,array_keys($quote['needs']),$quote['lock_ids']??[]);
             }
             self::lockProducts($ids);
             $quotes = []; $totalNeeds = []; $subtotal = 0;
             foreach ($items as $item) {
                 $quote = self::quoteItem((int)$item['product_id'],$item['quantity'],$item['modifiers'] ?? [],$branch);
+                foreach($quote['lock_ids']??[] as $lockedId)if(!in_array((int)$lockedId,array_map('intval',$ids),true))throw new DomainException('Package contents changed. Reload the cart.');
                 foreach ($quote['needs'] as $id=>$need) {
                     if (!in_array($id,array_map('intval',$ids),true)) throw new DomainException('Recipe changed. Reload the cart.');
                     $totalNeeds[$id] = ($totalNeeds[$id] ?? 0)+$need;
@@ -491,7 +516,9 @@ class RecipeInventory
                 }
             }
             $eligible=0;foreach($quotes as $q)if(!empty($q['product']['is_discountable']))$eligible+=$q['price_cents']*$q['quantity'];
-            $financial=CheckoutPolicy::calculate($subtotal,$eligible,(string)$discount);
+            require_once __DIR__.'/Promotion.php';
+            $financial=Promotion::financial($quotes,$branch,'pos',$promoContext['customer_id']??null,$promoContext['code']??'',(string)$discount,true,$user,$promoContext['approval_id']??null);
+            if(isset($promoContext['expected_total'])&&(int)$promoContext['expected_total']!==$financial['total_cents'])throw new DomainException('The promotion or total changed. Reload your cart before paying.');
             $discountCents=$financial['discount_cents'];
             $tenderCents = self::cents($tendered);
             if ($discountCents < 0 || $discountCents > $subtotal) throw new DomainException('Invalid discount.');
@@ -500,7 +527,11 @@ class RecipeInventory
             self::query("INSERT INTO sales (cashier_id, branch_id, total_amount, discount_amount, final_amount, amount_tendered, change_amount, payment_method, order_type, status, request_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Completed', ?)",
                 'iissssssss',[$user,$branch,number_format($subtotal/100,2,'.',''),number_format($discountCents/100,2,'.',''),number_format($final/100,2,'.',''),number_format($tenderCents/100,2,'.',''),number_format(($tenderCents-$final)/100,2,'.',''),$payment,$orderType,$key]);
             $sale = $conn->insert_id;
+            require_once __DIR__.'/ProductBundle.php';$financial['bundle_contents']=ProductBundle::snapshots($quotes);
             CheckoutPolicy::receipt($sale,$financial);
+            Promotion::redeem($financial,$branch,$promoContext['customer_id']??null,$sale);
+            if(!empty($financial['manual_discount']['approval_id']))self::query("UPDATE discount_approvals SET status='used',sale_id=? WHERE id=? AND status='approved'",'ii',[$sale,$financial['manual_discount']['approval_id']]);
+            if(!empty($financial['manual_discount'])){require_once __DIR__.'/ActivityLog.php';ActivityLog::log('Manual discount applied','Sale #'.$sale.' discount PHP '.number_format($discountCents/100,2,'.','').' approval #'.($financial['manual_discount']['approval_id']??'not required'));}
             CashShift::sale($cashShift,$sale,$payment,number_format($final/100,2,'.',''),$user);
             foreach ($quotes as $quote) {
                 self::query('INSERT INTO sales_items (sale_id, product_id, quantity, price, subtotal) VALUES (?, ?, ?, ?, ?)',
@@ -510,7 +541,7 @@ class RecipeInventory
                     self::query('INSERT INTO sale_item_modifiers (sales_item_id, modifier_name, additional_price, ingredient_product_id, ingredient_quantity, ingredient_unit) VALUES (?, ?, ?, ?, ?, ?)',
                         'ississ',[$saleItem,$mod['modifier_name'],$mod['additional_price'],$mod['ingredient_product_id'],$mod['ingredient_quantity'],$mod['ingredient_unit']]);
                 }
-                foreach ($quote['needs'] as $id=>$need) self::consume($id,$need,$user,$branch,$op['id'],$saleItem,'sale consumption');
+                foreach ($quote['needs'] as $id=>$need) self::consume($id,$need,$user,$branch,$op['id'],$saleItem,$quote['product']['product_type']==='combo'?'bundle_item:'.$quote['product']['id']:'sale consumption');
             }
             self::complete($op['id'],$sale,['lines'=>$quotes,'discount_cents'=>$discountCents]);
             return $sale;
@@ -535,6 +566,13 @@ class RecipeInventory
             $finished=[];
             foreach ($snapshot['lines'] as $line) {
                 $p=$line['product'];
+                if($p['product_type']==='combo'){
+                    foreach($line['bundle_components']??[] as $child){
+                        if($policy==='return_finished'&&$child['product_type']==='recipe'&&$child['recipe_mode']!=='prepared_batch')throw new DomainException('This package contains made-to-order food. Use a before-preparation void only if it has not been prepared; otherwise record waste.');
+                        $finished[(int)$child['product_id']]=true;
+                    }
+                    continue;
+                }
                 if ($policy === 'void_before_preparation' && ($p['product_type'] !== 'recipe' || $p['recipe_mode'] !== 'made_to_order')) {
                     throw new DomainException('A before-preparation void is only available for made-to-order items.');
                 }
@@ -564,7 +602,7 @@ class RecipeInventory
             }
             self::query('INSERT INTO inventory_reversals (sale_id,operation_id,policy) VALUES (?,?,?)','iis',[$saleId,$op['id'],$policy]);
             self::query("UPDATE sales SET status = 'Refunded' WHERE id = ?",'i',[$saleId]);
-            require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($saleId,$user);
+            require_once __DIR__.'/OnlineOrder.php';OnlineOrder::sync_refund($saleId,$user);require_once __DIR__.'/Promotion.php';Promotion::refund($saleId);
             self::complete($op['id'],$saleId,['original_operation'=>$original[0]['id'],'policy'=>$policy]);
             return true;
         });

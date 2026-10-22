@@ -76,7 +76,7 @@ class InventoryControl
                 // Existing waste engine supports expired batches and retains their original costs.
                 $op=RecipeInventory::operation('inventory_loss',$key,[$review,$kind],$user,$branch);
                 if ($kind==='expired') {
-                    $expired=RecipeInventory::rows("SELECT id,quantity FROM product_batches WHERE product_id=? AND branch_id=? AND quantity>0 AND (status='expired' OR (status='active' AND expiry_date<CURRENT_DATE)) ORDER BY created_at,id FOR UPDATE",'ii',[$id,$branch]);
+                    $expired=RecipeInventory::rows("SELECT id,quantity FROM product_batches WHERE product_id=? AND branch_id=? AND quantity>0 AND (status='expired' OR (status='active' AND expiry_date<".RecipeInventory::expiryDateSql().")) ORDER BY created_at,id FOR UPDATE",'ii',[$id,$branch]);
                     $available=0;
                     foreach ($expired as $batch) $available+=InventoryQuantity::parse($batch['quantity'],true);
                     if ($available<$qty) throw new DomainException('Not enough expired stock. Expired losses can only deduct expired batches.');

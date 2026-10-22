@@ -1,0 +1,20 @@
+<?php
+$shareData = ['branches'=>array_values($operations['branches']), 'period'=>html_entity_decode($display_date, ENT_QUOTES, 'UTF-8'), 'scope'=>html_entity_decode($display_branch, ENT_QUOTES, 'UTF-8'), 'generated'=>date('M j, Y · g:i A').' PHT'];
+?>
+<link rel="stylesheet" href="<?= url('assets/css/branch-share.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/branch-share.css') ?>">
+<div class="modal fade" id="branch-share-modal" tabindex="-1" aria-labelledby="branch-share-title" aria-hidden="true">
+ <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header"><div><h5 class="modal-title" id="branch-share-title">Share branch rankings</h5><p class="text-muted mb-0 small">Turn your current dashboard results into a shareable card.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+  <div class="modal-body branch-share-layout"><div class="branch-share-settings">
+   <div class="branch-share-step">STYLE YOUR STORY</div><label for="branch-share-theme" class="form-label">Choose a theme</label>
+   <select id="branch-share-theme" class="form-select mb-3"><option value="aqua">Aqua studio</option><option value="midnight">Midnight club</option><option value="paper">Editorial cream</option><option value="rose">Rose social</option><option value="cobalt">Cobalt editorial</option><option value="mono">Minimal monochrome</option><option value="matcha">Matcha café</option><option value="lavender">Lavender studio</option><option value="citrus">Citrus pop</option><option value="terracotta">Terracotta journal</option></select>
+   <label for="branch-share-layout" class="form-label">Card layout</label><select id="branch-share-layout" class="form-select mb-3"><option value="leaderboard">Leaderboard · trophy edition</option><option value="celebration">Celebration · reference edition</option><option value="studio">Studio · rounded cards</option><option value="editorial">Editorial · magazine style</option><option value="poster">Poster · bold blocks</option><option value="ticket">Ticket · receipt inspired</option></select><label for="branch-share-page" class="form-label">Ranking page</label><select id="branch-share-page" class="form-select mb-3"></select>
+   <p class="small text-muted">Ranked by completed sales, highest first. Equal sales share a rank. Each image includes up to eight branches from your current date and branch filters.</p>
+   <label class="branch-share-privacy" for="branch-share-hide"><input type="checkbox" id="branch-share-hide"><span><strong>Hide sales amounts</strong><small>Share rankings without revenue figures.</small></span></label><label class="branch-share-privacy mt-2" for="branch-share-hide-names"><input type="checkbox" id="branch-share-hide-names"><span><strong>Hide branch names</strong><small>Use Branch 1, Branch 2, and so on.</small></span></label><p class="small text-muted mt-3">Your preview is exactly what appears in the downloaded or shared image.</p>
+   <div id="branch-share-status" role="status" aria-live="polite" class="small"></div>
+  </div><div class="branch-share-preview"><canvas id="branch-share-canvas" width="1080" height="1350" role="img" aria-label="Branch sales rankings preview"></canvas><ol id="branch-share-accessible" class="visually-hidden"></ol></div></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button><button type="button" class="btn btn-outline-primary" id="branch-share-native"><i class="ti ti-share" aria-hidden="true"></i> Share image</button><button type="button" class="btn btn-primary" id="branch-share-download"><i class="ti ti-download" aria-hidden="true"></i> Download PNG</button></div>
+ </div></div>
+</div>
+<script type="application/json" id="branch-share-data"><?= json_encode($shareData, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_INVALID_UTF8_SUBSTITUTE) ?></script>
+<script defer src="<?= url('assets/js/branch-share.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/branch-share.js') ?>"></script>

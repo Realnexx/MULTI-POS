@@ -86,6 +86,8 @@
         const add=(field,message)=>{if(field && !errors.has(field))errors.set(field,message);};
         const field=name=>Array.from(form.elements).find(control=>control.name===name);
         const type=field('product_type') ? field('product_type').value : 'simple';
+        const branchChoices=form.querySelectorAll('.product-branch-picker input');
+        if(branchChoices.length&&!Array.from(branchChoices).some(input=>input.checked))add(branchChoices[0],'Select at least one branch.');
         Array.from(form.elements).forEach(control=>{
             if(type!=='recipe' && control.closest('#recipe-tab, #edit-recipe-tab'))return;
             if (control.willValidate && !control.validity.valid && !(control.name==='price' && ['ingredient','variant'].includes(type))) add(control,control.validationMessage);
@@ -97,6 +99,11 @@
         ['stock','low_stock_threshold','max_stock_threshold'].forEach(key=>{const input=field(key);if(input && !input.readOnly && type!=='variant' && (input.value==='' || !Number.isFinite(Number(input.value)) || Number(input.value)<0))add(input,'Enter a quantity of zero or more.');});
         const cost=field('cost_price');if(cost && cost.value!=='' && Number(cost.value)<0)add(cost,'Cost price cannot be negative.');
         const stock=field('stock');if(type==='recipe' && stock && !stock.readOnly && (!Number.isInteger(Number(stock.value)) || Number(stock.value)>100000))add(stock,'Enter a whole initial stock quantity from 0 to 100,000.');
+        if(type==='combo'){
+            const packageRows=form.querySelectorAll('.bundle-row'),seen=new Set();
+            if(!packageRows.length)add(form.querySelector('.bundle-editor-rows'),'Add at least one package item.');
+            packageRows.forEach(row=>{const product=row.querySelector('select'),qty=row.querySelector('[data-quantity]');if(!product.value)add(product,'Choose an included product.');else if(seen.has(product.value))add(product,'This product is already included.');seen.add(product.value);if(!Number.isInteger(Number(qty.value))||Number(qty.value)<1||Number(qty.value)>1000)add(qty,'Use a whole quantity from 1 to 1000.');});
+        }
         if(type==='recipe') {
             const rows=form.querySelectorAll('.ingredient-row');
             const list=form.querySelector('#ingredients_list_create, #ingredients_list');
@@ -135,9 +142,14 @@
 
     function serverErrors(form,result,message) {
         form.querySelectorAll('.is-invalid').forEach(clearField);
-        const box=summary(form,message);
+        const isUserForm=!!form.closest('#createUserModal,#editUserModal');
+        const hasFields=result && Object.keys(result.field_errors||{}).length>0;
+        const imageOnly=isUserForm&&hasFields&&Object.keys(result.field_errors).every(name=>name==='image');
+        const box=summary(form,isUserForm&&hasFields?'':message);
+        if(imageOnly)return;
         let first=null;
         Object.entries(result && result.field_errors || {}).forEach(([name,error])=>{
+            if(isUserForm&&name==='image')return;
             const field=Array.from(form.elements).find(control=>control.name===name);
             if(field){fieldError(field,String(error));if(!first)first=field;}
         });

@@ -38,10 +38,11 @@ require_once __DIR__.'/../models/CashierSchedule.php';
 require_once __DIR__.'/../models/AuthSecurity.php';
 try {
     CashierSchedule::assertAccess($user_id,(int)($_SESSION['pos_branch_id'] ?? 0));
-    if(AuthSecurity::consume('pos-pin','user:'.$user_id,5,60))throw new DomainException('Too many PIN attempts. Wait one minute before trying again.');
+    $wait=SystemPolicy::reservePinAttempt($user_id);
+    if($wait){http_response_code(429);header('Retry-After: '.$wait);echo json_encode(['success'=>false,'retry_after'=>$wait,'message'=>'Too many PIN attempts. Try again in '.$wait.' seconds. Refreshing the page will not reset this limit.']);exit;}
 } catch (DomainException $e) { echo json_encode(['success'=>false,'message'=>$e->getMessage()]);exit; }
 
-$is_admin = User::has_permission($user_id, 'manage_settings');
+$is_admin = SystemPolicy::canOverridePosPin($user_id);
 
 // Check if user has a PIN set
 $user_data = User::find_by_id($user_id);
@@ -54,20 +55,12 @@ if (!$has_personal_pin && !($is_admin && $has_master_pin)) {
     exit;
 }
 
-$verified = false;
-
-// Check user's personal PIN
-if ($has_personal_pin && User::verify_pin($user_id, $pin)) {
-    $verified = true;
-}
-
-// For admins, also check master PIN
-if (!$verified && $is_admin && $has_master_pin && SystemPolicy::verifyPin($pin,$master_pin)) {
-    $verified = true;
-}
+$usedPersonalPin=User::verify_pin($user_id,$pin);
+$verified=SystemPolicy::verifyAccessPin($user_id,$pin);
 
 if ($verified) {
-    AuthSecurity::clear_limit('pos-pin','user:'.$user_id);
+    if(!$usedPersonalPin){require_once __DIR__.'/../models/ActivityLog.php';ActivityLog::log('POS PIN override','Administrative override used for POS entry by user #'.$user_id);}
+    SystemPolicy::clearPinAttempts($user_id);
     $_SESSION['pos_entry_grant']=time();
     $_SESSION['pos_pin_verified'] = true;
     $_SESSION['pos_pin_verified_at'] = time();

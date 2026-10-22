@@ -663,7 +663,21 @@ ob_start();
     margin: 0 auto 16px;
     font-size: 2rem;
 }
+
+/* Shared dashboard and report visual treatment. */
+.cat-kpi-glow { display:none; }
+.cat-kpi-card { border:1px solid #e1eaf0; background:linear-gradient(145deg,#fff,#f8fbfd); box-shadow:0 5px 20px rgba(25,62,82,.045); }
+.cat-kpi-label { color:#62758b; }
+.cat-filter-btn,.cat-view-btn { min-height:44px; }
+.cat-view-btn { min-width:44px; }
+.cat-filter-btn.active,.cat-view-btn.active { background:#008aa5; border-color:#008aa5; color:#fff; box-shadow:0 3px 9px rgba(0,138,165,.2); }
+.cat-filter-btn.active::before { content:'\2713'; font-weight:800; }
+.cat-filter-btn.active .badge-pill-count { background:rgba(255,255,255,.2); color:#fff; }
+.cat-filter-btn:focus-visible,.cat-view-btn:focus-visible,.btn-cat-primary:focus-visible { outline:3px solid #64cfe0; outline-offset:3px; }
+@media(max-width:575px) { .cat-filter-btn { padding:8px 12px; font-size:.78rem; } .cat-kpi-value { font-size:1.5rem; } .cat-page-title { font-size:1.4rem; } }
+@media(prefers-reduced-motion:reduce) { .cat-kpi-card,.cat-filter-btn,.cat-view-btn,.btn-cat-primary,.btn-cat-primary::after { transition:none; } .cat-kpi-card:hover,.btn-cat-primary:hover { transform:none; } }
 </style>
+<link rel="stylesheet" href="<?= url('assets/css/categories-responsive.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/categories-responsive.css') ?>">
 
 <!-- Main Categories Container -->
 <div class="categories-page">
@@ -805,7 +819,7 @@ ob_start();
                     With Products <span class="badge-pill-count" id="countActive"><?= $total_categories - $empty_categories ?></span>
                 </button>
                 <button type="button" class="cat-filter-btn" data-filter="empty">
-                    Empty (0) <span class="badge-pill-count" id="countEmpty"><?= $empty_categories ?></span>
+                    Empty <span class="badge-pill-count" id="countEmpty"><?= $empty_categories ?></span>
                 </button>
             </div>
 
@@ -855,7 +869,7 @@ ob_start();
                 <table class="cat-table" id="categoriesTable">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">ID</th>
+                            <th class="d-none" aria-hidden="true">ID</th>
                             <th>Category Info</th>
                             <th>Description</th>
                             <th class="text-center" style="width: 160px;">Assigned Items</th>
@@ -877,12 +891,12 @@ ob_start();
                                 data-search="<?= htmlspecialchars($search_data, ENT_QUOTES) ?>">
                                 
                                 <!-- ID -->
-                                <td>
+                                <td data-label="ID" class="d-none" aria-hidden="true">
                                     <span class="cat-id-badge">#<?= $cat['id'] ?></span>
                                 </td>
 
                                 <!-- Category Info -->
-                                <td>
+                                <td data-label="Category">
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="cat-avatar" style="background: <?= $pal['bg'] ?>; color: <?= $pal['color'] ?>;">
                                             <?= $initial ?>
@@ -897,7 +911,7 @@ ob_start();
                                 </td>
 
                                 <!-- Description -->
-                                <td>
+                                <td data-label="Description">
                                     <?php if (!empty($cat['description'])): ?>
                                         <div class="cat-desc-cell" title="<?= htmlspecialchars($cat['description']) ?>">
                                             <?= htmlspecialchars($cat['description']) ?>
@@ -908,7 +922,7 @@ ob_start();
                                 </td>
 
                                 <!-- Items Count -->
-                                <td class="text-center">
+                                <td data-label="Assigned items" class="text-center">
                                     <?php if ($count > 0): ?>
                                         <button type="button" 
                                                 class="cat-count-badge cat-count-active view-category-items-btn" 
@@ -934,7 +948,7 @@ ob_start();
                                 </td>
 
                                 <!-- Actions -->
-                                <td class="text-end">
+                                <td data-label="Actions" class="text-end">
                                     <div class="d-inline-flex align-items-center gap-2">
                                         <button type="button" 
                                                 class="cat-action-pill cat-action-edit edit-category-btn" 
@@ -987,7 +1001,7 @@ ob_start();
                                     <?= $initial ?>
                                 </div>
                                 <div>
-                                    <div class="cat-id-badge mb-1">#<?= $cat['id'] ?></div>
+                                    
                                     <h5 class="fw-bold text-dark mb-0 fs-6"><?= htmlspecialchars($cat['name']) ?></h5>
                                 </div>
                             </div>
@@ -998,7 +1012,7 @@ ob_start();
                             </div>
 
                             <!-- Bottom Info Strip & Enhanced Actions -->
-                            <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-auto gap-2">
+                            <div class="cat-grid-footer d-flex align-items-center justify-content-between pt-3 border-top mt-auto gap-2">
                                 <div>
                                     <?php if ($count > 0): ?>
                                         <button type="button" 
@@ -1008,7 +1022,7 @@ ob_start();
                                                 data-name="<?= htmlspecialchars($cat['name'], ENT_QUOTES) ?>"
                                                 data-count="<?= $count ?>">
                                             <i class="ti ti-box"></i> 
-                                            <span><?= number_format($count) ?> Items</span>
+                                            <span><?= number_format($count) ?> <?= $count === 1 ? 'item' : 'items' ?></span>
                                             <i class="ti ti-chevron-right ms-1 opacity-75" style="font-size: 0.72rem;"></i>
                                         </button>
                                     <?php else: ?>
@@ -1397,7 +1411,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
             return `
                 <tr class="modal-prod-item" data-search="${searchAttr}">
-                    <td class="py-2 px-3">
+                    <td data-label="Product" class="py-2 px-3">
                         <div class="d-flex align-items-center gap-3">
                             ${imgHtml}
                             <div>
@@ -1406,20 +1420,20 @@ document.addEventListener("DOMContentLoaded", function() {
                             </div>
                         </div>
                     </td>
-                    <td class="py-2">
+                    <td data-label="SKU / Barcode" class="py-2">
                         <div class="font-monospace text-muted small" style="font-size:0.78rem;">${p.sku || '<span class="text-muted fst-italic">No SKU</span>'}</div>
                         ${p.barcode ? `<div class="text-muted" style="font-size:0.7rem;">${p.barcode}</div>` : ''}
                     </td>
-                    <td class="py-2">
+                    <td data-label="Type" class="py-2">
                         ${typeBadge}
                     </td>
-                    <td class="py-2 text-end fw-bold text-dark">
+                    <td data-label="Price" class="py-2 text-end fw-bold text-dark">
                         ${formattedPrice}
                     </td>
-                    <td class="py-2 text-center">
+                    <td data-label="Stock" class="py-2 text-center">
                         ${stockBadge}
                     </td>
-                    <td class="py-2 text-end px-3">
+                    <td data-label="Status" class="py-2 text-end px-3">
                         ${statusBadge}
                     </td>
                 </tr>
@@ -1589,11 +1603,18 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    function syncCategorySelection() {
+        document.querySelectorAll('.cat-filter-btn, .cat-view-btn').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.classList.contains('active')));
+        });
+    }
+    syncCategorySelection();
     // Filter Buttons Click
     filterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             filterBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
+            syncCategorySelection();
             activeFilter = this.getAttribute('data-filter') || 'all';
             filterCategories();
         });
@@ -1605,6 +1626,7 @@ document.addEventListener("DOMContentLoaded", function() {
             activeFilter = 'all';
             filterBtns.forEach(b => {
                 b.classList.toggle('active', b.getAttribute('data-filter') === 'all');
+                b.setAttribute('aria-pressed', String(b.classList.contains('active')));
             });
             filterCategories();
         });
@@ -1632,6 +1654,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (gridView) gridView.classList.add('d-none');
             localStorage.setItem('aurora_category_view_mode', 'table');
         }
+        syncCategorySelection();
         filterCategories();
     }
 
@@ -1648,6 +1671,9 @@ document.addEventListener("DOMContentLoaded", function() {
 });
 </script>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css">
+<script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script defer src="<?= url('assets/js/dashboard-motion.js') ?>?v=<?= filemtime(__DIR__.'/../../assets/js/dashboard-motion.js') ?>"></script>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/admin.php';

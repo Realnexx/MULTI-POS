@@ -1,6 +1,17 @@
 <?php
 // Canonical permission names used by page routes, action endpoints and the seeder.
 return [
+ 'view_recipes'=>['View Recipe Library and Ingredient Previews','Inventory'],
+ 'create_recipes'=>['Create Recipe Definitions','Inventory'],
+ 'edit_recipes'=>['Edit Recipe Details and Ingredients','Inventory'],
+ 'manage_global_recipes'=>['Create and Edit Shared Recipes Across Branches','Inventory'],
+ 'view_promotions'=>['View Promotions','Promotions'],
+ 'create_promotions'=>['Create Promotions','Promotions'],
+ 'edit_promotions'=>['Edit Promotion Rules','Promotions'],
+ 'activate_promotions'=>['Activate, Pause and Archive Promotions','Promotions'],
+ 'apply_manual_discounts'=>['Apply Manual Discounts Within Limit','Promotions'],
+ 'approve_discount_overrides'=>['Approve Above-Limit Manual Discounts','Promotions'],
+ 'view_promotion_reports'=>['View Promotion Reports','Promotions'],
  'view_pricing_tiers'=>['View Pricing Tiers','Pricing Tiers'],
  'add_pricing_tiers'=>['Add Pricing Tiers','Pricing Tiers'],
  'edit_pricing_tiers'=>['Edit Pricing Tiers, Features and Publication Status','Pricing Tiers'],

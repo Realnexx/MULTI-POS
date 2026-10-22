@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="<?= url('assets/css/inventory-workspace.css') ?>?v=<?= filemtime(__DIR__.'/../../assets/css/inventory-workspace.css') ?>">
 <?php
 $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESSION['user']['role_name']), ['admin', 'super admin', 'manager', 'owner']);
 ?>
@@ -205,9 +206,9 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
                                 <span class="material-symbols-outlined" style="font-size: 16px;">restaurant</span> Recipe Formula
                             </button>
                         </li>
-                    </ul>
+                    <li class="nav-item flex-fill bundle-tab-switch d-none" data-bundle-context="create"><button type="button" class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#create-bundle-tab"><span class="material-symbols-outlined" aria-hidden="true">inventory_2</span> Package items</button></li></ul>
 
-                    <div class="tab-content" id="productTabsContent">
+                    <div class="tab-content" id="productTabsContent"><div class="tab-pane fade bundle-editor" id="create-bundle-tab" data-context="create" role="tabpanel"><div class="bundle-editor-heading"><div><h6>Package contents</h6><p>One fixed package price. Included items consume their own stock or ingredients.</p></div><button type="button" class="btn btn-outline-primary btn-sm bundle-add-item"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">add</span>Add item</button></div><p class="bundle-editor-feedback" role="status"></p><div class="bundle-editor-rows"></div><div class="bundle-editor-summary" aria-live="polite"></div><p class="small text-muted">Whole item quantities only. No nested packages or variant parents. Preparation stations group items on the preparation ticket. Cost is estimated using available FIFO batches, falling back to recorded product costs if stock is missing.</p></div>
                         <!-- General Info Tab -->
                         <div class="tab-pane fade show active" id="general-tab" role="tabpanel">
                             <div class="row g-3">
@@ -431,12 +432,9 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-700 text-muted mb-1" style="font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.5px;">Assigned Branch</label>
-                                    <select name="branch_id" class="form-select">
-                                        <option value="">Global (All Branches)</option>
-                                        <?php foreach ($branches as $branch): ?>
-                                            <option value="<?= $branch['id'] ?>" <?= (isset($_SESSION['user']['branch_id']) && $_SESSION['user']['branch_id'] == $branch['id']) ? 'selected' : '' ?>><?= htmlspecialchars($branch['name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <?php $canPickProductBranches=User::is_product_branch_admin($_SESSION['user']['id']); ?>
+                                    <?php if($canPickProductBranches): ?><div class="product-branch-picker"><?php foreach($branches as $branch): if(($branch['status']??'Active')!=='Active')continue; ?><label><input type="checkbox" name="branch_ids[]" value="<?= (int)$branch['id'] ?>" <?= (int)($_SESSION['user']['branch_id']??0)===(int)$branch['id']?'checked':'' ?>><span><?= htmlspecialchars($branch['name'],ENT_QUOTES) ?></span></label><?php endforeach; ?></div><input type="hidden" name="branch_id" value="<?= (int)($_SESSION['user']['branch_id']??0) ?>"><small class="text-muted d-block mt-2">Choose one or more branches. A separate product and the entered initial stock are created in each branch. Multiple branches use shared ingredients only.</small>
+                                    <?php else: ?><input type="hidden" name="branch_id" value="<?= (int)($_SESSION['user']['branch_id']??0) ?>"><div class="form-control bg-light"><?php foreach($branches as $branch)if((int)$branch['id']===(int)($_SESSION['user']['branch_id']??0))echo htmlspecialchars($branch['name'],ENT_QUOTES); ?></div><small class="text-muted">Products are assigned to your branch.</small><?php endif; ?>
                                 </div>
                             </div>
                         </div>
@@ -520,7 +518,7 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
                                     <?php endforeach; ?>
                                 </select>
                                 <p class="small text-muted mt-2 mb-1">Loads a copy of the ingredients for this product. Later changes to the saved recipe do not change products already created.</p>
-                                <a href="<?= url('?route=inventory/recipes') ?>" target="_blank" rel="noopener">Open Recipe Management</a>
+                                <a href="<?= url('?route=inventory/recipes') ?>" target="_blank" rel="noopener"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">menu_book</span>Open Recipe Management</a>
                                 <p id="create_recipe_source_feedback" class="small mt-2 mb-0" role="status" aria-live="polite"></p>
                             </div>
                             <div class="border rounded p-3 mb-3">
@@ -590,7 +588,7 @@ $is_admin = !empty($_SESSION['user']['role_name']) && in_array(strtolower($_SESS
 
                 <!-- Footer Actions -->
                 <div class="modal-footer border-0 px-4 pb-4 pt-3 d-flex justify-content-end align-items-center gap-2" style="border-top: 1px solid #f1f5f9 !important;">
-                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal">Discard</button>
+                    <button type="button" class="btn btn-modal-secondary" data-bs-dismiss="modal"><span class="material-symbols-outlined inv-button-icon" aria-hidden="true">close</span>Discard</button>
                     <button type="submit" class="btn btn-modal-primary">
                         <span class="material-symbols-outlined" style="font-size: 16px;">add_task</span> Save Product
                     </button>

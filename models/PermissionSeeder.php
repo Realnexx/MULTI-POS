@@ -4,7 +4,7 @@ class PermissionSeeder {
  // Subsequent runs never restore permissions an administrator has revoked.
  public static function syncInventoryActions($conn) {
   $catalog=require __DIR__.'/../config/permissions.php';
-  $legacy=['lock_cash_drawer'=>'access_pos','view_own_shifts'=>'access_pos','open_cash_shift'=>'access_pos','close_cash_shift'=>'access_pos','view_stock_history'=>'view_product','edit_stock_batches'=>'manage_inventory','prepare_recipe_stock'=>'manage_inventory','transfer_products'=>'manage_inventory','view_stock_transfers'=>'transfer_products','receive_stock_transfers'=>'transfer_products'];
+  $legacy=['view_recipes'=>'view_product','create_recipes'=>'add_product','edit_recipes'=>'edit_product','manage_global_recipes'=>'edit_product','lock_cash_drawer'=>'access_pos','view_own_shifts'=>'access_pos','open_cash_shift'=>'access_pos','close_cash_shift'=>'access_pos','view_stock_history'=>'view_product','edit_stock_batches'=>'manage_inventory','prepare_recipe_stock'=>'manage_inventory','transfer_products'=>'manage_inventory','view_stock_transfers'=>'transfer_products','receive_stock_transfers'=>'transfer_products'];
   $conn->begin_transaction();
   try {
    foreach($catalog as $name=>$info) {
@@ -57,13 +57,14 @@ class PermissionSeeder {
   do{if($result=$conn->store_result())$result->free();}while($conn->more_results()&&$conn->next_result());
  }
  public static function run($conn) {
+  require_once __DIR__.'/Promotion.php';if(Promotion::ready())Promotion::migrate($conn);
   self::syncWebsiteActions($conn);
   self::syncInventoryActions($conn);
   $catalog=require __DIR__.'/../config/permissions.php';
   $conn->begin_transaction();
   try {
    foreach($catalog as $name=>$info) {
-    if(in_array($info[1],['Online Orders','Pricing Tiers','Demo Requests'],true))continue;
+    if(in_array($info[1],['Online Orders','Pricing Tiers','Demo Requests','Promotions'],true))continue;
     $stmt=$conn->prepare('SELECT id FROM permissions WHERE name=?');$stmt->bind_param('s',$name);$stmt->execute();$found=$stmt->get_result()->fetch_assoc();$stmt->close();
     if(!$found) { $stmt=$conn->prepare('INSERT INTO permissions(name,description,module) VALUES (?,?,?)');$stmt->bind_param('sss',$name,$info[0],$info[1]);$stmt->execute();$stmt->close(); }
    }
@@ -78,7 +79,7 @@ class PermissionSeeder {
    }
    foreach($roles as $role) {
     $rid=(int)$role['id'];$name=strtolower(trim($role['name']));$wanted=[];
-    if($name==='admin') $wanted=array_keys(array_filter($catalog,static function($entry){return !in_array($entry[1],['Online Orders','Pricing Tiers','Demo Requests'],true);}));
+    if($name==='admin') $wanted=array_keys(array_filter($catalog,static function($entry){return !in_array($entry[1],['Online Orders','Pricing Tiers','Demo Requests','Promotions'],true);}));
     elseif($name==='cashier') $wanted=['access_pos','view_dashboard'];
     elseif($name==='manager') {
      $has=$conn->query('SELECT COUNT(*) n FROM role_permissions WHERE role_id='.$rid)->fetch_assoc()['n'];

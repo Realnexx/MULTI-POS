@@ -7,6 +7,13 @@ class CashShiftController
 {
     public function page() {
         require_permissions(CashShift::permissions()); enforce_csrf(); csrf_token();
+        if (isset($_GET['print_shift'])) {
+            try { $shift = CashShift::detail((int)$_GET['print_shift']); }
+            catch (DomainException $e) { http_response_code(403); exit(htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8')); }
+            require_once __DIR__.'/../models/Setting.php';
+            require __DIR__.'/../views/modules/cash_shift_print.php';
+            return;
+        }
         $ready=CashShift::ready(); $error=null; $actor=(int)$_SESSION['user']['id'];
         if ($_SERVER['REQUEST_METHOD']==='POST') {
             try {

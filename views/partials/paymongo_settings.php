@@ -1,8 +1,9 @@
-<?php require_once __DIR__.'/../../models/PayMongo.php';$gateway=PayMongo::summary(); ?>
+<?php require_once __DIR__.'/../../models/PayMongo.php';$gateway=PayMongo::summary();$pmUsesHttps=false;try{$pmUsesHttps=parse_url(PayMongo::applicationUrl(),PHP_URL_SCHEME)==='https';}catch(DomainException $ignored){} ?>
 <div class="tab-pane fade <?= $active_tab==='paymongo'?'show active':'' ?>" id="tab-paymongo">
   <div class="settings-section-card p-4">
     <div class="d-flex align-items-start justify-content-between gap-3 mb-4"><div><h5 class="fw-bold">PayMongo online payments</h5><p class="text-muted small mb-0">Accept online-order payments through hosted checkout. POS integration is not enabled.</p></div><span class="badge <?= $gateway['enabled']?'bg-success':'bg-secondary' ?>"><?= $gateway['enabled']?'Enabled':'Disabled' ?></span></div>
     <?php if(!$gateway['ready']): ?><div class="alert alert-warning">PayMongo setup is pending. Ask your administrator to install the payment database migration.</div><?php else: ?>
+    <?php if(!$pmUsesHttps): ?><div class="alert alert-info small">You can save keys and check payment methods here. Online checkout will remain disabled until this application is opened at its public HTTPS address.</div><?php endif; ?>
     <form method="post" action="<?= url('?route=admin/settings') ?>" autocomplete="off">
       <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>"><input type="hidden" name="setting_category" value="paymongo">
       <div class="row g-3">

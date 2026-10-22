@@ -1,6 +1,25 @@
 document.addEventListener('DOMContentLoaded',function(){
     const bar=document.getElementById('pos-drawer-bar'),dialog=document.getElementById('pos-drawer-dialog');
     if(!bar || !dialog)return;
+    const unlockSecret=document.getElementById('pd-unlock-secret'),unlockMode=document.getElementById('pd-unlock-mode');
+    if(unlockSecret&&unlockMode){
+        let passwordMode=false;
+        const slots=Array.from(dialog.querySelectorAll('.pd-pin-slots span'));
+        function paintPin(){slots.forEach((slot,i)=>{slot.textContent=i<unlockSecret.value.length?'●':'';slot.classList.toggle('pd-pin-filled',i<unlockSecret.value.length);});}
+        unlockSecret.addEventListener('input',()=>{if(!passwordMode)unlockSecret.value=unlockSecret.value.replace(/[^0-9]/g,'').slice(0,4);paintPin();});
+        unlockSecret.form.addEventListener('reset',()=>{setTimeout(paintPin,0);});
+        unlockMode.addEventListener('click',()=>{
+            passwordMode=!passwordMode;unlockSecret.value='';paintPin();
+            unlockSecret.parentElement.classList.toggle('pd-password-entry',passwordMode);
+            unlockSecret.maxLength=passwordMode?200:4;unlockSecret.minLength=passwordMode?1:4;
+            if(passwordMode)unlockSecret.removeAttribute('pattern');else unlockSecret.setAttribute('pattern','[0-9]{4}');
+            unlockSecret.inputMode=passwordMode?'text':'numeric';unlockSecret.autocomplete=passwordMode?'current-password':'off';
+            document.getElementById('pd-unlock-label').textContent=passwordMode?'Account password':'Personal POS PIN';
+            document.getElementById('pd-unlock-help').textContent=passwordMode?'Enter your account password to continue your shift.':'Enter your 4-digit personal POS PIN to continue your shift.';
+            unlockMode.textContent=passwordMode?'Use 4-digit POS PIN instead':'Use account password instead';unlockSecret.focus();
+        });
+        dialog.addEventListener('close',()=>{unlockSecret.value='';paintPin();});
+    }
     let state=null,view='loading',busy=false,pendingExit=null,receipt=null,internalNavigation=false,requestSerial=0;
     const money=c=>new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(Number(c||0)/100);
     const token=()=>document.querySelector('meta[name="csrf-token"]').content;
@@ -91,7 +110,7 @@ document.addEventListener('DOMContentLoaded',function(){
             const result=await call(dialog.open&&view==='transactions'&&usable()?'transactions':'status');
             if(result.state.transactions)transactions(result.state.transactions);
             render(view);
-            if((initial && sessionStorage.getItem('pos-drawer-internal')!=='1') || (!usable()&&!receipt))show(view);
+            if(!usable()&&!receipt)show(view);
             if(initial)sessionStorage.removeItem('pos-drawer-internal');
         }catch(e){fail(e.message);if(initial)show('loading');}
     }
@@ -116,7 +135,7 @@ document.addEventListener('DOMContentLoaded',function(){
                 if(result.closing){receipt=result.closing;const r=receipt;document.getElementById('pos-drawer-closing-summary').textContent='Shift #'+r.id+' · '+r.register_name+' · '+r.branch_name+'\nExpected cash: '+money(Math.round(Number(r.expected_cash)*100))+'\nCounted cash: '+money(Math.round(Number(r.counted_cash)*100))+'\nOverage / shortage: '+money(Math.round(Number(r.difference)*100))+'\nStatus: '+r.status.replaceAll('_',' ')+'\nClosed: '+r.closed_at+'\n'+(r.close_notes||'Balanced drawer');show('closed');}
                 else{form.reset();show('overview');}
             }catch(e){fail(e.message);await refresh();}finally{
-                const secret=form.querySelector('[name="secret"]');if(secret)secret.value='';busy=false;button.disabled=false;form.inert=false;
+                const secret=form.querySelector('[name="secret"]');if(secret){secret.value='';secret.dispatchEvent(new Event('input'));}busy=false;button.disabled=false;form.inert=false;
             }
         });
     });
@@ -145,5 +164,5 @@ document.addEventListener('DOMContentLoaded',function(){
         if(state&&state.shift&&!state.shift.locked&&!receipt&&!internalNavigation&&state.permissions.lock_cash_drawer){const data=new FormData();data.set('action','lock');data.set('shift_id',state.shift.id);data.set('csrf_token',token());data.set('request_key',key());navigator.sendBeacon(bar.dataset.endpoint,data);}
     });
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-    show('loading');refresh(true);setInterval(()=>refresh(),5000);
+    render('loading');refresh(true);setInterval(()=>refresh(),5000);
 });

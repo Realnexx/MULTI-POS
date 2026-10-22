@@ -74,7 +74,8 @@ class PayMongo {
         if(!preg_match('/^sk_'.$mode.'_[A-Za-z0-9]{8,240}$/D',$secret)||!preg_match('/^pk_'.$mode.'_[A-Za-z0-9]{8,240}$/D',$public))throw new DomainException('Enter valid public and secret keys for the same selected mode.');
         if($webhook!=='' && (!preg_match('/^[A-Za-z0-9_\-]{8,255}$/D',$webhook)))throw new DomainException('Enter a valid webhook signing secret.');
         $site=self::applicationUrl();
-        if($enable && parse_url($site,PHP_URL_SCHEME)!=='https')throw new DomainException('Payment methods can be checked here, but enabling online payments requires this application to run at a public HTTPS address.');
+        $activationDeferred=$enable && parse_url($site,PHP_URL_SCHEME)!=='https';
+        if($activationDeferred)$enable=false;
         if($old && ($old['mode']!==$mode || !hash_equals(self::decrypt($old['secret_cipher']),$secret) || $old['public_key']!==$public) && RecipeInventory::rows("SELECT id FROM paymongo_payments WHERE state IN ('creating','pending','review') LIMIT 1"))throw new DomainException('Reconcile or expire outstanding checkouts before changing payment keys or mode.');
         $methods=self::parseMethods(self::request('GET','/v1/merchants/capabilities/payment_methods',$secret));
         if($enable && !$methods)throw new DomainException('No active payment methods were found. Activate methods in PayMongo before enabling payments.');
@@ -86,6 +87,7 @@ class PayMongo {
             RecipeInventory::query('UPDATE paymongo_methods SET available=0 WHERE mode=?','s',[$mode]);
             foreach($methods as $code)RecipeInventory::query('INSERT INTO paymongo_methods(mode,code,label,available) VALUES(?,?,?,1) ON DUPLICATE KEY UPDATE label=VALUES(label),available=1,synced_at=NOW()','sss',[$mode,$code,self::label($code)]);
         });
+        return $activationDeferred?'Keys checked and payment methods synchronized. Online payments remain disabled because this site uses HTTP. Enable them after opening the application at its public HTTPS address.':null;
     }
     private static function connectWebhook($secret,$site,$mode){
         $url=$site.'ajax/paymongo_webhook.php';$hooks=self::request('GET','/v1/webhooks',$secret)['data']??[];$hook=null;

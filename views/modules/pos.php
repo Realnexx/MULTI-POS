@@ -4,7 +4,7 @@ $title = "Cashier POS System";
 // Fallback for categories if not passed from controller
 if (!isset($categories)) {
     require_once __DIR__ . '/../../models/Product.php';
-    $categories = Product::get_all_categories() ?: [];
+    $categories = Product::get_all_categories($_SESSION['pos_branch_id'] ?? null, true) ?: [];
 }
 // Fallback for category_id if not passed
 if (!isset($category_id)) {
@@ -310,16 +310,17 @@ endif;
         </div>
         <div class="pos-header-accent"></div>
 
+        <div class="pos-catalog-controls">
         <!-- Category Tabs -->
         <div class="pos-categories px-margin-desktop py-md flex gap-sm overflow-x-auto cat-tab-scroll bg-background shrink-0 border-b border-outline-variant border-opacity-20">
             <?php
-            $total_cat_count = array_sum(array_column($categories, 'product_count'));
+            $total_cat_count = array_sum($type_counts ?? []);
             $is_all_flavors = empty($category_id);
             ?>
             <a href="<?= url('?route=pos' . (!empty($_GET['search']) ? '&search=' . urlencode($_GET['search']) : '') . (!empty($product_type) ? '&product_type=' . urlencode($product_type) : '')) ?>" 
                class="group px-5 py-2 rounded-full font-label-md text-xs shrink-0 text-decoration-none transition-all duration-300 flex items-center gap-2 <?= $is_all_flavors ? 'bg-primary text-on-primary shadow-md' : 'bg-surface-container-low text-on-surface-variant border border-outline-variant border-opacity-30 hover:border-primary hover:border-opacity-40 hover:text-primary' ?>">
                 <span class="material-symbols-outlined text-[14px] font-bold">restaurant_menu</span>
-                <span>All Flavors</span>
+                <span>All products</span>
                 <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-bold rounded-full min-w-[20px] h-5 transition-all duration-300 <?= $is_all_flavors ? 'bg-white/20 text-white' : 'bg-surface-container-highest text-on-surface-variant group-hover:bg-primary-fixed group-hover:text-primary' ?>">
                     <?= $total_cat_count ?>
                 </span>
@@ -349,7 +350,7 @@ endif;
                 <span class="inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold rounded-full min-w-[16px] h-4 <?= empty($product_type) ? 'bg-white/20 text-white' : 'bg-surface-container-highest text-on-surface-variant' ?>"><?= $total_type_count ?></span>
             </a>
             <?php
-            $type_filters = ['simple' => 'Simple', 'variant' => 'Variant', 'recipe' => 'Recipe', 'ingredient' => 'Ingredient'];
+            $type_filters = ['simple' => 'Simple', 'variant' => 'Variant', 'recipe' => 'Recipe', 'combo' => 'Packages'];
             foreach ($type_filters as $type_val => $type_label):
                 $is_active_type = ($product_type === $type_val);
                 $type_count = $type_counts[$type_val] ?? 0;
@@ -362,6 +363,7 @@ endif;
             <?php endforeach; ?>
         </div>
 
+        </div>
         <!-- Product Items Grid -->
         <div class="flex-grow product-grid-scroll min-h-0 px-margin-desktop py-md grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-gutter content-start">
             <?php if (empty($products)): ?>
@@ -373,10 +375,10 @@ endif;
                     <p class="text-xs text-on-surface-variant opacity-60 mb-0">Try adjusting your search or category filter.</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($products as $prod): ?>
+                <?php foreach ($products as $prod): ?><?php $packageContents=[];if($prod['product_type']==='combo'){require_once __DIR__.'/../../models/ProductBundle.php';$packageContents=ProductBundle::items($prod['id']);} ?>
                     <div class="product-card group bg-surface-container-lowest rounded-2xl border border-outline-variant/20 cursor-pointer hover:border-primary/50 hover:shadow-[0_8px_25px_-5px_rgba(182,14,61,0.12)] transition-all duration-300 <?= $prod['stock'] <= 0 ? 'opacity-50' : '' ?>"
                          id="product-card-<?= $prod['id'] ?>"
-                         data-product-id="<?= $prod['id'] ?>"
+                         data-product-id="<?= $prod['id'] ?>" data-product-type="<?= htmlspecialchars($prod['product_type'],ENT_QUOTES) ?>"
                          data-product-name="<?= htmlspecialchars($prod['name'], ENT_QUOTES) ?>"
                          data-product-price="<?= $prod['price'] ?>"
                          data-product-stock="<?= $prod['stock'] ?>"
@@ -384,12 +386,13 @@ endif;
                         <div class="rounded-t-2xl overflow-hidden">
                             <div class="pos-product-image aspect-[3/4] bg-surface-container relative">
                                 <img loading="lazy" decoding="async" src="<?= get_product_image($prod['image_url'], $prod['id']) ?>"
-                                     alt="<?= htmlspecialchars($prod['name']) ?>" 
+                                     alt="<?= htmlspecialchars($prod['name']) ?>" onerror="this.onerror=null;this.src='<?= url('assets/img/product-placeholder.svg') ?>';" 
                                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                                 
                                 <!-- Image overlay on hover -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/0 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 
+                                <?php if($prod['product_type']==='combo'): ?><span class="pos-bundle-badge">Package</span><?php endif; ?>
                                 <div class="stock-badge-wrapper absolute top-2 right-2">
                                     <?php if ($prod['stock'] <= 0): ?>
                                         <span class="bg-error/90 backdrop-blur-md text-on-error text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
@@ -408,7 +411,7 @@ endif;
                             </div>
                         </div>
                         <div class="p-3">
-                            <h3 class="font-bold text-sm text-on-surface mb-2 line-clamp-2 font-label-md group-hover:text-primary transition-colors leading-snug"><?= htmlspecialchars($prod['name']) ?></h3>
+                            <h3 class="font-bold text-sm text-on-surface mb-2 line-clamp-2 font-label-md group-hover:text-primary transition-colors leading-snug"><?= htmlspecialchars($prod['name']) ?></h3><?php if($packageContents): ?><p class="pos-bundle-preview"><?= htmlspecialchars(implode(' · ',array_map(static function($item){return (int)$item['quantity'].'× '.$item['name'];},$packageContents)),ENT_QUOTES) ?></p><?php endif; ?>
                             <div class="flex items-center justify-between pt-2 border-t border-outline-variant/10">
                                 <span class="font-extrabold text-sm text-primary">₱<?= number_format($prod['price'], 2) ?></span>
                                 <button type="button" aria-label="Add <?= htmlspecialchars($prod['name'], ENT_QUOTES) ?> to order" class="w-8 h-8 rounded-full bg-primary-fixed-dim hover:bg-primary hover:text-on-primary text-primary flex items-center justify-center transition-all duration-200 border-0 cursor-pointer group/btn">
@@ -429,7 +432,7 @@ endif;
         <div class="cart-accent-bar shrink-0"></div>
         
         <!-- Order Info Header -->
-        <div class="p-md bg-surface border-b border-outline-variant">
+        <div class="pos-order-header p-md bg-surface border-b border-outline-variant">
         <div class="flex justify-between items-start mb-md">
                 <div class="flex items-center gap-2.5">
                     <div class="w-9 h-9 rounded-xl bg-primary-fixed-dim flex items-center justify-center text-primary shrink-0">
@@ -448,9 +451,9 @@ endif;
             $active_order_type = $_SESSION['pos_order_type'] ?? 'Dine-in';
             $dine_in_active = ($active_order_type === 'Dine-in');
             ?>
-            <div class="flex bg-surface-container-high p-1 rounded-xl w-full gap-1 border border-outline-variant border-opacity-30">
-                <button id="btnOrderTypeDineIn" onclick="setOrderType('Dine-in')" class="flex-grow py-2 rounded-lg font-label-md text-xs border-0 cursor-pointer transition-all duration-300 <?= $dine_in_active ? 'bg-surface-container-lowest text-primary font-bold shadow-xs' : 'text-on-surface-variant font-medium hover:bg-surface-container-highest bg-transparent' ?>">Dine-in</button>
-                <button id="btnOrderTypeTakeOut" onclick="setOrderType('Take-out')" class="flex-grow py-2 rounded-lg font-label-md text-xs border-0 cursor-pointer transition-all duration-300 <?= !$dine_in_active ? 'bg-surface-container-lowest text-primary font-bold shadow-xs' : 'text-on-surface-variant font-medium hover:bg-surface-container-highest bg-transparent' ?>">Take-out</button>
+            <div role="group" aria-label="Order type" class="pos-order-type-switch flex bg-surface-container-high p-1 rounded-xl w-full gap-1 border border-outline-variant border-opacity-30">
+                <button id="btnOrderTypeDineIn" type="button" aria-pressed="<?= $dine_in_active ? 'true' : 'false' ?>" onclick="setOrderType('Dine-in')" class="flex-grow py-2 rounded-lg font-label-md text-xs border-0 cursor-pointer transition-all duration-300 <?= $dine_in_active ? 'bg-surface-container-lowest text-primary font-bold shadow-xs' : 'text-on-surface-variant font-medium hover:bg-surface-container-highest bg-transparent' ?>"><span class="material-symbols-outlined" aria-hidden="true">restaurant</span><span>Dine-in</span><span class="material-symbols-outlined order-type-selected" aria-hidden="true">check_circle</span></button>
+                <button id="btnOrderTypeTakeOut" type="button" aria-pressed="<?= !$dine_in_active ? 'true' : 'false' ?>" onclick="setOrderType('Take-out')" class="flex-grow py-2 rounded-lg font-label-md text-xs border-0 cursor-pointer transition-all duration-300 <?= !$dine_in_active ? 'bg-surface-container-lowest text-primary font-bold shadow-xs' : 'text-on-surface-variant font-medium hover:bg-surface-container-highest bg-transparent' ?>"><span class="material-symbols-outlined" aria-hidden="true">takeout_dining</span><span>Take-out</span><span class="material-symbols-outlined order-type-selected" aria-hidden="true">check_circle</span></button>
             </div>
             <input type="hidden" id="orderType" value="<?= htmlspecialchars($active_order_type) ?>">
         </div>
@@ -467,7 +470,7 @@ endif;
         </div>
 
         <!-- Summary & Actions -->
-        <div class="p-md bg-surface border-t border-outline-variant shrink-0">
+        <div class="pos-order-summary p-md bg-surface border-t border-outline-variant shrink-0">
             <!-- Cart item count indicator -->
             <div class="flex items-center gap-2 mb-3 px-1">
                 <div class="w-1.5 h-1.5 rounded-full bg-primary opacity-60"></div>
@@ -482,22 +485,26 @@ endif;
                     <span id="cartSubtotal" class="font-bold text-on-surface">₱0.00</span>
                 </div>
                 
-                <div class="flex justify-between text-on-surface-variant font-medium text-sm items-center">
-                    <span class="text-xs">Discount</span>
+                <details class="pos-discount-panel"><summary><span class="material-symbols-outlined" aria-hidden="true">sell</span><span>Discounts &amp; offers</span><span class="material-symbols-outlined pos-discount-chevron" aria-hidden="true">expand_more</span></summary><div class="pos-discount-body">                <div class="flex justify-between text-on-surface-variant font-medium text-sm items-center">
+                    <span class="text-xs">Manual discount</span>
                     <div class="flex items-center gap-1.5">
                         <span class="text-[10px] text-on-surface-variant opacity-50">₱</span>
-                        <input type="number" id="cartDiscount" class="w-20 text-end rounded-lg px-2 py-1 text-xs outline-none border border-outline-variant border-opacity-50 focus:border-primary font-bold text-primary shadow-none bg-surface-container-lowest" value="0" min="0" step="0.01" onchange="updateCartDiscount()">
+                        <input type="number" id="cartDiscount" class="w-20 text-end rounded-lg px-2 py-1 text-xs outline-none border border-outline-variant border-opacity-50 focus:border-primary font-bold text-primary shadow-none bg-surface-container-lowest" value="0" min="0" step="0.01" onchange="updateCartDiscount()"><button type="button" onclick="updateCartDiscount()" style="padding:4px 8px;color:#00859d;border:1px solid #cce4eb;border-radius:6px;font-size:11px">Apply</button>
                     </div>
                 </div>
                 
+                <div class="pos-promo-controls" style="display:grid;gap:8px;margin-top:12px;font-size:12px"><button type="button" class="pos-offers-browse" onclick="openPosOffers()"><span class="material-symbols-outlined" aria-hidden="true">local_offer</span> Browse promotions &amp; offers</button><label for="pos-promo-code">Promo code (optional)</label><div style="display:flex;gap:8px"><input id="pos-promo-code" maxlength="40" placeholder="Promo code" style="min-width:0;flex:1;padding:8px;border:1px solid #d2e3eb;border-radius:8px"><button type="button" onclick="applyPosPromotion()" style="padding:8px;border:1px solid #008da6;border-radius:8px;color:#008da6">Apply</button></div><label for="pos-promo-customer">Customer email (optional)</label><input id="pos-promo-customer" type="email" maxlength="254" placeholder="Registered customer email" style="padding:8px;border:1px solid #d2e3eb;border-radius:8px"><button type="button" onclick="requestPosDiscountApproval()" style="text-align:left;color:#00859d">Request supervisor discount approval</button><small>Offers apply only when selected or when you enter a code. Clear the code and press Apply to remove an offer.</small></div>
+</div></details><div id="pos-applied-promotion" class="pos-applied-promotion" hidden aria-live="polite"></div><p id="pos-promo-status" role="status" class="pos-promotion-message"></p>
                 <div class="summary-divider my-2"></div>
                 
+
+            </div>
+
+        </div><div class="pos-checkout-footer">
                 <div class="flex justify-between items-center">
                     <span class="font-bold text-sm text-on-surface m-0">Total</span>
                     <span class="font-extrabold text-lg text-primary m-0 animate-scale-in" id="cartTotal">₱0.00</span>
                 </div>
-            </div>
-
             <!-- Proceed to Payment Action -->
             <button id="proceedToPayBtn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-headline-md text-sm font-bold flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:brightness-105 active:scale-[0.98] transition-all disabled:from-gray-400 disabled:to-gray-500 disabled:opacity-50 disabled:cursor-not-allowed border-0 cursor-pointer" onclick="openPaymentModal()" disabled>
                 Proceed to Payment
@@ -507,13 +514,15 @@ endif;
     </section>
 </main>
 
+<dialog id="pos-discount-approval-dialog" aria-labelledby="pos-approval-title" oncancel="if(this.dataset.sending==='1')event.preventDefault()"><form onsubmit="submitPosDiscountApproval(event)" novalidate><header><span class="pos-approval-icon material-symbols-outlined" aria-hidden="true">verified_user</span><div><h2 id="pos-approval-title">Request discount approval</h2><p>Send the reason to your supervisor for review.</p></div><button type="button" class="pos-approval-close" onclick="closePosDiscountApproval()" aria-label="Close approval request"><span class="material-symbols-outlined" aria-hidden="true">close</span></button></header><div class="pos-approval-body"><div class="pos-approval-summary"><span>Requested manual discount</span><strong id="pos-approval-amount"></strong></div><label for="pos-approval-reason">Reason for discount</label><textarea id="pos-approval-reason" name="reason" rows="3" minlength="5" maxlength="255" required placeholder="Explain why this discount is needed…" aria-describedby="pos-approval-hint pos-approval-error" autofocus></textarea><p id="pos-approval-hint">5–255 characters. Approval applies to this cart and amount, and expires after 30 minutes.</p><p id="pos-approval-error" role="alert"></p></div><footer><button type="button" onclick="closePosDiscountApproval()">Cancel</button><button type="submit" id="pos-approval-submit">Send request</button></footer></form></dialog>
+<dialog id="pos-offers-dialog" aria-labelledby="pos-offers-title"><header><div><p>CHOOSE YOUR SAVINGS</p><h2 id="pos-offers-title">Promotions &amp; offers</h2></div><button type="button" onclick="document.getElementById('pos-offers-dialog').close()" aria-label="Close offers">×</button></header><p class="pos-offers-intro">Select one offer to apply it, or copy a code. Nothing is applied automatically.</p><p id="pos-offers-feedback" role="status" aria-live="polite"></p><div id="pos-offers-list"></div></dialog>
 <nav class="pos-mobile-navigation" aria-label="POS sections">
-    <a href="#posCatalog"><span class="material-symbols-outlined" aria-hidden="true">restaurant_menu</span>Browse menu</a>
+    <a href="#posCatalog"><span class="material-symbols-outlined" aria-hidden="true">restaurant_menu</span>Browse products</a>
     <a href="#posOrder"><span class="material-symbols-outlined" aria-hidden="true">shopping_bag</span>View order</a>
 </nav>
 
 <!-- Payment Modal Overlay -->
-<div id="paymentModal" class="fixed inset-0 bg-black/60 modal-backdrop-premium z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+<div id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="pos-payment-title" class="fixed inset-0 bg-black/60 modal-backdrop-premium z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
     <div class="bg-surface-container-lowest w-full max-w-[460px] rounded-3xl border border-outline-variant border-opacity-40 shadow-2xl p-6 relative mx-4 transform scale-95 transition-transform duration-300" id="paymentModalContent">
         <!-- Premium Accent Bar -->
         <div class="cart-accent-bar rounded-t-3xl absolute top-0 left-0 right-0"></div>
@@ -528,7 +537,7 @@ endif;
                 <span class="material-symbols-outlined text-[20px] font-bold">payments</span>
             </div>
             <div>
-                <h3 class="font-bold text-lg text-on-surface m-0 font-headline-md">Payment Method</h3>
+                <h3 class="font-bold text-lg text-on-surface m-0 font-headline-md" id="pos-payment-title">Take payment</h3>
                 <p class="font-label-sm text-[10px] text-on-surface-variant opacity-70 m-0 mt-0.5">Select payment channel and complete transaction.</p>
             </div>
         </div>
@@ -543,8 +552,8 @@ endif;
             <!-- Payment Method Selection Segmented Group -->
             <div class="space-y-2">
                 <label class="font-bold text-[10px] text-on-surface-variant uppercase tracking-wider block">Payment Channel</label>
-                <?php require_once __DIR__.'/../../models/CheckoutPolicy.php';$manualMethods=CheckoutPolicy::methods(); ?>
-                <select id="manualPaymentChoice" aria-label="Payment channel" class="w-full p-3 rounded-xl border" onchange="setPaymentMethod(this.value)"><?php foreach($manualMethods as $method): ?><option value="<?= htmlspecialchars($method,ENT_QUOTES) ?>"><?= htmlspecialchars($method) ?></option><?php endforeach; ?></select>
+                <?php require_once __DIR__.'/../../models/CheckoutPolicy.php';$manualMethods=CheckoutPolicy::posMethods(); ?>
+                <div class="pos-payment-options" role="group" aria-label="Payment channel"><?php foreach($manualMethods as $method): $paymentIcon=$method==='Cash'?'payments':(stripos($method,'card')!==false?'credit_card':(stripos($method,'QR')!==false?'qr_code_2':'account_balance_wallet')); ?><button type="button" class="pos-payment-option <?= $method===$manualMethods[0]?'is-selected':'' ?>" data-payment-method="<?= htmlspecialchars($method,ENT_QUOTES) ?>" aria-pressed="<?= $method===$manualMethods[0]?'true':'false' ?>" onclick="setPaymentMethod(this.dataset.paymentMethod)"><span class="material-symbols-outlined" aria-hidden="true"><?= $paymentIcon ?></span><span><?= htmlspecialchars($method) ?></span><span class="material-symbols-outlined pos-payment-check" aria-hidden="true">check_circle</span></button><?php endforeach; ?></div><p class="pos-payment-guidance">For electronic payments, confirm receipt on your payment device or account before completing this sale.</p>
                 <input type="hidden" id="paymentMethod" value="<?= htmlspecialchars($manualMethods[0],ENT_QUOTES) ?>">
                 <script>window.manualPaymentMethods=<?= json_encode($manualMethods,JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_HEX_AMP) ?>;</script>
             </div>
@@ -610,7 +619,7 @@ endif;
         </button>
 
         <!-- Receipt Body Container -->
-        <div id="receiptModalBody" class="px-1 pr-2 mt-2">
+        <button type="button" class="pos-kitchen-print" onclick="if(window.currentActiveReceiptSaleId)window.open('?route=pos/receipt&amp;id='+Number(window.currentActiveReceiptSaleId)+'&amp;kitchen=1','_blank','noopener')">Print preparation ticket</button><div id="receiptModalBody" class="px-1 pr-2 mt-2">
             <!-- Dynamically populated via AJAX (main.js) -->
         </div>
 
@@ -789,6 +798,7 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 <?php
+echo '<script defer src="'.url('assets/js/pos-promotions.js').'?v='.filemtime(__DIR__.'/../../assets/js/pos-promotions.js').'"></script>';
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/pos_layout.php';
 ?>

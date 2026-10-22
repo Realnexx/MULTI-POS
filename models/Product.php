@@ -4,6 +4,22 @@ require_once __DIR__ . '/RecipeInventory.php';
 
 class Product
 {
+    public static function creationBranches(array $input) {
+        $actor=(int)($_SESSION['user']['id']??0);$context=User::access_context($actor);
+        $admin=User::is_product_branch_admin($actor);
+        $values=$input['branch_ids']??[$input['branch_id']??$context['branch_id']];
+        if(!is_array($values)||!$values||count($values)>1000)throw new DomainException('Select at least one branch.');
+        $ids=[];foreach($values as $value){
+            if(!is_scalar($value)||!ctype_digit((string)$value)||(int)$value<1)throw new DomainException('Select a dedicated branch. Global assignment is not available in Add Product.');
+            $id=(int)$value;
+            if(!$admin&&$id!==(int)$context['branch_id'])throw new DomainException('You can only create products in your assigned branch.');
+            RecipeInventory::branch($id);
+            if(!RecipeInventory::rows("SELECT id FROM branches WHERE id=? AND status='Active'",'i',[$id]))throw new DomainException('Choose active branches only.');
+            $ids[$id]=$id;
+        }
+        if(!$admin&&count($ids)!==1)throw new DomainException('You can only create products in your assigned branch.');
+        $ids=array_values($ids);sort($ids);return $ids;
+    }
     public static function get_all_ingredients()
     {
         require_once __DIR__ . '/User.php';
@@ -101,19 +117,22 @@ class Product
         return $results;
     }
 
-    public static function get_all_categories($branch_id = null)
+    public static function get_all_categories($branch_id = null, $sellable_only = false)
     {
         global $conn;
         $branch_join = $branch_id ? "AND (p.branch_id IS NULL OR p.branch_id = " . intval($branch_id) . ")" : "";
-        $query = "SELECT c.*, COUNT(p.id) as product_count FROM categories c LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active' $branch_join GROUP BY c.id ORDER BY c.name ASC";
+        $sellable_join = $sellable_only ? "AND p.is_sellable = 1 AND p.product_type != 'ingredient'" : "";
+        $nonempty = $sellable_only ? "HAVING COUNT(p.id) > 0" : "";
+        $query = "SELECT c.*, COUNT(p.id) as product_count FROM categories c LEFT JOIN products p ON c.id = p.category_id AND p.status = 'active' $sellable_join $branch_join GROUP BY c.id $nonempty ORDER BY c.name ASC";
         return $conn->query($query)->fetch_all(MYSQLI_ASSOC);
     }
 
-    public static function get_product_type_counts($branch_id = null)
+    public static function get_product_type_counts($branch_id = null, $sellable_only = false)
     {
         global $conn;
         $branch_filter = $branch_id ? "AND (p.branch_id IS NULL OR p.branch_id = " . intval($branch_id) . ")" : "";
-        $query = "SELECT p.product_type, COUNT(*) as count FROM products p WHERE p.product_type IS NOT NULL AND p.product_type != '' $branch_filter GROUP BY p.product_type";
+        $sellable_filter = $sellable_only ? "AND p.status = 'active' AND p.is_sellable = 1 AND p.product_type != 'ingredient'" : "";
+        $query = "SELECT p.product_type, COUNT(*) as count FROM products p WHERE p.product_type IS NOT NULL AND p.product_type != '' $sellable_filter $branch_filter GROUP BY p.product_type";
         $result = $conn->query($query);
         $counts = [];
         while ($row = $result->fetch_assoc()) {
@@ -251,6 +270,7 @@ class Product
                 || RecipeInventory::rows('SELECT id FROM product_modifiers WHERE ingredient_product_id = ? AND is_active=1 LIMIT 1 FOR UPDATE','i',[$id])) {
                 throw new DomainException('Remove this ingredient from active recipes and extras before archiving it.');
             }
+            require_once __DIR__.'/ProductBundle.php';if(ProductBundle::ready()&&RecipeInventory::rows("SELECT c.id FROM product_combos c JOIN products p ON p.id=c.bundle_product_id WHERE c.item_product_id=? AND p.status='active' LIMIT 1",'i',[$id]))throw new DomainException('Remove this product from active packages before archiving it.');
             // Preserve historical receipts, recipes and stock records.
             RecipeInventory::query("UPDATE products SET status = 'inactive', is_sellable = 0 WHERE id = ?",'i',[$id]);
             return true;
@@ -622,7 +642,7 @@ class Product
         global $conn;
         $sql = "SELECT b.id, b.name, COALESCE(SUM(pb.quantity), 0) as branch_stock
                 FROM branches b
-                LEFT JOIN product_batches pb ON b.id = pb.branch_id AND pb.product_id = ? AND pb.status = 'active' AND (pb.expiry_date IS NULL OR pb.expiry_date >= CURRENT_DATE)
+                LEFT JOIN product_batches pb ON b.id = pb.branch_id AND pb.product_id = ? AND pb.status = 'active' AND (pb.expiry_date IS NULL OR pb.expiry_date >= ".RecipeInventory::expiryDateSql().")
                 GROUP BY b.id";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $product_id);
@@ -665,7 +685,7 @@ class Product
     {
         require_once __DIR__ . '/User.php';
         $branch_id=(!$branch_id && User::has_all_branch_access($_SESSION['user']['id'] ?? 0)) ? null : RecipeInventory::branch($branch_id);
-        $sql="SELECT p.*,c.name category_name,b.name branch_name,(SELECT COALESCE(SUM(pb.quantity),0) FROM product_batches pb WHERE pb.product_id=p.id AND pb.status='active' AND pb.quantity>0 AND (pb.expiry_date IS NULL OR pb.expiry_date>=CURRENT_DATE)) all_physical_stock FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN branches b ON b.id=p.branch_id WHERE 1=1";
+        $sql="SELECT p.*,c.name category_name,b.name branch_name,(SELECT COALESCE(SUM(pb.quantity),0) FROM product_batches pb WHERE pb.product_id=p.id AND pb.status='active' AND pb.quantity>0 AND (pb.expiry_date IS NULL OR pb.expiry_date>=".RecipeInventory::expiryDateSql().")) all_physical_stock FROM products p LEFT JOIN categories c ON c.id=p.category_id LEFT JOIN branches b ON b.id=p.branch_id WHERE 1=1";
         $params=[]; $types='';
         if ($branch_id !== null) { $sql.=' AND (p.branch_id IS NULL OR p.branch_id=?)'; $params[]=$branch_id; $types.='i'; }
         if ($category_id) { $sql.=' AND p.category_id=?'; $params[]=$category_id; $types.='i'; }
@@ -674,22 +694,25 @@ class Product
             for ($i=0;$i<4;$i++) $params[]='%' . $search . '%';
             $types.='ssss';
         }
-        $columns=['p.name','c.name','p.price','p.cost_price','p.id','p.id','p.id'];
+        $columns=['p.name','c.name','p.price','p.cost_price','p.id','p.id','p.id','p.created_at'];
         $sql.=' ORDER BY ' . ($columns[(int)$order_col] ?? 'p.id') . (strtolower($order_dir)==='desc' ? ' DESC':' ASC');
+        $sql.=', p.id '.(strtolower($order_dir)==='asc'?'ASC':'DESC');
         $rows=RecipeInventory::rows($sql,$types,$params); $result=[];
         foreach ($rows as $row) {
             $row['physical_stock']=$branch_id === null ? $row['all_physical_stock'] : InventoryQuantity::format(RecipeInventory::balance($row['id'],$branch_id));
             $row['stock']=$row['physical_stock'];
-            if ($row['product_type']==='recipe' && ($row['recipe_mode'] ?? '')==='made_to_order') {
+            if ($row['product_type']==='combo' || ($row['product_type']==='recipe' && ($row['recipe_mode'] ?? '')==='made_to_order')) {
                 $row['stock']=RecipeInventory::catalogAvailability($row,$branch_id);
                 $row['stock_is_recipe_capacity']=true;
             }
+            if(!in_array($row['product_type'],['recipe','combo'],true)&&(!$row['track_stock']||in_array($row['inventory_type'],['non-stock','unlimited'],true))){$row['stock_is_unlimited']=true;if($stock_status!=='all')continue;}
             $amount=(float)$row['stock'];
             if ($stock_status==='low' && !($amount>0 && $amount<=(float)$row['low_stock_threshold'])) continue;
             if ($stock_status==='out' && $amount>0) continue;
             if ($stock_status==='overstock' && $amount<=(float)$row['max_stock_threshold']) continue;
             $result[]=$row;
         }
+        if((int)$order_col===4)usort($result,function($a,$b)use($order_dir){$compare=(float)$a['stock']<=>(float)$b['stock'];if(!$compare)$compare=(int)$a['id']<=>(int)$b['id'];return strtolower($order_dir)==='desc'?-$compare:$compare;});
         return $result;
     }
 
@@ -714,7 +737,7 @@ class Product
         $rows=self::catalog_rows((string)$search,$branch_id,$category_id,$stock_status);
         $stats=['total_items'=>count($rows),'low_stock_count'=>0,'total_valuation'=>0,'total_revenue'=>0];
         foreach ($rows as $row) {
-            if ((float)$row['stock'] <= (float)$row['low_stock_threshold']) $stats['low_stock_count']++;
+            if (empty($row['stock_is_unlimited']) && (float)$row['stock'] <= (float)$row['low_stock_threshold']) $stats['low_stock_count']++;
             // Virtual burger capacity is not extra physical inventory to value twice.
             $stats['total_valuation']+=(float)$row['cost_price']*(float)$row['physical_stock'];
             $stats['total_revenue']+=(float)$row['price']*(float)$row['physical_stock'];

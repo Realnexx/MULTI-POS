@@ -102,7 +102,7 @@ class StockTransfer
                     if($t['status']!=='approved') throw new DomainException('Only approved transfers can be dispatched.');
                     foreach($items as $item) {
                         $remaining=InventoryQuantity::parse($item['requested_quantity']);
-                        $batches=RecipeInventory::rows("SELECT * FROM product_batches WHERE product_id=? AND branch_id=? AND quantity>0 AND status='active' AND (expiry_date IS NULL OR expiry_date>=CURRENT_DATE) ORDER BY created_at,id FOR UPDATE",'ii',[$item['source_product_id'],$t['source_branch_id']]);
+                        $batches=RecipeInventory::rows("SELECT * FROM product_batches WHERE product_id=? AND branch_id=? AND quantity>0 AND status='active' AND (expiry_date IS NULL OR expiry_date>=".RecipeInventory::expiryDateSql().") ORDER BY created_at,id FOR UPDATE",'ii',[$item['source_product_id'],$t['source_branch_id']]);
                         foreach($batches as $batch) {
                             if(!$remaining) break;$take=min($remaining,InventoryQuantity::parse($batch['quantity']));
                             RecipeInventory::consume($item['source_product_id'],$take,$actor,$t['source_branch_id'],$op['id'],null,'transfer dispatch #'.$id,(int)$batch['id']);

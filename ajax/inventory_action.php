@@ -30,6 +30,12 @@ if (in_array($action,['get_next_batch','get_product_modifiers','save_product_mod
     RecipeInventory::branch(RecipeInventory::product((int)$_POST['product_id'])['branch_id']);
 }
 switch ($action) {
+    case 'get_bundle_config':
+        require_once __DIR__.'/../models/ProductBundle.php';$bundleId=(int)($_POST['product_id']??0);$bundleBranch=$_POST['branch_id']??'';$bundleItems=[];
+        if($bundleId){$owner=RecipeInventory::product($bundleId);if($owner['branch_id']!==null)RecipeInventory::branch($owner['branch_id']);if(!User::can_change_product_branch($_SESSION['user']['id'])||$bundleBranch==='')$bundleBranch=$owner['branch_id']===null?'global':(string)$owner['branch_id'];$bundleItems=ProductBundle::items($bundleId);}
+        if(!is_string($bundleBranch))throw new DomainException('Choose a valid branch.');
+        echo json_encode(['success'=>true,'items'=>$bundleItems,'products'=>ProductBundle::candidates($bundleBranch,$bundleId)]);break;
+
     case 'stock_transfer_create':
         require_once __DIR__.'/../models/StockTransfer.php';
         $id=StockTransfer::create($_POST['source_branch_id'] ?? '',$_POST['destination_branch_id'] ?? '',is_array($_POST['items'] ?? null) ? $_POST['items'] : [],$_POST['notes'] ?? '',$_POST['request_key'] ?? '');
@@ -48,8 +54,8 @@ switch ($action) {
         require_once __DIR__ . '/../models/ProductTransfer.php';
         $transfer=ProductTransfer::run((int)($_POST['product_id'] ?? 0),$_POST['destination_branch_id'] ?? '',$_SESSION['user']['id'],$_POST['request_key'] ?? '',(string)($_POST['source_branch_id'] ?? ''));
         ActivityLog::log('Product Branch Transfer','Transferred product #'.$transfer['product_id'].' to '.$transfer['destination_name'].'; operation recorded.');
-        set_flash('success','Product and its stock transferred to '.$transfer['destination_name'].'.');
-        echo json_encode(['success'=>true,'message'=>'Product and its stock transferred to '.$transfer['destination_name'].'.','transfer'=>$transfer]);
+        set_flash('success','Product, '.count($transfer['ingredients']??[]).' ingredients, and all their stock transferred to '.$transfer['destination_name'].'.');
+        echo json_encode(['success'=>true,'message'=>'Product, ingredients and stock consolidated into '.$transfer['destination_name'].'.','transfer'=>$transfer]);
         break;
     case 'get_category_products':
         $cat_id = (int) ($_POST['category_id'] ?? 0);
@@ -144,7 +150,7 @@ switch ($action) {
         $start = (int) ($_POST['start'] ?? 0);
         $length = (int) ($_POST['length'] ?? 10);
         $search = $_POST['search']['value'] ?? '';
-        $order_col = (int) ($_POST['order'][0]['column'] ?? 0);
+        $order_col = (int) ($_POST['order'][0]['column'] ?? 7);
         $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
 
         $branch_id = empty($_POST['branch_id']) && User::has_all_branch_access($_SESSION['user']['id']) ? null : RecipeInventory::branch($_POST['branch_id'] ?? null);
@@ -177,6 +183,7 @@ switch ($action) {
                 unset($location);
                 $prod['stock_is_recipe_capacity'] = true;
             }
+            if($branch_id!==null)$prod['branch_stocks']=array_values(array_filter($prod['branch_stocks'],function($location)use($branch_id){return (int)$location['id']===(int)$branch_id;}));
             $prod['global_performance_badge'] = $global_perf[$prod['id']] ?? null;
             $prod['branch_performance_badges'] = [];
             foreach ($active_branches as $ab) {
@@ -258,14 +265,20 @@ switch ($action) {
         }
         break;
 
+    case 'get_recipe_capacity':
+        echo json_encode(['success'=>true,'report'=>RecipeInventory::capacityReport((int)($_POST['product_id']??0),empty($_POST['branch_id'])?null:(int)$_POST['branch_id'])]);break;
+
     case 'get_product_recipe':
         $product_id = (int) ($_POST['product_id'] ?? 0);
         if ($product_id > 0) {
             $recipeProduct=RecipeInventory::product($product_id);
             RecipeInventory::branch($recipeProduct['branch_id']);
             $recipe = Product::get_recipes($product_id);
+            require_once __DIR__.'/../models/ProductBundle.php';
+            $packageItems=$recipeProduct['product_type']==='combo'?ProductBundle::items($product_id):[];
             $physicalBranch=RecipeInventory::branch($recipeProduct['branch_id'] ?? ($_POST['branch_id'] ?? null));
-            echo json_encode(['success' => true, 'recipe' => $recipe, 'product'=>['type'=>$recipeProduct['product_type'],'mode'=>$recipeProduct['recipe_mode'] ?? 'legacy','branch_id'=>$recipeProduct['branch_id'],'physical_stock'=>InventoryQuantity::format(RecipeInventory::balance($product_id,$physicalBranch)),'global_access'=>User::has_all_branch_access($_SESSION['user']['id'])]]);
+            $packageReport=$recipeProduct['product_type']==='combo'?RecipeInventory::capacityReport($product_id,$physicalBranch):null;
+            echo json_encode(['success' => true, 'recipe' => $recipe, 'package_items'=>$packageItems, 'package_report'=>$packageReport, 'product'=>['type'=>$recipeProduct['product_type'],'mode'=>$recipeProduct['recipe_mode'] ?? 'legacy','branch_id'=>$recipeProduct['branch_id'],'physical_stock'=>InventoryQuantity::format(RecipeInventory::balance($product_id,$physicalBranch)),'global_access'=>User::has_all_branch_access($_SESSION['user']['id'])]]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid product ID']);
         }
@@ -434,17 +447,18 @@ switch ($action) {
     case 'sales_dt':
         require_once __DIR__ . '/../models/Sale.php';
         $draw = (int) ($_POST['draw'] ?? 0);
-        $start = (int) ($_POST['start'] ?? 0);
-        $length = (int) ($_POST['length'] ?? 10);
+        $start = max(0, (int) ($_POST['start'] ?? 0));
+        $length = max(1, min(100, (int) ($_POST['length'] ?? 10)));
         $search = $_POST['search']['value'] ?? '';
         $order_col = (int) ($_POST['order'][0]['column'] ?? 0);
         $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
-        $branch_id = RecipeInventory::branch($_POST['branch_id'] ?? null);
+        $access = User::access_context((int)$_SESSION['user']['id']);
+        $branch_id = $access['global'] && empty($_POST['branch_id']) ? null : RecipeInventory::branch($_POST['branch_id'] ?? null);
         $date_from = $_POST['date_from'] ?? null;
         $date_to = $_POST['date_to'] ?? null;
 
         $sales = Sale::get_dt_sales($start, $length, $search, $order_col, $order_dir, $branch_id, $date_from, $date_to);
-        $recordsTotal = Sale::get_total_sales_count();
+        $recordsTotal = Sale::get_total_sales_count($branch_id, $date_from, $date_to);
         $recordsFiltered = Sale::count_dt_sales_filtered($search, $branch_id, $date_from, $date_to);
 
         echo json_encode([
@@ -458,17 +472,18 @@ switch ($action) {
     case 'logs_dt':
         require_once __DIR__ . '/../models/Product.php';
         $draw = (int) ($_POST['draw'] ?? 0);
-        $start = (int) ($_POST['start'] ?? 0);
-        $length = (int) ($_POST['length'] ?? 10);
+        $start = max(0, (int) ($_POST['start'] ?? 0));
+        $length = max(1, min(100, (int) ($_POST['length'] ?? 10)));
         $search = $_POST['search']['value'] ?? '';
         $order_col = (int) ($_POST['order'][0]['column'] ?? 0);
         $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
-        $branch_id = RecipeInventory::branch($_POST['branch_id'] ?? null);
+        $access = User::access_context((int)$_SESSION['user']['id']);
+        $branch_id = $access['global'] && empty($_POST['branch_id']) ? null : RecipeInventory::branch($_POST['branch_id'] ?? null);
         $date_from = $_POST['date_from'] ?? null;
         $date_to = $_POST['date_to'] ?? null;
 
         $logs = Product::get_dt_inventory_logs($start, $length, $search, $order_col, $order_dir, $branch_id, $date_from, $date_to);
-        $recordsTotal = Product::get_total_inventory_logs_count();
+        $recordsTotal = Product::get_total_inventory_logs_count($branch_id, $date_from, $date_to);
         $recordsFiltered = Product::count_dt_inventory_logs_filtered($search, $branch_id, $date_from, $date_to);
 
         echo json_encode([
@@ -482,17 +497,18 @@ switch ($action) {
     case 'expenses_dt':
         require_once __DIR__ . '/../models/Expense.php';
         $draw = (int) ($_POST['draw'] ?? 0);
-        $start = (int) ($_POST['start'] ?? 0);
-        $length = (int) ($_POST['length'] ?? 10);
+        $start = max(0, (int) ($_POST['start'] ?? 0));
+        $length = max(1, min(100, (int) ($_POST['length'] ?? 10)));
         $search = $_POST['search']['value'] ?? '';
         $order_col = (int) ($_POST['order'][0]['column'] ?? 0);
         $order_dir = $_POST['order'][0]['dir'] ?? 'desc';
-        $branch_id = RecipeInventory::branch($_POST['branch_id'] ?? null);
+        $access = User::access_context((int)$_SESSION['user']['id']);
+        $branch_id = $access['global'] && empty($_POST['branch_id']) ? null : RecipeInventory::branch($_POST['branch_id'] ?? null);
         $date_from = $_POST['date_from'] ?? null;
         $date_to = $_POST['date_to'] ?? null;
 
         $expenses = Expense::get_dt_expenses($start, $length, $search, $order_col, $order_dir, $branch_id, $date_from, $date_to);
-        $recordsTotal = Expense::get_total_expenses_count();
+        $recordsTotal = Expense::get_total_expenses_count($branch_id, $date_from, $date_to);
         $recordsFiltered = Expense::count_dt_expenses_filtered($search, $branch_id, $date_from, $date_to);
 
         echo json_encode([
