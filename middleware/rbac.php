@@ -7,7 +7,7 @@ require_once __DIR__ . '/auth.php';
 function access_denied($message = 'You do not have access to this action.', $status = 403) {
     http_response_code($status);
     $route = $_GET['route'] ?? '';
-    $json = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest'
+    $json = ($_SERVER['HTTP_X_MODAL_FORM'] ?? '') === '1' || strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest'
         || strpos($route, 'ajax/') === 0 || preg_match('~/(data|single|stats|update_status)$~', $route)
         || strpos($_SERVER['SCRIPT_NAME'] ?? '', '/ajax/') !== false;
     if ($json) { header('Content-Type: application/json'); echo json_encode(['success'=>false,'message'=>$message]); }
@@ -17,7 +17,7 @@ function access_denied($message = 'You do not have access to this action.', $sta
 function require_permissions(array $permissions) {
     require_once __DIR__.'/session.php';enforce_session_timeout();
     if (empty($_SESSION['user']['id'])) {
-        if (strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest' || strpos($_SERVER['SCRIPT_NAME'] ?? '', '/ajax/') !== false || strpos($_GET['route'] ?? '', 'ajax/') === 0) access_denied('Please sign in to continue.',401);
+        if (($_SERVER['HTTP_X_MODAL_FORM'] ?? '') === '1' || strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest' || strpos($_SERVER['SCRIPT_NAME'] ?? '', '/ajax/') !== false || strpos($_GET['route'] ?? '', 'ajax/') === 0) access_denied('Please sign in to continue.',401);
         require_login();
     }
     foreach ($permissions as $permission) if (User::has_permission($_SESSION['user']['id'], $permission)) return;

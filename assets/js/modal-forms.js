@@ -224,7 +224,7 @@
             const action = new URL(form.getAttribute('action') || window.location.href, document.baseURI);
             const response = await fetch(action.href, {
                 method: 'POST', body: data, credentials: 'same-origin',
-                headers: { 'X-Modal-Form': '1', 'Accept': 'application/json' }
+                headers: { 'X-Modal-Form': '1', 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             });
             const text = await response.text();
             try { result = JSON.parse(text); } catch (_) {
